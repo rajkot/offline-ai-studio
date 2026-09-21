@@ -61,6 +61,9 @@ import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
 import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
 import MultiFileComposerModal from './MultiFileComposerModal';
 import DockerSandboxPanel from './DockerSandboxPanel';
+import LanCollabPanel from './LanCollabPanel';
+import SemanticSearchPalette from './SemanticSearchPalette';
+import GgufQuantizerStudio from './GgufQuantizerStudio';
 import { localWhisperEngine } from '@/lib/ai/localWhisperEngine';
 import { webGpuEngine } from '@/lib/ai/webGpuEngine';
 import { autonomousAgentEngine } from '@/lib/ai/autonomousAgentEngine';
@@ -349,6 +352,11 @@ export default function Playground({
   // Multi-File RAG Composer & Docker Sandbox State
   const [isRagComposerOpen, setIsRagComposerOpen] = useState(false);
   const [isDockerSandboxOpen, setIsDockerSandboxOpen] = useState(false);
+
+  // LAN Pair Programming, Semantic Search & GGUF Quantizer State
+  const [isLanCollabOpen, setIsLanCollabOpen] = useState(false);
+  const [isSemanticSearchOpen, setIsSemanticSearchOpen] = useState(false);
+  const [isGgufQuantizerOpen, setIsGgufQuantizerOpen] = useState(false);
 
   // Local AI Ollama Daemon State
   const [ollamaStatus, setOllamaStatus] = useState<'active' | 'stopped' | 'starting'>('active');
@@ -1531,6 +1539,15 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         break;
       case 'docker-sandbox':
         setIsDockerSandboxOpen(true);
+        break;
+      case 'lan-collab':
+        setIsLanCollabOpen(true);
+        break;
+      case 'semantic-search':
+        setIsSemanticSearchOpen(true);
+        break;
+      case 'gguf-quantizer':
+        setIsGgufQuantizerOpen(true);
         break;
       case 'vision-open':
         setSelectedFile('__VISION_STUDIO__');
@@ -6060,6 +6077,54 @@ export default function ExtractedVisionUI() {
         isOpen={isDockerSandboxOpen}
         onClose={() => setIsDockerSandboxOpen(false)}
         workspaceFiles={Object.entries(parsedFiles).map(([path, content]) => ({ path, content }))}
+      />
+
+      {/* LAN Pair Programming — zero-cloud P2P collaboration */}
+      <LanCollabPanel
+        isOpen={isLanCollabOpen}
+        onClose={() => setIsLanCollabOpen(false)}
+        activeFile={selectedFile}
+        cursorLine={undefined}
+        cursorColumn={undefined}
+        onIncomingEdit={(filePath, delta, _peerId) => {
+          if (parsedFiles[filePath] !== undefined) {
+            handleUpdateFile(filePath, delta);
+          }
+        }}
+        onFollowPeer={(filePath, line) => {
+          if (filePath !== selectedFile) {
+            setOpenTabs(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
+            setSelectedFile(filePath);
+          }
+          setTimeout(() => {
+            editorRef.current?.revealLineInCenter(line);
+            editorRef.current?.setPosition({ lineNumber: line, column: 1 });
+          }, 80);
+        }}
+      />
+
+      {/* Semantic Codebase Search — natural language across all files */}
+      <SemanticSearchPalette
+        isOpen={isSemanticSearchOpen}
+        onClose={() => setIsSemanticSearchOpen(false)}
+        workspaceFiles={Object.entries(parsedFiles).map(([path, content]) => ({ path, content }))}
+        onJumpToResult={(filePath, line) => {
+          if (filePath !== selectedFile) {
+            setOpenTabs(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
+            setSelectedFile(filePath);
+          }
+          setTimeout(() => {
+            editorRef.current?.revealLineInCenter(line);
+            editorRef.current?.setPosition({ lineNumber: line, column: 1 });
+            editorRef.current?.focus();
+          }, 80);
+        }}
+      />
+
+      {/* GGUF Quantization Studio — visual llama.cpp wrapper */}
+      <GgufQuantizerStudio
+        isOpen={isGgufQuantizerOpen}
+        onClose={() => setIsGgufQuantizerOpen(false)}
       />
 
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}

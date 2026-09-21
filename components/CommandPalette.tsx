@@ -29,6 +29,9 @@ export const COMMAND_METADATA = [
   { command: 'wasi-show-info', name: 'Show WASI System Info', description: 'Display micro-kernel diagnostics', category: 'WASI' },
   { command: 'rag-composer', name: 'Multi-File RAG Composer', description: 'Semantic workspace search → cross-file analysis → chunk-level diff review (Ctrl+Shift+C)', category: 'AI' },
   { command: 'docker-sandbox', name: 'Docker Sandbox Studio', description: 'Spawn isolated containers, run builds, copy workspace files into Docker (Ctrl+Shift+K)', category: 'DevOps' },
+  { command: 'lan-collab', name: 'LAN Pair Programming (P2P)', description: 'Zero-cloud collaborative editing on same Wi-Fi — shared cursors, live chat (Ctrl+Shift+Y)', category: 'Collaboration' },
+  { command: 'semantic-search', name: 'Semantic Codebase Search', description: 'Natural language search across all files using local vector embeddings (Ctrl+Shift+F)', category: 'Search' },
+  { command: 'gguf-quantizer', name: 'GGUF Quantization Studio', description: 'Visual llama.cpp quantizer — 1-click Q4/Q5/Q8 with VRAM calculator (Ctrl+Shift+Q)', category: 'Models' },
 ];
 
 export const DEFAULT_KEYBINDINGS: Record<string, string> = {
@@ -47,6 +50,9 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'live-preview-toggle': 'Ctrl+Shift+V',
   'rag-composer': 'Ctrl+Shift+C',
   'docker-sandbox': 'Ctrl+Shift+K',
+  'lan-collab': 'Ctrl+Shift+Y',
+  'semantic-search': 'Ctrl+Shift+F',
+  'gguf-quantizer': 'Ctrl+Shift+Q',
   'theme-picker': 'Ctrl+K Ctrl+T',
   'layout-toggle-left': 'Ctrl+B',
   'layout-toggle-right': 'Ctrl+Alt+B',
