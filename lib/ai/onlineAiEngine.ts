@@ -377,7 +377,7 @@ export async function generateWithOnlineAi(options: GenerateOptions): Promise<st
 
   // Local Ollama
   if (provider === 'ollama') {
-    return await generateOllamaText(userPrompt, model, systemPrompt);
+    return await generateOllamaText({ prompt: userPrompt, model, system: systemPrompt });
   }
 
   // OmniRoute Gateway (Auto-fallback across 352 AI providers with free tier routing)

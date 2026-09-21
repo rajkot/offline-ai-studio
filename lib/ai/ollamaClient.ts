@@ -294,6 +294,8 @@ export async function generateOllamaText(options: {
   temperature?: number;
   baseUrl?: string;
   signal?: AbortSignal;
+  raw?: boolean;
+  options?: Record<string, any>;
 }): Promise<string> {
   const baseUrl = (options.baseUrl || getOllamaBaseUrl()).replace(/\/+$/, '');
   const model = options.model || 'llama3.2:3b';
@@ -302,8 +304,10 @@ export async function generateOllamaText(options: {
     model,
     prompt: options.prompt,
     stream: false,
+    raw: options.raw ?? false,
     options: {
       temperature: options.temperature ?? 0.2,
+      ...(options.options || {}),
     },
   };
 

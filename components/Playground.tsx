@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Download, FileText, Folder, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Sliders, Radio, CaseUpper, WholeWord, Regex } from 'lucide-react';
+import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Sliders, Radio, CaseUpper, WholeWord, Regex } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import JSZip from 'jszip';
 import CommandPalette, { getActiveKeybindings } from './CommandPalette';
@@ -64,12 +64,13 @@ import { lspWorkspace } from '@/lib/lspEngine';
 import { lspWorkerHub } from '@/lib/lsp/LspWorkerHub';
 import { extensionHost } from '@/lib/extensions/ExtensionHost';
 import { mcpHub } from '@/lib/mcp/McpClient';
-import { ghostTextEngine } from '@/lib/ghostTextEngine';
+import { ghostTextEngine, AutocompleteTelemetry } from '@/lib/ghostTextEngine';
 import { SearchEngine, FileSearchResult } from '@/lib/searchEngine';
 import { wasiRuntime } from '@/lib/wasiRuntime';
 import { dapDebugger } from '@/lib/dapDebuggerEngine';
 import { opfsEngine } from '@/lib/opfsEngine';
 import { gitEngine } from '@/lib/gitEngine';
+import { localFileSystemEngine } from '@/lib/localFileSystemEngine';
 import { SUPPORTED_LANGUAGES, LANGUAGE_STORAGE_KEY, DEFAULT_LANGUAGE, getLanguageByCode, getLanguagePromptInstruction } from '@/lib/languages';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
@@ -454,6 +455,16 @@ export default function Playground({
     ghostTextEnabledRef.current = ghostTextEnabled;
   }, [ghostTextEnabled]);
 
+  // Real-Time Direct OS File System Sync & Ghost Telemetry States
+  const [mountedLocalFolder, setMountedLocalFolder] = useState<string | null>(null);
+  const [diskToastMessage, setDiskToastMessage] = useState<string | null>(null);
+  const [ghostTelemetry, setGhostTelemetry] = useState<AutocompleteTelemetry>(() => ghostTextEngine.getTelemetry());
+
+  // Subscribe to real-time Ghost Text FIM telemetry
+  useEffect(() => {
+    return ghostTextEngine.subscribeTelemetry(setGhostTelemetry);
+  }, []);
+
   // Multi-tab Workspace States
   const [openTabs, setOpenTabs] = useState<string[]>([
     'components/Playground.tsx',
@@ -641,7 +652,7 @@ export default function Playground({
 
       // 1. Real-Time Inline Ghost Text Provider (Tab to accept multi-token completions)
       monaco.languages.registerInlineCompletionsProvider(
-        ['typescript', 'javascript', 'json', 'css', 'html', 'markdown'],
+        ['typescript', 'javascript', 'json', 'css', 'html', 'markdown', 'python', 'rust', 'go', 'cpp', 'c', 'sql', 'yaml'],
         {
           provideInlineCompletions: async (model: any, position: any) => {
             if (!ghostTextEnabledRef.current) return { items: [] };
@@ -688,6 +699,14 @@ export default function Playground({
           freeInlineCompletions: () => {}
         }
       );
+
+      // Keybindings for accepting inline ghost text word-by-word (Cursor Tab / Copilot style)
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.RightArrow, () => {
+        editor.trigger('ghostText', 'editor.action.inlineSuggest.acceptNextWord', {});
+      });
+      editor.addCommand(monaco.KeyMod.Alt | monaco.KeyCode.RightArrow, () => {
+        editor.trigger('ghostText', 'editor.action.inlineSuggest.acceptNextWord', {});
+      });
 
       // 2. Native LSP: Cross-File Go to Definition (F12)
       monaco.languages.registerDefinitionProvider(
@@ -995,6 +1014,11 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
   });
 
   const handleUpdateFile = useCallback((filePath: string, newContent: string) => {
+    // If local directory is mounted, write through directly to disk in background
+    if (localFileSystemEngine.getActiveDirectory()) {
+      localFileSystemEngine.writeFile(filePath, newContent).catch(console.error);
+    }
+
     setRawOutput(prev => {
       const fileHeader = `--- FILE: ${filePath} ---`;
       const fileEnd = `--- END FILE ---`;
@@ -1008,6 +1032,56 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       }
     });
   }, []);
+
+  // Mount real local disk directory via File System Access API
+  const handleOpenLocalFolder = useCallback(async () => {
+    try {
+      const res = await localFileSystemEngine.openDirectory();
+      if (!res) return; // User cancelled modal
+
+      setMountedLocalFolder(res.directoryName);
+
+      // Serialize loaded disk files into rawOutput format so all subsystems index it
+      let newRaw = '';
+      for (const [path, content] of Object.entries(res.files)) {
+        newRaw += `--- FILE: ${path} ---\n${content}\n--- END FILE ---\n\n`;
+      }
+      setRawOutput(newRaw);
+
+      // Select first non-image/non-icon file
+      const firstFile = Object.keys(res.files).find(f => !f.endsWith('.ico') && !f.endsWith('.png') && !f.endsWith('.jpg')) || Object.keys(res.files)[0];
+      if (firstFile) {
+        setSelectedFile(firstFile);
+        setOpenTabs([firstFile]);
+      }
+
+      setDiskToastMessage(`Mounted "${res.directoryName}" (${Object.keys(res.files).length} files) from local disk`);
+      setTimeout(() => setDiskToastMessage(null), 4000);
+    } catch (err: any) {
+      alert(`Could not open local folder: ${err.message}`);
+    }
+  }, []);
+
+  const handleUnmountLocalFolder = useCallback(() => {
+    localFileSystemEngine.unmountDirectory();
+    setMountedLocalFolder(null);
+    setDiskToastMessage('Disconnected local folder');
+    setTimeout(() => setDiskToastMessage(null), 3000);
+  }, []);
+
+  // Listen for external file modifications from local disk watcher
+  useEffect(() => {
+    return localFileSystemEngine.subscribe((event) => {
+      if (event.type === 'file-externally-modified' && event.path && event.details?.newContent) {
+        handleUpdateFile(event.path, event.details.newContent);
+        setDiskToastMessage(`External edit: reloaded ${event.path} from disk`);
+        setTimeout(() => setDiskToastMessage(null), 3000);
+      }
+      if (event.type === 'directory-unmounted') {
+        setMountedLocalFolder(null);
+      }
+    });
+  }, [handleUpdateFile]);
 
   const handleBatchApplyFiles = useCallback((updatedFiles: Record<string, string>) => {
     setRawOutput(prev => {
@@ -1314,12 +1388,22 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'file-save':
         if (selectedFile && parsedFiles[selectedFile]) {
           setDirtyFiles(prev => prev.filter(f => f !== selectedFile));
-          setShowWorkspaceToast(true);
-          setTimeout(() => setShowWorkspaceToast(false), 3000);
+          if (localFileSystemEngine.getActiveDirectory()) {
+            localFileSystemEngine.writeFile(selectedFile, parsedFiles[selectedFile]).then(() => {
+              setDiskToastMessage(`💾 Saved ${selectedFile.split('/').pop()} directly to local disk`);
+              setTimeout(() => setDiskToastMessage(null), 2500);
+            });
+          } else {
+            setShowWorkspaceToast(true);
+            setTimeout(() => setShowWorkspaceToast(false), 3000);
+          }
         } else if (rawOutput) {
           setShowWorkspaceToast(true);
           setTimeout(() => setShowWorkspaceToast(false), 3000);
         }
+        break;
+      case 'folder-open':
+        handleOpenLocalFolder();
         break;
       case 'security-scan':
         setSelectedFile('__COMPLIANCE_SHIELD__');
@@ -2752,6 +2836,9 @@ export default function ExtractedVisionUI() {
                   <button onClick={() => { setNewFilePathInput(''); setIsNewFileModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>New File...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+N</span>
                   </button>
+                  <button onClick={() => { handleOpenLocalFolder(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><FolderOpen size={12} className="text-amber-400" /> Open Local Folder...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+O</span>
+                  </button>
                   <button onClick={() => { handleExecuteCommand('file-save'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Save</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+S</span>
                   </button>
@@ -3292,7 +3379,33 @@ export default function ExtractedVisionUI() {
                   {/* WORKSPACE PROJECT FILES */}
                   <div className="space-y-0.5 pt-2 border-t border-zinc-800/80">
                     <div className="flex items-center justify-between text-[9.5px] font-bold text-zinc-500 uppercase tracking-wider px-1 mb-1">
-                      <span>Project Files</span>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span>Project Files</span>
+                        {mountedLocalFolder && (
+                          <span className="px-1.5 py-0.5 bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 rounded font-mono text-[9px] font-bold truncate">
+                            📂 {mountedLocalFolder} (Disk 🟢)
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {mountedLocalFolder ? (
+                          <button
+                            onClick={handleUnmountLocalFolder}
+                            title="Disconnect Local Folder"
+                            className="text-zinc-500 hover:text-rose-400 p-0.5 rounded cursor-pointer"
+                          >
+                            <X size={11} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleOpenLocalFolder}
+                            title="Open Local Folder from Disk (Ctrl+O)"
+                            className="text-amber-400 hover:text-amber-300 flex items-center gap-0.5 font-sans lowercase text-[10px] font-semibold hover:underline cursor-pointer"
+                          >
+                            <FolderOpen size={11} /> open
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {Object.keys(parsedFiles)
                       .filter(path => !sidebarSearchQuery || path.toLowerCase().includes(sidebarSearchQuery.toLowerCase()))
@@ -4537,11 +4650,19 @@ export default function ExtractedVisionUI() {
                         smoothScrolling: true,
                         cursorBlinking: 'smooth',
                         contextmenu: true,
-                        inlineSuggest: { enabled: true },
+                        inlineSuggest: { enabled: ghostTextEnabled, mode: 'subwordSmart' },
                         inlayHints: { enabled: inlayHintsEnabled ? 'on' : 'off' }
                       }}
                     />
                   </div>
+
+                  {/* Real-time Disk Sync Toast Banner */}
+                  {diskToastMessage && (
+                    <div className="absolute top-3 right-4 z-40 bg-emerald-950/95 border border-emerald-500/80 text-emerald-200 px-3 py-1.5 rounded-lg shadow-2xl text-xs font-mono flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                      <FolderOpen size={13} className="text-emerald-400 animate-pulse" />
+                      <span>{diskToastMessage}</span>
+                    </div>
+                  )}
 
                   {/* Inline Vim Ex Command Prompt Bar */}
                   {isVimExPromptOpen && (
@@ -4598,17 +4719,35 @@ export default function ExtractedVisionUI() {
 
                       <span className="text-zinc-700">|</span>
 
+                      {/* Real-Time Ghost Text (FIM) Telemetry Indicator & Toggle */}
                       <button
                         onClick={() => {
-                          setActiveSidebarTab('ghost');
-                          if (!isSidebarOpen) setIsSidebarOpen(true);
+                          setGhostTextEnabled(prev => !prev);
+                          setDiskToastMessage(`Ghost Text (FIM): ${!ghostTextEnabled ? 'ENABLED (Tab to accept, Ctrl+RightArrow for word)' : 'DISABLED'}`);
+                          setTimeout(() => setDiskToastMessage(null), 2500);
                         }}
-                        className="flex items-center gap-1.5 text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
-                        title="Ghost Text Engine: 24ms speculative token autocomplete (Press Tab in editor to accept)"
+                        className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
+                          ghostTextEnabled ? 'text-purple-400 hover:text-purple-300 font-semibold' : 'text-zinc-600 hover:text-zinc-400'
+                        }`}
+                        title={`Inline Ghost Text FIM Engine: ${ghostTextEnabled ? 'ACTIVE' : 'OFF'}. Latency: ${ghostTelemetry.lastLatencyMs}ms. Model: ${ghostTelemetry.activeModel}. Press Tab to accept, Ctrl+RightArrow for word-by-word.`}
                       >
-                        <Zap size={11} className="text-purple-400 animate-pulse" />
-                        <span className="font-semibold">⚡ Ghost: ON</span>
+                        <Zap size={11} className={ghostTextEnabled ? 'text-purple-400 animate-pulse' : 'text-zinc-600'} />
+                        <span>⚡ Ghost (FIM): {ghostTextEnabled ? `${ghostTelemetry.lastLatencyMs}ms` : 'OFF'}</span>
                       </button>
+
+                      {/* Real Disk Two-Way Sync Active Status */}
+                      {mountedLocalFolder && (
+                        <>
+                          <span className="text-zinc-700">|</span>
+                          <div
+                            className="flex items-center gap-1 text-emerald-400 font-semibold truncate max-w-[200px]"
+                            title={`Real-Time Two-Way Local Disk Sync Active. Folder: ${mountedLocalFolder}. Edits save directly to disk.`}
+                          >
+                            <FolderOpen size={11} className="text-emerald-400 shrink-0" />
+                            <span className="truncate">📂 {mountedLocalFolder} (Disk 🟢)</span>
+                          </div>
+                        </>
+                      )}
 
                       <span className="text-zinc-700">|</span>
 
