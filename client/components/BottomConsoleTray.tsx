@@ -38,6 +38,7 @@ import OpfsWorkspaceStudio from './OpfsWorkspaceStudio';
 import GitVisualizerStudio from './GitVisualizerStudio';
 import PluginMarketplaceStudio from './PluginMarketplaceStudio';
 import McpStudioPanel from './McpStudioPanel';
+import RealPtyTerminal from './RealPtyTerminal';
 import { lspWorkerHub, LspProblemItem } from '@/lib/lsp/LspWorkerHub';
 
 interface BottomConsoleTrayProps {
@@ -644,52 +645,15 @@ export default function BottomConsoleTray({
             </div>
           )}
 
-          {/* SANDBOX TERMINAL TAB */}
+          {/* REAL PTY SHELL TERMINAL TAB */}
           {activeTab === 'terminal' && (
-            <div className="h-full flex flex-col gap-3">
+            <div className="h-full flex flex-col overflow-hidden">
               {sandboxConsole ? (
                 <div className="flex-1 min-h-0">
                   {sandboxConsole}
                 </div>
               ) : (
-                <>
-                  <div className="flex items-center justify-between pb-2 border-b border-[#27272a]/60 text-[11px] text-zinc-400">
-                    <span className="flex items-center gap-1.5 font-sans font-semibold text-zinc-300">
-                      <Server size={13} className="text-emerald-400" /> Sandbox Console Environment
-                    </span>
-                    <div className="flex items-center gap-2 font-sans">
-                      {onRunSandbox && (
-                        <button
-                          onClick={onRunSandbox}
-                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] rounded flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <Play size={10} /> Execute File
-                        </button>
-                      )}
-                      {onClearOutput && (
-                        <button
-                          onClick={onClearOutput}
-                          className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-[10px] rounded flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <RotateCw size={10} /> Clear Console
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 bg-[#09090b] border border-[#27272a] rounded-xl p-4 font-mono text-xs overflow-y-auto leading-relaxed text-emerald-400 select-text">
-                    <div className="text-zinc-500 select-none mb-1">// Sandbox Terminal environment initialized. Logs & test execution results stream below:</div>
-                    <div className="whitespace-pre-wrap font-mono">
-                      {consoleOutput ? (
-                        consoleOutput
-                      ) : (
-                        <div className="text-zinc-400 font-sans italic p-2 bg-[#121214]/40 rounded-lg border border-dashed border-zinc-800">
-                          No console log history found. Trigger any app execution command or run scripts to monitor outputs.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
+                <RealPtyTerminal className="flex-1 min-h-0 rounded-xl border border-slate-800" />
               )}
             </div>
           )}

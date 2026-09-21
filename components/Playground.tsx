@@ -57,9 +57,13 @@ import ModelCatalogStorefront from '@/client/components/ModelCatalogStorefront';
 import AutonomousAgentModal from '@/client/components/AutonomousAgentModal';
 import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
+import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
+import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
 import { localWhisperEngine } from '@/lib/ai/localWhisperEngine';
 import { webGpuEngine } from '@/lib/ai/webGpuEngine';
 import { autonomousAgentEngine } from '@/lib/ai/autonomousAgentEngine';
+import { databaseEngine } from '@/lib/database/databaseEngine';
+import { livePreviewEngine, InspectedElementInfo } from '@/lib/preview/livePreviewEngine';
 import { themeEngine } from '@/lib/themes/ThemeEngine';
 import { agentToolPipeline } from '@/lib/ai/AgentToolPipeline';
 import { prettierFormatterEngine, browserLinterEngine } from '@/lib/extensions/builtin/formatters';
@@ -335,6 +339,10 @@ export default function Playground({
   const [isWebGpuStudioOpen, setIsWebGpuStudioOpen] = useState(false);
   const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false);
   const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+
+  // Built-in Database Studio & Live Split-Screen Webview State
+  const [isDatabaseStudioOpen, setIsDatabaseStudioOpen] = useState(false);
+  const [isLivePreviewOpen, setIsLivePreviewOpen] = useState(false);
 
   // Local AI Ollama Daemon State
   const [ollamaStatus, setOllamaStatus] = useState<'active' | 'stopped' | 'starting'>('active');
@@ -1132,6 +1140,21 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
     setIsAutonomousAgentOpen(true);
   }, []);
 
+  // Bidirectional DOM Element Click-to-Code Inspector Handler
+  const handleInspectElement = useCallback((info: InspectedElementInfo) => {
+    if (info.sourceLine && editorRef.current) {
+      editorRef.current.revealLineInCenter(info.sourceLine);
+      editorRef.current.setPosition({ lineNumber: info.sourceLine, column: 1 });
+    } else if (info.textContent && editorRef.current && selectedFile && parsedFiles[selectedFile]) {
+      const lines = parsedFiles[selectedFile].split('\n');
+      const lineIdx = lines.findIndex(l => l.includes(info.textContent!));
+      if (lineIdx !== -1) {
+        editorRef.current.revealLineInCenter(lineIdx + 1);
+        editorRef.current.setPosition({ lineNumber: lineIdx + 1, column: 1 });
+      }
+    }
+  }, [selectedFile, parsedFiles]);
+
   const handleBatchApplyFiles = useCallback((updatedFiles: Record<string, string>) => {
     setRawOutput(prev => {
       let result = prev;
@@ -1490,6 +1513,12 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'voice-to-code':
         setIsVoiceOverlayOpen(true);
         localWhisperEngine.toggleRecording();
+        break;
+      case 'database-studio':
+        setIsDatabaseStudioOpen(true);
+        break;
+      case 'live-preview-toggle':
+        setIsLivePreviewOpen(prev => !prev);
         break;
       case 'vision-open':
         setSelectedFile('__VISION_STUDIO__');
@@ -3158,6 +3187,30 @@ export default function ExtractedVisionUI() {
             <kbd className="text-[9px] bg-zinc-800 text-zinc-400 px-1 rounded font-mono">F8</kbd>
           </button>
 
+          {/* Built-in Database Studio */}
+          <button
+            onClick={() => setIsDatabaseStudioOpen(true)}
+            className="flex items-center gap-1.5 px-2 py-1 bg-[#18181b] hover:bg-[#202024] border border-[#27272a] hover:border-teal-700/60 rounded-md text-[11px] text-teal-300 font-medium transition-all h-7 cursor-pointer"
+            title="Database Studio: Visual SQLite & PostgreSQL client, ER diagrams, AI SQL"
+          >
+            <Database size={13} className="text-teal-400" />
+            <span>DB Studio</span>
+          </button>
+
+          {/* Live Split-Screen Webview Toggle */}
+          <button
+            onClick={() => setIsLivePreviewOpen(prev => !prev)}
+            className={`flex items-center gap-1.5 px-2 py-1 border rounded-md text-[11px] font-medium transition-all h-7 cursor-pointer ${
+              isLivePreviewOpen
+                ? 'bg-sky-950 border-sky-600 text-sky-200'
+                : 'bg-[#18181b] hover:bg-[#202024] border-[#27272a] hover:border-sky-700/60 text-slate-300'
+            }`}
+            title="Toggle Live Split-Screen Webview with device emulation & DOM inspector"
+          >
+            <Globe size={13} className={isLivePreviewOpen ? 'text-sky-400' : 'text-slate-400'} />
+            <span>Webview</span>
+          </button>
+
           {/* Global Response Language Dropdown */}
           <div id="language-dropdown-container" title="Global AI Response Language" className="hidden sm:flex items-center gap-1.5 bg-[#18181b] hover:bg-[#202024] px-2 py-0.5 rounded-md border border-[#27272a] hover:border-zinc-700 transition-all h-7">
             <span className="text-xs select-none" role="img" aria-label="Flag">{currentLangConfig.flag}</span>
@@ -4725,39 +4778,51 @@ export default function ExtractedVisionUI() {
                     </div>
                   )}
 
-                  <div className="flex-1 w-full relative min-h-0">
-                    <MonacoEditor
-                      height="100%"
-                      language={editorLanguage}
-                      theme="vs-dark"
-                      value={selectedFile ? parsedFiles[selectedFile] : rawOutput}
-                      onChange={(val) => {
-                        if (val !== undefined) {
-                          if (selectedFile) {
-                            handleUpdateFile(selectedFile, val);
-                            setDirtyFiles(prev => prev.includes(selectedFile) ? prev : [...prev, selectedFile]);
-                          } else {
-                            setRawOutput(val);
+                  <div className="flex-1 w-full relative min-h-0 flex flex-row overflow-hidden">
+                    <div className={`h-full transition-all ${isLivePreviewOpen ? 'w-1/2 border-r border-slate-800' : 'w-full'}`}>
+                      <MonacoEditor
+                        height="100%"
+                        language={editorLanguage}
+                        theme="vs-dark"
+                        value={selectedFile ? parsedFiles[selectedFile] : rawOutput}
+                        onChange={(val) => {
+                          if (val !== undefined) {
+                            if (selectedFile) {
+                              handleUpdateFile(selectedFile, val);
+                              setDirtyFiles(prev => prev.includes(selectedFile) ? prev : [...prev, selectedFile]);
+                            } else {
+                              setRawOutput(val);
+                            }
                           }
-                        }
-                      }}
-                      onMount={handleEditorDidMount}
-                      options={{
-                        fontSize: 13,
-                        fontFamily: 'JetBrains Mono, Fira Code, Menlo, Monaco, monospace',
-                        minimap: { enabled: true },
-                        scrollBeyondLastLine: false,
-                        lineNumbers: 'on',
-                        renderLineHighlight: 'all',
-                        wordWrap: 'on',
-                        tabSize: 2,
-                        smoothScrolling: true,
-                        cursorBlinking: 'smooth',
-                        contextmenu: true,
-                        inlineSuggest: { enabled: ghostTextEnabled, mode: 'subwordSmart' },
-                        inlayHints: { enabled: inlayHintsEnabled ? 'on' : 'off' }
-                      }}
-                    />
+                        }}
+                        onMount={handleEditorDidMount}
+                        options={{
+                          fontSize: 13,
+                          fontFamily: 'JetBrains Mono, Fira Code, Menlo, Monaco, monospace',
+                          minimap: { enabled: !isLivePreviewOpen },
+                          scrollBeyondLastLine: false,
+                          lineNumbers: 'on',
+                          renderLineHighlight: 'all',
+                          wordWrap: 'on',
+                          tabSize: 2,
+                          smoothScrolling: true,
+                          cursorBlinking: 'smooth',
+                          contextmenu: true,
+                          inlineSuggest: { enabled: ghostTextEnabled, mode: 'subwordSmart' },
+                          inlayHints: { enabled: inlayHintsEnabled ? 'on' : 'off' }
+                        }}
+                      />
+                    </div>
+                    {isLivePreviewOpen && (
+                      <div className="w-1/2 h-full">
+                        <LiveWebviewSplitPane
+                          files={parsedFiles}
+                          activeFilePath={selectedFile || undefined}
+                          onInspectElement={handleInspectElement}
+                          onClose={() => setIsLivePreviewOpen(false)}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Real-time Disk Sync Toast Banner */}
@@ -5959,6 +6024,13 @@ export default function ExtractedVisionUI() {
         onSendToComposer={handleSendVoiceToComposer}
         onSendToAgent={handleSendVoiceToAgent}
         onClose={() => setIsVoiceOverlayOpen(false)}
+      />
+
+      {/* Built-in Database Studio Modal */}
+      <DatabaseStudioModal
+        isOpen={isDatabaseStudioOpen}
+        onClose={() => setIsDatabaseStudioOpen(false)}
+        onInsertSqlToEditor={(sql) => handleUpdateFile(selectedFile || 'queries.sql', sql)}
       />
 
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}
