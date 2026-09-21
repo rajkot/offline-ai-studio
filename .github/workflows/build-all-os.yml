@@ -1,0 +1,63 @@
+name: Build Executables (All OS)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-matrix:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build Standalone Executables & Packages
+        run: node scripts/build-standalone-exe.js
+
+      - name: Upload Windows Executables
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-ai-studio-windows-x64
+          path: |
+            public/release/*.exe
+            public/release/*.zip
+          if-no-files-found: warn
+
+      - name: Upload Linux Bundle
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-ai-studio-linux
+          path: |
+            public/release/*.zip
+            public/release/*.exe
+          if-no-files-found: warn
+
+      - name: Upload macOS Bundle
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-ai-studio-macos
+          path: |
+            public/release/*.zip
+            public/release/*.exe
+          if-no-files-found: warn

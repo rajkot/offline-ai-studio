@@ -28,6 +28,3 @@ public/release/
 public/*.exe
 tsconfig.tsbuildinfo
 
-# GitHub Actions Workflows (requires workflow OAuth scope)
-.github/
-app/applet/.github/
