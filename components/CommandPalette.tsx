@@ -21,6 +21,9 @@ export const COMMAND_METADATA = [
   { command: 'workbench-palette', name: 'Command Palette', description: 'Open the universal command runner', category: 'Workbench' },
   { command: 'online-ai-hub', name: 'Online AI Hub (Browser Login & API Keys)', description: 'Connect Claude 3.5, GPT-4o, DeepSeek R1, OpenRouter, Gemini', category: 'AI' },
   { command: 'project-ai-scaffold', name: 'AI Project Architect & Generator', description: 'Generate complete multi-file project with online or offline AI', category: 'File' },
+  { command: 'autonomous-agent', name: 'Autonomous Agent Mode (Devin / Claude Code)', description: 'Iterative self-healing loop: Plan -> Write -> Test -> Auto-Patch', category: 'AI' },
+  { command: 'webgpu-studio', name: 'WebGPU Zero-Install Local Inference', description: 'Run Qwen2.5-Coder & SmolLM2 100% in browser memory without Ollama', category: 'AI' },
+  { command: 'voice-to-code', name: 'Local Voice-to-Code Whisper Dictation', description: '100% air-gapped real-time speech transcription to cursor/composer (F8)', category: 'AI' },
   { command: 'wasi-show-info', name: 'Show WASI System Info', description: 'Display micro-kernel diagnostics', category: 'WASI' },
 ];
 
@@ -33,6 +36,9 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'models-catalog': 'Ctrl+Shift+M',
   'online-ai-hub': 'Ctrl+Shift+O',
   'project-ai-scaffold': 'Ctrl+Shift+A',
+  'autonomous-agent': 'Ctrl+Shift+L',
+  'webgpu-studio': 'Ctrl+Shift+W',
+  'voice-to-code': 'F8',
   'theme-picker': 'Ctrl+K Ctrl+T',
   'layout-toggle-left': 'Ctrl+B',
   'layout-toggle-right': 'Ctrl+Alt+B',

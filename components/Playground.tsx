@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Sliders, Radio, CaseUpper, WholeWord, Regex } from 'lucide-react';
+import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import JSZip from 'jszip';
 import CommandPalette, { getActiveKeybindings } from './CommandPalette';
@@ -54,6 +54,12 @@ import OnlineAiStatusBar from '@/client/components/OnlineAiStatusBar';
 import OnlineAiHubModal from '@/client/components/OnlineAiHubModal';
 import OnlineProjectScaffolderModal from '@/client/components/OnlineProjectScaffolderModal';
 import ModelCatalogStorefront from '@/client/components/ModelCatalogStorefront';
+import AutonomousAgentModal from '@/client/components/AutonomousAgentModal';
+import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
+import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
+import { localWhisperEngine } from '@/lib/ai/localWhisperEngine';
+import { webGpuEngine } from '@/lib/ai/webGpuEngine';
+import { autonomousAgentEngine } from '@/lib/ai/autonomousAgentEngine';
 import { themeEngine } from '@/lib/themes/ThemeEngine';
 import { agentToolPipeline } from '@/lib/ai/AgentToolPipeline';
 import { prettierFormatterEngine, browserLinterEngine } from '@/lib/extensions/builtin/formatters';
@@ -323,6 +329,12 @@ export default function Playground({
   // Online AI Hub & Project Scaffolder Modal State
   const [isOnlineAiHubOpen, setIsOnlineAiHubOpen] = useState(false);
   const [isOnlineProjectModalOpen, setIsOnlineProjectModalOpen] = useState(false);
+
+  // Autonomous Agent, WebGPU Studio & Local Voice-to-Code State
+  const [isAutonomousAgentOpen, setIsAutonomousAgentOpen] = useState(false);
+  const [isWebGpuStudioOpen, setIsWebGpuStudioOpen] = useState(false);
+  const [isVoiceOverlayOpen, setIsVoiceOverlayOpen] = useState(false);
+  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
 
   // Local AI Ollama Daemon State
   const [ollamaStatus, setOllamaStatus] = useState<'active' | 'stopped' | 'starting'>('active');
@@ -1083,6 +1095,43 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
     });
   }, [handleUpdateFile]);
 
+  // Subscribe to local Whisper audio state
+  useEffect(() => {
+    return localWhisperEngine.subscribe((s) => {
+      setIsVoiceRecording(s.isRecording);
+    });
+  }, []);
+
+  // Voice-to-Code Dispatch Handlers
+  const handleInsertVoiceToEditor = useCallback((text: string) => {
+    if (editorRef.current) {
+      const editor = editorRef.current;
+      const position = editor.getPosition();
+      if (position) {
+        editor.executeEdits('voice-input', [{
+          range: {
+            startLineNumber: position.lineNumber,
+            startColumn: position.column,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column
+          },
+          text: text,
+          forceMoveMarkers: true
+        }]);
+      }
+    } else if (selectedFile && parsedFiles[selectedFile]) {
+      handleUpdateFile(selectedFile, parsedFiles[selectedFile] + '\n' + text);
+    }
+  }, [selectedFile, parsedFiles, handleUpdateFile]);
+
+  const handleSendVoiceToComposer = useCallback((text: string) => {
+    setPrompt(text);
+  }, []);
+
+  const handleSendVoiceToAgent = useCallback((text: string) => {
+    setIsAutonomousAgentOpen(true);
+  }, []);
+
   const handleBatchApplyFiles = useCallback((updatedFiles: Record<string, string>) => {
     setRawOutput(prev => {
       let result = prev;
@@ -1432,6 +1481,16 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'project-ai-scaffold':
         setIsOnlineProjectModalOpen(true);
         break;
+      case 'autonomous-agent':
+        setIsAutonomousAgentOpen(true);
+        break;
+      case 'webgpu-studio':
+        setIsWebGpuStudioOpen(true);
+        break;
+      case 'voice-to-code':
+        setIsVoiceOverlayOpen(true);
+        localWhisperEngine.toggleRecording();
+        break;
       case 'vision-open':
         setSelectedFile('__VISION_STUDIO__');
         break;
@@ -1646,6 +1705,13 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       if (currentCombo === 'Ctrl+Shift+P') {
         e.preventDefault();
         setIsCommandPaletteOpen(true);
+        return;
+      }
+
+      if (e.key === 'F8') {
+        e.preventDefault();
+        setIsVoiceOverlayOpen(true);
+        localWhisperEngine.toggleRecording();
         return;
       }
 
@@ -3053,6 +3119,44 @@ export default function ExtractedVisionUI() {
 
           {/* Online AI Hub & Model Connection Widget */}
           <OnlineAiStatusBar onOpenHub={() => setIsOnlineAiHubOpen(true)} />
+
+          {/* Autonomous Agent Mode (Devin / Claude Code) */}
+          <button
+            onClick={() => setIsAutonomousAgentOpen(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-950 to-purple-950 hover:from-indigo-900 hover:to-purple-900 border border-indigo-700/60 rounded-md text-[11px] text-indigo-200 font-medium transition-all shadow-sm cursor-pointer h-7"
+            title="Launch Autonomous Agent (Self-Healing Feedback Loop: Prompt -> Plan -> Code -> Test -> Patch)"
+          >
+            <Bot size={13} className="text-indigo-400" />
+            <span className="font-bold">Agent Mode</span>
+          </button>
+
+          {/* WebGPU Zero-Install Local Inference */}
+          <button
+            onClick={() => setIsWebGpuStudioOpen(true)}
+            className="flex items-center gap-1.5 px-2 py-1 bg-[#18181b] hover:bg-[#202024] border border-[#27272a] hover:border-cyan-700/60 rounded-md text-[11px] text-cyan-300 font-medium transition-all h-7 cursor-pointer"
+            title="WebGPU Zero-Install Local Inference (Run Qwen2.5-Coder & SmolLM2 in Browser Memory)"
+          >
+            <Cpu size={13} className="text-cyan-400" />
+            <span>WebGPU AI</span>
+          </button>
+
+          {/* Local Voice-to-Code Whisper Dictation */}
+          <button
+            onClick={() => {
+              setIsVoiceOverlayOpen(true);
+              localWhisperEngine.toggleRecording();
+            }}
+            className={`flex items-center gap-1.5 px-2 py-1 border rounded-md text-[11px] font-medium transition-all h-7 cursor-pointer ${
+              isVoiceRecording
+                ? 'bg-rose-950 border-rose-600 text-rose-200 animate-pulse'
+                : 'bg-[#18181b] hover:bg-[#202024] border-[#27272a] hover:border-rose-700/60 text-slate-300'
+            }`}
+            title="Local Voice-to-Code (F8): 100% Air-Gapped Speech-to-Text directly to Cursor / Composer"
+          >
+            <Mic size={13} className={isVoiceRecording ? 'text-rose-400' : 'text-slate-400'} />
+            <span>Voice</span>
+            <kbd className="text-[9px] bg-zinc-800 text-zinc-400 px-1 rounded font-mono">F8</kbd>
+          </button>
 
           {/* Global Response Language Dropdown */}
           <div id="language-dropdown-container" title="Global AI Response Language" className="hidden sm:flex items-center gap-1.5 bg-[#18181b] hover:bg-[#202024] px-2 py-0.5 rounded-md border border-[#27272a] hover:border-zinc-700 transition-all h-7">
@@ -5831,6 +5935,30 @@ export default function ExtractedVisionUI() {
           setRawOutput(prev => prev + '\n\n' + formatted);
           handleSelectFile(primaryFile);
         }}
+      />
+
+      {/* Autonomous Agent Mode Modal (Devin / Claude Code Style) */}
+      <AutonomousAgentModal
+        isOpen={isAutonomousAgentOpen}
+        onClose={() => setIsAutonomousAgentOpen(false)}
+        activeFile={selectedFile || ''}
+        allFiles={parsedFiles}
+        onApplyFileUpdate={handleUpdateFile}
+      />
+
+      {/* WebGPU Zero-Install Local Inference Studio */}
+      <WebGpuStudioModal
+        isOpen={isWebGpuStudioOpen}
+        onClose={() => setIsWebGpuStudioOpen(false)}
+        onApplyCodeToEditor={(code) => handleUpdateFile(selectedFile || 'components/Playground.tsx', code)}
+      />
+
+      {/* Local Voice-to-Code Whisper Floating Overlay */}
+      <VoiceToCodeOverlay
+        onInsertToEditor={handleInsertVoiceToEditor}
+        onSendToComposer={handleSendVoiceToComposer}
+        onSendToAgent={handleSendVoiceToAgent}
+        onClose={() => setIsVoiceOverlayOpen(false)}
       />
 
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}
