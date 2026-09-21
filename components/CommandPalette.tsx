@@ -27,6 +27,8 @@ export const COMMAND_METADATA = [
   { command: 'database-studio', name: 'Built-in Database Studio (SQLite & PostgreSQL)', description: 'Inspect tables, visualize ER diagrams, and generate AI SQL', category: 'Database' },
   { command: 'live-preview-toggle', name: 'Toggle Live Split-Screen Webview', description: 'Embedded preview dockable next to Monaco with device emulation & DOM inspector', category: 'View' },
   { command: 'wasi-show-info', name: 'Show WASI System Info', description: 'Display micro-kernel diagnostics', category: 'WASI' },
+  { command: 'rag-composer', name: 'Multi-File RAG Composer', description: 'Semantic workspace search → cross-file analysis → chunk-level diff review (Ctrl+Shift+C)', category: 'AI' },
+  { command: 'docker-sandbox', name: 'Docker Sandbox Studio', description: 'Spawn isolated containers, run builds, copy workspace files into Docker (Ctrl+Shift+K)', category: 'DevOps' },
 ];
 
 export const DEFAULT_KEYBINDINGS: Record<string, string> = {
@@ -43,6 +45,8 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'voice-to-code': 'F8',
   'database-studio': 'Ctrl+Shift+D',
   'live-preview-toggle': 'Ctrl+Shift+V',
+  'rag-composer': 'Ctrl+Shift+C',
+  'docker-sandbox': 'Ctrl+Shift+K',
   'theme-picker': 'Ctrl+K Ctrl+T',
   'layout-toggle-left': 'Ctrl+B',
   'layout-toggle-right': 'Ctrl+Alt+B',

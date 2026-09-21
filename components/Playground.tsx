@@ -59,6 +59,8 @@ import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
 import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
+import MultiFileComposerModal from './MultiFileComposerModal';
+import DockerSandboxPanel from './DockerSandboxPanel';
 import { localWhisperEngine } from '@/lib/ai/localWhisperEngine';
 import { webGpuEngine } from '@/lib/ai/webGpuEngine';
 import { autonomousAgentEngine } from '@/lib/ai/autonomousAgentEngine';
@@ -343,6 +345,10 @@ export default function Playground({
   // Built-in Database Studio & Live Split-Screen Webview State
   const [isDatabaseStudioOpen, setIsDatabaseStudioOpen] = useState(false);
   const [isLivePreviewOpen, setIsLivePreviewOpen] = useState(false);
+
+  // Multi-File RAG Composer & Docker Sandbox State
+  const [isRagComposerOpen, setIsRagComposerOpen] = useState(false);
+  const [isDockerSandboxOpen, setIsDockerSandboxOpen] = useState(false);
 
   // Local AI Ollama Daemon State
   const [ollamaStatus, setOllamaStatus] = useState<'active' | 'stopped' | 'starting'>('active');
@@ -1519,6 +1525,12 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         break;
       case 'live-preview-toggle':
         setIsLivePreviewOpen(prev => !prev);
+        break;
+      case 'rag-composer':
+        setIsRagComposerOpen(true);
+        break;
+      case 'docker-sandbox':
+        setIsDockerSandboxOpen(true);
         break;
       case 'vision-open':
         setSelectedFile('__VISION_STUDIO__');
@@ -6031,6 +6043,23 @@ export default function ExtractedVisionUI() {
         isOpen={isDatabaseStudioOpen}
         onClose={() => setIsDatabaseStudioOpen(false)}
         onInsertSqlToEditor={(sql) => handleUpdateFile(selectedFile || 'queries.sql', sql)}
+      />
+
+      {/* Multi-File RAG Composer — semantic cross-file search + diff review */}
+      <MultiFileComposerModal
+        isOpen={isRagComposerOpen}
+        onClose={() => setIsRagComposerOpen(false)}
+        workspaceFiles={Object.entries(parsedFiles).map(([path, content]) => ({ path, content }))}
+        onApplyFiles={(files) => {
+          files.forEach(f => handleUpdateFile(f.filePath, f.content));
+        }}
+      />
+
+      {/* Docker Sandbox Studio — isolated container builds */}
+      <DockerSandboxPanel
+        isOpen={isDockerSandboxOpen}
+        onClose={() => setIsDockerSandboxOpen(false)}
+        workspaceFiles={Object.entries(parsedFiles).map(([path, content]) => ({ path, content }))}
       />
 
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}
