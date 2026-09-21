@@ -1,0 +1,6 @@
+{
+  "name": "Standalone Subject Creator AI",
+  "description": "Universal Subject Virtualization & Workspace Hub for offline-first AI development",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

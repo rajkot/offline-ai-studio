@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg-grad-large" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <linearGradient id="glow-grad-large" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#a78bfa" />
+    </linearGradient>
+    <filter id="glow-large" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="url(#bg-grad-large)" stroke="#27272a" stroke-width="4" />
+  
+  <!-- Tech-ring accents -->
+  <rect x="40" y="40" width="432" height="432" rx="72" fill="none" stroke="#312e81" stroke-width="3" opacity="0.6" />
+  <rect x="64" y="64" width="384" height="384" rx="56" fill="none" stroke="#4f46e5" stroke-width="1.5" opacity="0.25" />
+  
+  <!-- Code cursor & AI Sparkle -->
+  <g filter="url(#glow-large)" transform="translate(48, 48)">
+    <!-- Code symbol </> shape -->
+    <path d="M 130 160 L 80 210 L 130 260" fill="none" stroke="url(#glow-grad-large)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 290 160 L 340 210 L 290 260" fill="none" stroke="url(#glow-grad-large)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 240 130 L 180 290" fill="none" stroke="url(#glow-grad-large)" stroke-width="18" stroke-linecap="round" />
+  </g>
+  
+  <!-- Active Glowing Green offline status beacon -->
+  <circle cx="410" cy="100" r="18" fill="#10b981" />
+  <circle cx="410" cy="100" r="28" fill="none" stroke="#10b981" stroke-width="4" opacity="0.6">
+    <animate attributeName="r" values="18;36;18" dur="2.5s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.8;0;0.8" dur="2.5s" repeatCount="indefinite" />
+  </circle>
+</svg>

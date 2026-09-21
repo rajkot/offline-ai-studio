@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --color-zinc-950: #09090b;
+  --color-zinc-900: #18181b;
+  --color-zinc-800: #27272a;
+  --color-zinc-700: #3f3f46;
+  
+  --color-obsidian-950: #050507;
+  --color-obsidian-900: #0c0c0e;
+  --color-obsidian-800: #1a1a1e;
+  --color-obsidian-700: #2a2a2e;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+  }
+  ::selection {
+    background-color: #9333ea;
+    color: #ffffff;
+  }
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Force chat message and code blocks to allow mouse drag selection and copying */
+  .chat-selectable,
+  .chat-selectable * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+  }
+}

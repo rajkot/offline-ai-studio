@@ -1,0 +1,33 @@
+node_modules/
+.next/
+dist/
+build/
+out/
+.vscode-test/
+*.vsix
+.DS_Store
+*.log
+.env
+.env*.local
+*.local
+
+# Executables & Large Binaries (exceeding GitHub 100MB limit)
+*.exe
+*.dll
+*.dat
+*.zip
+*.tar
+*.gz
+*.7z
+*.iso
+
+# Build Artifacts & Desktop Release Bundles
+desktop-app/dist/
+desktop-app/*.exe
+public/release/
+public/*.exe
+tsconfig.tsbuildinfo
+
+# GitHub Actions Workflows (requires workflow OAuth scope)
+.github/
+app/applet/.github/

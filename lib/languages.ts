@@ -1,0 +1,136 @@
+export interface LanguageOption {
+  code: string;
+  name: string;
+  nativeName: string;
+  flag: string;
+  direction?: 'ltr' | 'rtl';
+}
+
+export const SUPPORTED_LANGUAGES: LanguageOption[] = [
+  { code: 'en', name: 'English', nativeName: 'English', flag: '🇬🇧', direction: 'ltr' },
+  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', flag: '🇪🇸', direction: 'ltr' },
+  { code: 'fr', name: 'French', nativeName: 'Français', flag: '🇫🇷', direction: 'ltr' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', flag: '🇩🇪', direction: 'ltr' },
+  { code: 'zh-CN', name: 'Chinese (Simplified)', nativeName: '中文 (简体)', flag: '🇨🇳', direction: 'ltr' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)', nativeName: '中文 (繁體)', flag: '🇹🇼', direction: 'ltr' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語', flag: '🇯🇵', direction: 'ltr' },
+  { code: 'ko', name: 'Korean', nativeName: '한국어', flag: '🇰🇷', direction: 'ltr' },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية', flag: '🇸🇦', direction: 'rtl' },
+  { code: 'ru', name: 'Russian', nativeName: 'Русский', flag: '🇷🇺', direction: 'ltr' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português', flag: '🇧🇷', direction: 'ltr' },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano', flag: '🇮🇹', direction: 'ltr' },
+  { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', flag: '🇳🇱', direction: 'ltr' },
+  { code: 'pl', name: 'Polish', nativeName: 'Polski', flag: '🇵🇱', direction: 'ltr' },
+  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', flag: '🇹🇷', direction: 'ltr' },
+  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', flag: '🇻🇳', direction: 'ltr' },
+  { code: 'th', name: 'Thai', nativeName: 'ไทย', flag: '🇹🇭', direction: 'ltr' },
+  { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia', flag: '🇮🇩', direction: 'ltr' },
+  { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu', flag: '🇲🇾', direction: 'ltr' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', flag: '🇧🇳', direction: 'ltr' },
+  { code: 'mr', name: 'Marathi', nativeName: 'मराठी', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو', flag: '🇵🇰', direction: 'rtl' },
+  { code: 'fa', name: 'Persian (Farsi)', nativeName: 'فارسی', flag: '🇮🇷', direction: 'rtl' },
+  { code: 'he', name: 'Hebrew', nativeName: 'עברית', flag: '🇮🇱', direction: 'rtl' },
+  { code: 'uk', name: 'Ukrainian', nativeName: 'Українська', flag: '🇺🇦', direction: 'ltr' },
+  { code: 'cs', name: 'Czech', nativeName: 'Čeština', flag: '🇨🇿', direction: 'ltr' },
+  { code: 'el', name: 'Greek', nativeName: 'Ελληνικά', flag: '🇬🇷', direction: 'ltr' },
+  { code: 'sv', name: 'Swedish', nativeName: 'Svenska', flag: '🇸🇪', direction: 'ltr' },
+  { code: 'da', name: 'Danish', nativeName: 'Dansk', flag: '🇩🇰', direction: 'ltr' },
+  { code: 'fi', name: 'Finnish', nativeName: 'Suomi', flag: '🇫🇮', direction: 'ltr' },
+  { code: 'no', name: 'Norwegian', nativeName: 'Norsk', flag: '🇳🇴', direction: 'ltr' },
+  { code: 'hu', name: 'Hungarian', nativeName: 'Magyar', flag: '🇭🇺', direction: 'ltr' },
+  { code: 'ro', name: 'Romanian', nativeName: 'Română', flag: '🇷🇴', direction: 'ltr' },
+  { code: 'bg', name: 'Bulgarian', nativeName: 'Български', flag: '🇧🇬', direction: 'ltr' },
+  { code: 'sk', name: 'Slovak', nativeName: 'Slovenčina', flag: '🇸🇰', direction: 'ltr' },
+  { code: 'hr', name: 'Croatian', nativeName: 'Hrvatski', flag: '🇭🇷', direction: 'ltr' },
+  { code: 'sr', name: 'Serbian', nativeName: 'Српски', flag: '🇷🇸', direction: 'ltr' },
+  { code: 'sl', name: 'Slovenian', nativeName: 'Slovenščina', flag: '🇸🇮', direction: 'ltr' },
+  { code: 'lt', name: 'Lithuanian', nativeName: 'Lietuvių', flag: '🇱🇹', direction: 'ltr' },
+  { code: 'lv', name: 'Latvian', nativeName: 'Latviešu', flag: '🇱🇻', direction: 'ltr' },
+  { code: 'et', name: 'Estonian', nativeName: 'Eesti', flag: '🇪🇪', direction: 'ltr' },
+  { code: 'fil', name: 'Filipino (Tagalog)', nativeName: 'Filipino', flag: '🇵🇭', direction: 'ltr' },
+  { code: 'af', name: 'Afrikaans', nativeName: 'Afrikaans', flag: '🇿🇦', direction: 'ltr' },
+  { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili', flag: '🇰🇪', direction: 'ltr' },
+  { code: 'am', name: 'Amharic', nativeName: 'አማርኛ', flag: '🇪🇹', direction: 'ltr' },
+  { code: 'ne', name: 'Nepali', nativeName: 'नेपाली', flag: '🇳🇵', direction: 'ltr' },
+  { code: 'si', name: 'Sinhala', nativeName: 'සිංහල', flag: '🇱🇰', direction: 'ltr' },
+  { code: 'my', name: 'Burmese (Myanmar)', nativeName: 'မြန်မာ', flag: '🇲🇲', direction: 'ltr' },
+  { code: 'km', name: 'Khmer', nativeName: 'ខ្មែរ', flag: '🇰🇭', direction: 'ltr' },
+  { code: 'lo', name: 'Lao', nativeName: 'ລາວ', flag: '🇱🇦', direction: 'ltr' },
+  { code: 'ka', name: 'Georgian', nativeName: 'ქართული', flag: '🇬🇪', direction: 'ltr' },
+  { code: 'hy', name: 'Armenian', nativeName: 'Հայերեն', flag: '🇦🇲', direction: 'ltr' },
+  { code: 'az', name: 'Azerbaijani', nativeName: 'Azərbaycan', flag: '🇦🇿', direction: 'ltr' },
+  { code: 'kk', name: 'Kazakh', nativeName: 'Қазақ', flag: '🇰🇿', direction: 'ltr' },
+  { code: 'uz', name: 'Uzbek', nativeName: 'Oʻzbek', flag: '🇺🇿', direction: 'ltr' },
+  { code: 'mn', name: 'Mongolian', nativeName: 'Монгол', flag: '🇲🇳', direction: 'ltr' },
+  { code: 'sq', name: 'Albanian', nativeName: 'Shqip', flag: '🇦🇱', direction: 'ltr' },
+  { code: 'bs', name: 'Bosnian', nativeName: 'Bosanski', flag: '🇧🇦', direction: 'ltr' },
+  { code: 'mk', name: 'Macedonian', nativeName: 'Македонски', flag: '🇲🇰', direction: 'ltr' },
+  { code: 'mt', name: 'Maltese', nativeName: 'Malti', flag: '🇲🇹', direction: 'ltr' },
+  { code: 'is', name: 'Icelandic', nativeName: 'Íslenska', flag: '🇮🇸', direction: 'ltr' },
+  { code: 'ga', name: 'Irish', nativeName: 'Gaeilge', flag: '🇮🇪', direction: 'ltr' },
+  { code: 'cy', name: 'Welsh', nativeName: 'Cymraeg', flag: '🏴󠁧󠁢󠁷󠁬󠁳󠁿', direction: 'ltr' },
+  { code: 'eu', name: 'Basque', nativeName: 'Euskara', flag: '🇪🇸', direction: 'ltr' },
+  { code: 'ca', name: 'Catalan', nativeName: 'Català', flag: '🇪🇸', direction: 'ltr' },
+  { code: 'gl', name: 'Galician', nativeName: 'Galego', flag: '🇪🇸', direction: 'ltr' },
+  { code: 'la', name: 'Latin', nativeName: 'Latina', flag: '🏛️', direction: 'ltr' },
+  { code: 'eo', name: 'Esperanto', nativeName: 'Esperanto', flag: '🌍', direction: 'ltr' },
+  { code: 'yi', name: 'Yiddish', nativeName: 'ייִדיש', flag: '🕎', direction: 'rtl' },
+  { code: 'yo', name: 'Yoruba', nativeName: 'Èdè Yorùbá', flag: '🇳🇬', direction: 'ltr' },
+  { code: 'ig', name: 'Igbo', nativeName: 'Asụsụ Igbo', flag: '🇳🇬', direction: 'ltr' },
+  { code: 'ha', name: 'Hausa', nativeName: 'Hausa', flag: '🇳🇬', direction: 'ltr' },
+  { code: 'zu', name: 'Zulu', nativeName: 'isiZulu', flag: '🇿🇦', direction: 'ltr' },
+  { code: 'xh', name: 'Xhosa', nativeName: 'isiXhosa', flag: '🇿🇦', direction: 'ltr' },
+  { code: 'st', name: 'Sesotho', nativeName: 'Sesotho', flag: '🇱🇸', direction: 'ltr' },
+  { code: 'sn', name: 'Shona', nativeName: 'chiShona', flag: '🇿🇼', direction: 'ltr' },
+  { code: 'so', name: 'Somali', nativeName: 'Soomaaliga', flag: '🇸🇴', direction: 'ltr' },
+  { code: 'mg', name: 'Malagasy', nativeName: 'Malagasy', flag: '🇲🇬', direction: 'ltr' },
+  { code: 'ny', name: 'Chichewa', nativeName: 'ChiCheŵa', flag: '🇲🇼', direction: 'ltr' },
+  { code: 'rw', name: 'Kinyarwanda', nativeName: 'Ikinyarwanda', flag: '🇷🇼', direction: 'ltr' },
+  { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া', flag: '🇮🇳', direction: 'ltr' },
+  { code: 'sd', name: 'Sindhi', nativeName: 'سنڌي', flag: '🇵🇰', direction: 'rtl' },
+  { code: 'ps', name: 'Pashto', nativeName: 'پښتو', flag: '🇦🇫', direction: 'rtl' },
+  { code: 'ku', name: 'Kurdish (Kurmanji)', nativeName: 'Kurdî', flag: '☀️', direction: 'ltr' },
+  { code: 'ckb', name: 'Kurdish (Sorani)', nativeName: 'کوردی', flag: '☀️', direction: 'rtl' },
+  { code: 'tg', name: 'Tajik', nativeName: 'Тоҷикӣ', flag: '🇹🇯', direction: 'ltr' },
+  { code: 'ky', name: 'Kyrgyz', nativeName: 'Кыргызча', flag: '🇰🇬', direction: 'ltr' },
+  { code: 'tk', name: 'Turkmen', nativeName: 'Türkmençe', flag: '🇹🇲', direction: 'ltr' },
+  { code: 'tt', name: 'Tatar', nativeName: 'Татарча', flag: '🇷🇺', direction: 'ltr' },
+  { code: 'ug', name: 'Uyghur', nativeName: 'ئۇيغۇرچە', flag: '🇨🇳', direction: 'rtl' },
+  { code: 'ceb', name: 'Cebuano', nativeName: 'Binisaya', flag: '🇵🇭', direction: 'ltr' },
+  { code: 'jw', name: 'Javanese', nativeName: 'Basa Jawa', flag: '🇮🇩', direction: 'ltr' },
+  { code: 'su', name: 'Sundanese', nativeName: 'Basa Sunda', flag: '🇮🇩', direction: 'ltr' },
+  { code: 'haw', name: 'Hawaiian', nativeName: 'ʻŌlelo Hawaiʻi', flag: '🌺', direction: 'ltr' },
+  { code: 'sm', name: 'Samoan', nativeName: 'Gagana Samoa', flag: '🇼🇸', direction: 'ltr' },
+  { code: 'mi', name: 'Maori', nativeName: 'Te Reo Māori', flag: '🇳🇿', direction: 'ltr' },
+  { code: 'hmn', name: 'Hmong', nativeName: 'Hmoob', flag: '⛰️', direction: 'ltr' },
+  { code: 'co', name: 'Corsican', nativeName: 'Corsu', flag: '🇫🇷', direction: 'ltr' },
+  { code: 'fy', name: 'Frisian', nativeName: 'Frysk', flag: '🇳🇱', direction: 'ltr' },
+  { code: 'gd', name: 'Scots Gaelic', nativeName: 'Gàidhlig', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', direction: 'ltr' },
+  { code: 'lb', name: 'Luxembourgish', nativeName: 'Lëtzebuergesch', flag: '🇱🇺', direction: 'ltr' },
+  { code: 'ht', name: 'Haitian Creole', nativeName: 'Kreyòl Ayisyen', flag: '🇭🇹', direction: 'ltr' },
+];
+
+export const DEFAULT_LANGUAGE = 'en';
+export const LANGUAGE_STORAGE_KEY = 'offlineAi.preferredLanguage';
+
+export function getLanguageByCode(code: string): LanguageOption {
+  const found = SUPPORTED_LANGUAGES.find(l => l.code.toLowerCase() === code.toLowerCase());
+  return found || SUPPORTED_LANGUAGES[0];
+}
+
+export function getLanguagePromptInstruction(code: string): string {
+  const lang = getLanguageByCode(code);
+  if (lang.code === 'en') {
+    return `Respond in English. Keep all code blocks formatted cleanly.`;
+  }
+  return `[CRITICAL LOCALIZATION DIRECTIVE: You MUST formulate your explanations, markdown headings, summary, and code comments strictly in ${lang.name} (${lang.nativeName} - ISO: ${lang.code}). Preserve all source code syntax, keywords, variable names, and code structures intact in standard markdown code blocks (\`\`\`...\`\`\`) while providing all conversational context, commentary, and descriptions in ${lang.name}.]`;
+}

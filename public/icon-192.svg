@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#09090b" />
+    </linearGradient>
+    <linearGradient id="glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#a78bfa" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- Background -->
+  <rect width="192" height="192" rx="40" fill="url(#bg-grad)" stroke="#27272a" stroke-width="2" />
+  
+  <!-- Tech-ring accents -->
+  <rect x="16" y="16" width="160" height="160" rx="28" fill="none" stroke="#312e81" stroke-width="1.5" opacity="0.5" />
+  
+  <!-- Code cursor & AI Sparkle -->
+  <g filter="url(#glow)" transform="translate(16, 16)">
+    <!-- Code symbol </> shape -->
+    <path d="M 50 60 L 30 80 L 50 100" fill="none" stroke="url(#glow-grad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 110 60 L 130 80 L 110 100" fill="none" stroke="url(#glow-grad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 90 50 L 70 110" fill="none" stroke="url(#glow-grad)" stroke-width="8" stroke-linecap="round" />
+  </g>
+  
+  <!-- Active Glowing Green offline status beacon -->
+  <circle cx="152" cy="40" r="7" fill="#10b981" />
+  <circle cx="152" cy="40" r="11" fill="none" stroke="#10b981" stroke-width="2" opacity="0.6">
+    <animate attributeName="r" values="7;14;7" dur="2.5s" repeatCount="indefinite" />
+    <animate attributeName="opacity" values="0.8;0;0.8" dur="2.5s" repeatCount="indefinite" />
+  </circle>
+</svg>

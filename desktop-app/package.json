@@ -1,0 +1,36 @@
+{
+  "name": "offline-ai-studio",
+  "version": "1.0.0",
+  "description": "Offline AI Studio Standalone Desktop Client",
+  "main": "main.js",
+  "scripts": {
+    "dev": "cd .. && next dev -p 3000",
+    "start": "cd .. && next start -p 3000",
+    "build:exe": "electron-builder --win"
+  },
+  "author": "Offline AI Studio Team",
+  "license": "MIT",
+  "build": {
+    "appId": "com.offline.aistudio",
+    "productName": "OfflineAIStudio",
+    "electronVersion": "34.0.0",
+    "compression": "normal",
+    "directories": {
+      "output": "../public/release"
+    },
+    "win": {
+      "target": "nsis",
+      "signExecutable": false,
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Offline AI Studio",
+      "packElevateHelper": false,
+      "differentialPackage": false
+    }
+  }
+}
