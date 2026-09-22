@@ -161,9 +161,10 @@ class WebGpuEngine {
     }
 
     try {
-      const adapter = await (navigator as any).gpu.requestAdapter({
-        powerPreference: 'high-performance'
-      });
+      const isWindows = typeof navigator !== 'undefined' && /windows|win32/i.test(navigator.userAgent || '');
+      const adapter = await (navigator as any).gpu.requestAdapter(
+        isWindows ? undefined : { powerPreference: 'high-performance' }
+      );
 
       if (!adapter) {
         throw new Error('No appropriate GPU adapter found by navigator.gpu.');

@@ -722,7 +722,7 @@ export default function Playground({
         ['typescript', 'javascript', 'json', 'css', 'html', 'markdown', 'python', 'rust', 'go', 'cpp', 'c', 'sql', 'yaml'],
         {
           provideInlineCompletions: async (model: any, position: any) => {
-            if (!ghostTextEnabledRef.current) return { items: [] };
+            if (!ghostTextEnabledRef.current) return { items: [], dispose: () => {} };
 
             const prefix = model.getValueInRange({
               startLineNumber: 1,
@@ -747,7 +747,7 @@ export default function Playground({
               parsedFilesRef.current
             );
 
-            if (!result || !result.insertText) return { items: [] };
+            if (!result || !result.insertText) return { items: [], dispose: () => {} };
 
             return {
               items: [
@@ -760,7 +760,8 @@ export default function Playground({
                     endColumn: position.column
                   }
                 }
-              ]
+              ],
+              dispose: () => {}
             };
           },
           freeInlineCompletions: () => {}
@@ -872,7 +873,7 @@ export default function Playground({
         ['typescript', 'javascript'],
         {
           provideInlayHints: (model: any) => {
-            if (!inlayHintsRef.current) return { hints: [] };
+            if (!inlayHintsRef.current) return { hints: [], dispose: () => {} };
 
             const hints = lspWorkspace.getInlayHints(selectedFileRef.current || 'components/Playground.tsx');
             return {
@@ -883,7 +884,8 @@ export default function Playground({
                 tooltip: h.tooltip,
                 paddingLeft: true,
                 paddingRight: true
-              }))
+              })),
+              dispose: () => {}
             };
           }
         }

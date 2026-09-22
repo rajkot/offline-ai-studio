@@ -468,7 +468,7 @@ export class LspWorkerHub {
             );
           }
 
-          return { suggestions };
+          return { suggestions, dispose: () => {} };
         },
       });
       this.activeDisposables.push(compDisp);
