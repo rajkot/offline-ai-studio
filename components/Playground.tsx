@@ -64,6 +64,10 @@ import InlineAiDiffTransformer from '@/client/components/InlineAiDiffTransformer
 import GitCommitModal from '@/client/components/GitCommitModal';
 import BreadcrumbsBar from '@/client/components/BreadcrumbsBar';
 import ReferencesPeekModal from '@/client/components/ReferencesPeekModal';
+import GlobalSearchSidebar from '@/client/components/GlobalSearchSidebar';
+import InteractiveDebugSidebar from '@/client/components/InteractiveDebugSidebar';
+import FloatingDebugToolbar from '@/client/components/FloatingDebugToolbar';
+import BreakpointEditModal from '@/client/components/BreakpointEditModal';
 import MultiFileComposerModal from './MultiFileComposerModal';
 import DockerSandboxPanel from './DockerSandboxPanel';
 import LanCollabPanel from './LanCollabPanel';
@@ -89,7 +93,7 @@ import { mcpHub } from '@/lib/mcp/McpClient';
 import { ghostTextEngine, AutocompleteTelemetry } from '@/lib/ghostTextEngine';
 import { SearchEngine, FileSearchResult } from '@/lib/searchEngine';
 import { wasiRuntime } from '@/lib/wasiRuntime';
-import { dapDebugger } from '@/lib/dapDebuggerEngine';
+import { dapDebugger, DapBreakpoint } from '@/lib/dapDebuggerEngine';
 import { opfsEngine } from '@/lib/opfsEngine';
 import { gitEngine } from '@/lib/gitEngine';
 import { localFileSystemEngine } from '@/lib/localFileSystemEngine';
@@ -478,6 +482,9 @@ export default function Playground({
   // Cross-File LSP Intelligence & Breadcrumbs Navigation States
   const [activeReferencesPeek, setActiveReferencesPeek] = useState<ReferencesPeekData | null>(null);
   const [activeCursorLine, setActiveCursorLine] = useState<number>(1);
+
+  // Interactive DAP Breakpoint & Logpoint Configuration State
+  const [activeBreakpointToEdit, setActiveBreakpointToEdit] = useState<DapBreakpoint | null>(null);
 
   // Real-Time Inline Ghost Text & Native LSP Engine States
   const [inlayHintsEnabled, setInlayHintsEnabled] = useState<boolean>(true);
@@ -878,7 +885,7 @@ export default function Playground({
       );
     }
 
-    // 6. Interactive DAP Gutter Breakpoints (Click gutter to toggle breakpoint)
+    // 6. Interactive DAP Gutter Breakpoints (Click gutter to toggle breakpoint, Right-click to edit)
     editor.onMouseDown((e: any) => {
       if (
         e.target?.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN ||
@@ -886,7 +893,82 @@ export default function Playground({
       ) {
         const line = e.target.position?.lineNumber;
         if (line && selectedFileRef.current && !selectedFileRef.current.startsWith('__')) {
-          dapDebugger.toggleBreakpoint(selectedFileRef.current, line);
+          const file = selectedFileRef.current;
+          if (e.event?.rightButton) {
+            e.event.preventDefault?.();
+            e.event.stopPropagation?.();
+            const existing = dapDebugger.getBreakpoints(file).find(b => b.line === line);
+            if (existing) {
+              setActiveBreakpointToEdit(existing);
+            } else {
+              const bp = dapDebugger.addBreakpoint(file, line);
+              setActiveBreakpointToEdit(bp);
+            }
+          } else {
+            dapDebugger.toggleBreakpoint(file, line);
+          }
+        }
+      }
+    });
+
+    editor.onContextMenu((e: any) => {
+      if (
+        e.target?.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN ||
+        e.target?.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS
+      ) {
+        const line = e.target.position?.lineNumber;
+        if (line && selectedFileRef.current && !selectedFileRef.current.startsWith('__')) {
+          e.event?.preventDefault?.();
+          const file = selectedFileRef.current;
+          const existing = dapDebugger.getBreakpoints(file).find(b => b.line === line);
+          if (existing) {
+            setActiveBreakpointToEdit(existing);
+          } else {
+            const bp = dapDebugger.addBreakpoint(file, line);
+            setActiveBreakpointToEdit(bp);
+          }
+        }
+      }
+    });
+
+    // Monaco Context Menu Actions for Conditional Breakpoints & Logpoints
+    editor.addAction({
+      id: 'dap.addConditionalBreakpoint',
+      label: 'Add / Edit Conditional Breakpoint...',
+      contextMenuGroupId: '9_dap',
+      contextMenuOrder: 1,
+      run: (ed: any) => {
+        const pos = ed.getPosition();
+        if (!pos || !selectedFileRef.current || selectedFileRef.current.startsWith('__')) return;
+        const file = selectedFileRef.current;
+        const line = pos.lineNumber;
+        const existing = dapDebugger.getBreakpoints(file).find(b => b.line === line);
+        if (existing) {
+          setActiveBreakpointToEdit(existing);
+        } else {
+          const bp = dapDebugger.addBreakpoint(file, line);
+          setActiveBreakpointToEdit(bp);
+        }
+      }
+    });
+
+    editor.addAction({
+      id: 'dap.addLogpoint',
+      label: 'Add / Edit Logpoint...',
+      contextMenuGroupId: '9_dap',
+      contextMenuOrder: 2,
+      run: (ed: any) => {
+        const pos = ed.getPosition();
+        if (!pos || !selectedFileRef.current || selectedFileRef.current.startsWith('__')) return;
+        const file = selectedFileRef.current;
+        const line = pos.lineNumber;
+        const existing = dapDebugger.getBreakpoints(file).find(b => b.line === line);
+        if (existing) {
+          setActiveBreakpointToEdit(existing);
+        } else {
+          const bp = dapDebugger.addBreakpoint(file, line);
+          dapDebugger.updateBreakpoint(bp.id, { isLogpoint: true, logMessage: 'Value is: {x}' });
+          setActiveBreakpointToEdit({ ...bp, isLogpoint: true, logMessage: 'Value is: {x}' });
         }
       }
     });
@@ -993,6 +1075,28 @@ export default function Playground({
     });
     crossFileLspManager.setOnReferencesFound((data) => {
       setActiveReferencesPeek(data);
+    });
+
+    // 11. Debugger & Search Hotkeys inside Monaco Editor
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, () => {
+      setActiveActivityTab('search');
+      setIsLeftPanelOpen(true);
+    });
+    editor.addCommand(monaco.KeyCode.F5, () => {
+      const activeFile = selectedFileRef.current || 'components/Playground.tsx';
+      dapDebugger.startDebugging(activeFile, parsedFilesRef.current[activeFile] || '');
+    });
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F5, () => {
+      dapDebugger.stopDebugging();
+    });
+    editor.addCommand(monaco.KeyCode.F10, () => {
+      dapDebugger.stepOver();
+    });
+    editor.addCommand(monaco.KeyCode.F11, () => {
+      dapDebugger.stepInto();
+    });
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F11, () => {
+      dapDebugger.stepOut();
     });
 
     const updateSelectionCoords = () => {
@@ -1881,6 +1985,42 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       if (e.key === 'F1') {
         e.preventDefault();
         setIsCommandPaletteOpen(prev => !prev);
+        return;
+      }
+
+      // Ctrl+Shift+F: Dedicated Find & Replace Across Files Sidebar
+      if ((e.key === 'F' || e.key === 'f') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        setActiveActivityTab('search');
+        setIsLeftPanelOpen(true);
+        return;
+      }
+
+      // Debugger shortcuts (F5, Shift+F5, F10, F11, Shift+F11)
+      if (e.key === 'F5' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        const activeFile = selectedFileRef.current || 'components/Playground.tsx';
+        dapDebugger.startDebugging(activeFile, parsedFilesRef.current[activeFile] || '');
+        return;
+      }
+      if (e.key === 'F5' && e.shiftKey) {
+        e.preventDefault();
+        dapDebugger.stopDebugging();
+        return;
+      }
+      if (e.key === 'F10' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        dapDebugger.stepOver();
+        return;
+      }
+      if (e.key === 'F11' && !e.shiftKey) {
+        e.preventDefault();
+        dapDebugger.stepInto();
+        return;
+      }
+      if (e.key === 'F11' && e.shiftKey) {
+        e.preventDefault();
+        dapDebugger.stepOut();
         return;
       }
 
@@ -3803,142 +3943,15 @@ export default function ExtractedVisionUI() {
                 </>
               )}
 
-              {/* Search & RAG Tab View */}
+              {/* Dedicated Find & Replace Across Files Sidebar (Ctrl+Shift+F) */}
               {activeActivityTab === 'search' && (
-                <div className="space-y-3 flex flex-col h-full overflow-hidden pr-1">
-                  <div className="space-y-2 shrink-0">
-                    <div className="flex items-center justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">
-                      <span>Search & Replace</span>
-                      <div className="flex items-center gap-1.5">
-                        <button 
-                          onClick={() => setSearchOptions(prev => ({ ...prev, isCaseSensitive: !prev.isCaseSensitive }))}
-                          title="Match Case"
-                          className={`p-0.5 rounded border ${searchOptions.isCaseSensitive ? 'bg-indigo-600 border-indigo-400 text-white' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'} transition-colors cursor-pointer`}
-                        >
-                          <CaseUpper size={10} />
-                        </button>
-                        <button 
-                          onClick={() => setSearchOptions(prev => ({ ...prev, isWholeWord: !prev.isWholeWord }))}
-                          title="Match Whole Word"
-                          className={`p-0.5 rounded border ${searchOptions.isWholeWord ? 'bg-indigo-600 border-indigo-400 text-white' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'} transition-colors cursor-pointer`}
-                        >
-                          <WholeWord size={10} />
-                        </button>
-                        <button 
-                          onClick={() => setSearchOptions(prev => ({ ...prev, isRegex: !prev.isRegex }))}
-                          title="Use Regular Expression"
-                          className={`p-0.5 rounded border ${searchOptions.isRegex ? 'bg-indigo-600 border-indigo-400 text-white' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'} transition-colors cursor-pointer`}
-                        >
-                          <Regex size={10} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="relative group">
-                      <input
-                        type="text"
-                        placeholder="Search workspace..."
-                        value={sidebarSearchQuery}
-                        onChange={(e) => setSidebarSearchQuery(e.target.value)}
-                        className="w-full h-8 bg-[#121214] border border-zinc-800 focus:border-indigo-600 focus:outline-none rounded px-2 pr-8 text-xs text-zinc-200 placeholder-zinc-500 font-sans"
-                      />
-                      <button 
-                        onClick={() => setSearchOptions(prev => ({ ...prev, isReplaceOpen: !prev.isReplaceOpen }))}
-                        className={`absolute right-2 top-1.5 p-0.5 rounded hover:bg-zinc-800 transition-colors cursor-pointer ${searchOptions.isReplaceOpen ? 'text-indigo-400' : 'text-zinc-600'}`}
-                        title="Toggle Replace"
-                      >
-                        <ChevronDown size={14} className={searchOptions.isReplaceOpen ? 'rotate-180 transition-transform' : 'transition-transform'} />
-                      </button>
-                    </div>
-
-                    {searchOptions.isReplaceOpen && (
-                      <div className="flex gap-1 items-center animate-in fade-in slide-in-from-top-1">
-                        <input
-                          type="text"
-                          placeholder="Replace with..."
-                          value={sidebarReplaceQuery}
-                          onChange={(e) => setSidebarReplaceQuery(e.target.value)}
-                          className="flex-1 h-8 bg-[#121214] border border-zinc-800 focus:border-emerald-600 focus:outline-none rounded px-2 text-xs text-zinc-200 placeholder-zinc-500 font-sans"
-                        />
-                        <button 
-                          onClick={() => {
-                            const updates = SearchEngine.replace(sidebarSearchQuery, sidebarReplaceQuery, parsedFiles, {
-                              isRegex: searchOptions.isRegex,
-                              isCaseSensitive: searchOptions.isCaseSensitive,
-                              isWholeWord: searchOptions.isWholeWord
-                            });
-                            handleBatchApplyFiles(updates);
-                            setSidebarSearchQuery('');
-                            setSidebarReplaceQuery('');
-                          }}
-                          disabled={!sidebarSearchQuery}
-                          className="h-8 px-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white rounded text-[10px] font-bold shadow transition-colors cursor-pointer"
-                          title="Replace All"
-                        >
-                          ALL
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Results List */}
-                  <div className="flex-1 overflow-y-auto min-h-0 space-y-2 scrollbar-none pb-4">
-                    {literalSearchResults.length > 0 ? (
-                      literalSearchResults.map(res => (
-                        <div key={res.filePath} className="space-y-0.5">
-                          <button 
-                            onClick={() => handleSelectFile(res.filePath)}
-                            className="w-full text-left px-1 py-0.5 hover:bg-zinc-800/40 rounded flex items-center gap-1.5 text-[10.5px] font-bold text-zinc-300 transition-colors"
-                          >
-                            <ChevronRight size={11} className="text-zinc-500" />
-                            <span className="truncate">{res.filePath}</span>
-                            <span className="text-[9px] px-1 bg-zinc-800 rounded text-zinc-500 ml-auto">{res.matches.length}</span>
-                          </button>
-                          <div className="ml-4 space-y-0.5 border-l border-zinc-800 pl-1">
-                            {res.matches.map((m, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => handleJumpToLocation(res.filePath, m.line)}
-                                className="w-full text-left px-2 py-1 hover:bg-indigo-950/40 rounded text-[10px] text-zinc-500 transition-colors flex flex-col group"
-                              >
-                                <span className="text-zinc-400 group-hover:text-indigo-300 truncate">{m.preview}</span>
-                                <span className="text-[8px] opacity-60">Line {m.line}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    ) : sidebarSearchQuery.length > 1 ? (
-                      <div className="text-center py-8 text-zinc-600 text-[11px]">
-                        No results found for "{sidebarSearchQuery}"
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="bg-[#121214] p-2.5 rounded-md border border-zinc-800/80 text-[11px] text-zinc-400 space-y-2">
-                          <div className="text-xs font-bold text-zinc-300 flex items-center gap-2">
-                            <Radio size={14} className="text-indigo-400" />
-                            AI Vector Index Status
-                          </div>
-                          <div className="space-y-1">
-                            <div className="flex justify-between font-mono text-[10px]">
-                              <span>Indexed Files:</span>
-                              <span className="text-emerald-400 font-bold">{ragStats.indexedFilesCount}</span>
-                            </div>
-                            <div className="flex justify-between font-mono text-[10px]">
-                              <span>Vector Chunks:</span>
-                              <span className="text-indigo-400 font-bold">{ragStats.totalChunksCount}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleSelectFile('__RAG_ANALYZER__')}
-                          className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer flex items-center justify-center gap-2"
-                        >
-                          <Search size={14} /> Open Semantic Deep Analyzer
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                <div className="flex-1 h-full overflow-hidden">
+                  <GlobalSearchSidebar
+                    workspaceFiles={parsedFiles}
+                    onSelectFile={(filePath) => handleSelectFile(filePath)}
+                    onJumpToLocation={(filePath, line, col) => handleJumpToLocation(filePath, line, col)}
+                    onBatchApplyFiles={handleBatchApplyFiles}
+                  />
                 </div>
               )}
 
@@ -3978,21 +3991,14 @@ export default function ExtractedVisionUI() {
                 </div>
               )}
 
-              {/* Run & Debug Tab View */}
+              {/* Run & Debug Tab View (Interactive DAP Engine) */}
               {activeActivityTab === 'debug' && (
-                <div className="space-y-3">
-                  <div className="bg-[#121214] p-2 rounded-md border border-zinc-800 space-y-2 text-xs">
-                    <div className="font-semibold text-zinc-300">Debug Configuration</div>
-                    <div className="bg-[#18181b] p-1.5 rounded border border-zinc-800 text-[11px] font-mono text-zinc-400">
-                      Node.js / WASM Runner
-                    </div>
-                    <button
-                      onClick={() => handleSelectFile('__DAP_DEBUGGER__')}
-                      className="w-full py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      <Bug size={13} /> Launch Visual DAP Debugger
-                    </button>
-                  </div>
+                <div className="flex-1 h-full overflow-hidden">
+                  <InteractiveDebugSidebar
+                    currentFile={selectedFile || 'components/Playground.tsx'}
+                    onOpenFile={(file, line) => handleJumpToLocation(file, line)}
+                    onConfigureBreakpoint={(bp) => setActiveBreakpointToEdit(bp)}
+                  />
                 </div>
               )}
 
@@ -5038,6 +5044,12 @@ export default function ExtractedVisionUI() {
                         />
                       </div>
                     )}
+
+                    {/* Live Floating Debug Toolbar (F5, F10, F11, Shift+F11, Restart, Stop) */}
+                    <FloatingDebugToolbar
+                      currentFilePath={selectedFile || 'components/Playground.tsx'}
+                      onOpenFile={(file, line) => handleJumpToLocation(file, line)}
+                    />
                   </div>
 
                   {/* Real-time Disk Sync Toast Banner */}
@@ -6418,6 +6430,25 @@ export default function ExtractedVisionUI() {
         data={activeReferencesPeek}
         onClose={() => setActiveReferencesPeek(null)}
         onJumpToLocation={handleJumpToLocation}
+      />
+
+      {/* DAP Conditional Breakpoint & Logpoint Configuration Dialog */}
+      <BreakpointEditModal
+        isOpen={!!activeBreakpointToEdit}
+        breakpoint={activeBreakpointToEdit}
+        filePath={activeBreakpointToEdit?.file || selectedFile || ''}
+        line={activeBreakpointToEdit?.line || 1}
+        onClose={() => setActiveBreakpointToEdit(null)}
+        onSave={(opts) => {
+          if (activeBreakpointToEdit) {
+            dapDebugger.updateBreakpoint(activeBreakpointToEdit.id, opts);
+          }
+        }}
+        onRemove={() => {
+          if (activeBreakpointToEdit) {
+            dapDebugger.removeBreakpoint(activeBreakpointToEdit.id);
+          }
+        }}
       />
 
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}

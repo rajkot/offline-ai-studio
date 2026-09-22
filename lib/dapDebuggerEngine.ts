@@ -11,6 +11,7 @@ export interface DapBreakpoint {
   hitCondition?: string;
   hitCount: number;
   logMessage?: string;
+  isLogpoint?: boolean;
   verified: boolean;
 }
 
@@ -305,6 +306,10 @@ class DapDebuggerEngine {
     this.emit('session_terminated', {});
   }
 
+  public stopDebugging(): void {
+    this.stop();
+  }
+
   // Dynamic Variable Scopes & Call Stack Generator
   private generateStackFrames(): void {
     const step = this.currentStepIndex;
@@ -442,6 +447,52 @@ class DapDebuggerEngine {
     this.emit('watch_updated', this.watchExpressions);
   }
 
+  /**
+   * Evaluates expressions against active paused scope variables or JS runtime
+   */
+  public evaluateExpression(expr: string): { result: string; type: string; error?: string } {
+    const trimmed = expr.trim();
+    if (!trimmed) return { result: '', type: 'undefined' };
+
+    // 1. Check in active frame variables (Local, Closure, Global)
+    const frame = this.stackFrames[this.currentFrameIndex];
+    if (frame) {
+      for (const scope of frame.scopes) {
+        const found = scope.variables.find(v => v.name === trimmed);
+        if (found) {
+          return { result: found.value, type: found.type };
+        }
+      }
+    }
+
+    // 2. Evaluate with active context scope in sandbox
+    try {
+      const scopeObj: Record<string, any> = {};
+      if (frame) {
+        frame.scopes.forEach(s => {
+          s.variables.forEach(v => {
+            try {
+              scopeObj[v.name] = JSON.parse(v.value);
+            } catch {
+              scopeObj[v.name] = v.value.replace(/^["']|["']$/g, '');
+            }
+          });
+        });
+      }
+
+      // Safe evaluation with scope keys
+      const keys = Object.keys(scopeObj);
+      const values = Object.values(scopeObj);
+      const fn = new Function(...keys, `return (${trimmed});`);
+      const val = fn(...values);
+      const valType = Array.isArray(val) ? 'array' : typeof val;
+      const strVal = typeof val === 'object' ? JSON.stringify(val) : String(val);
+      return { result: strVal, type: valType };
+    } catch (err: any) {
+      return { result: '', type: 'error', error: err?.message || 'Evaluation error' };
+    }
+  }
+
   public updateVariableValue(scopeName: string, varName: string, newValue: string): boolean {
     const frame = this.stackFrames[this.currentFrameIndex];
     if (!frame) return false;
@@ -458,25 +509,36 @@ class DapDebuggerEngine {
 
   private interpolateLogMessage(msg: string): string {
     return msg.replace(/\{([^}]+)\}/g, (_, expr) => {
-      if (expr.trim() === 'telemetrySpeed') {
-        return String(120 + this.currentStepIndex * 10);
+      const evalResult = this.evaluateExpression(expr);
+      if (!evalResult.error && evalResult.result) {
+        return evalResult.result;
       }
       return expr;
     });
   }
 
-  private evaluateCondition(condition: string): boolean {
-    try {
-      if (condition.includes('>')) {
-        const parts = condition.split('>');
-        const left = 120 + this.currentStepIndex * 10;
-        const right = parseFloat(parts[1].trim());
-        return left > right;
+  private evaluateCondition(condition: string, bp?: DapBreakpoint): boolean {
+    if (!condition && !bp?.hitCondition) return true;
+
+    // Check hit condition e.g. "> 5" or "== 10"
+    if (bp?.hitCondition) {
+      try {
+        const count = bp.hitCount;
+        const fn = new Function('hitCount', `return hitCount ${bp.hitCondition};`);
+        if (!fn(count)) return false;
+      } catch {
+        // Fallback
       }
-      return true;
-    } catch {
-      return true;
     }
+
+    if (!condition) return true;
+    const evalResult = this.evaluateExpression(condition);
+    if (evalResult.error) return true;
+    return Boolean(
+      evalResult.result === 'true' ||
+      evalResult.result === '1' ||
+      (evalResult.result && evalResult.result !== 'false' && evalResult.result !== '0')
+    );
   }
 
   // Getters
