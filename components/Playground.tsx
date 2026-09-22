@@ -59,11 +59,15 @@ import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
 import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
+import GitHunkPopover from '@/client/components/GitHunkPopover';
+import InlineAiDiffTransformer from '@/client/components/InlineAiDiffTransformer';
+import GitCommitModal from '@/client/components/GitCommitModal';
 import MultiFileComposerModal from './MultiFileComposerModal';
 import DockerSandboxPanel from './DockerSandboxPanel';
 import LanCollabPanel from './LanCollabPanel';
 import SemanticSearchPalette from './SemanticSearchPalette';
 import GgufQuantizerStudio from './GgufQuantizerStudio';
+import { gitGutterEngine, GutterClickEvent } from '@/lib/git/gitGutterEngine';
 import { localWhisperEngine } from '@/lib/ai/localWhisperEngine';
 import { webGpuEngine } from '@/lib/ai/webGpuEngine';
 import { autonomousAgentEngine } from '@/lib/ai/autonomousAgentEngine';
@@ -457,6 +461,16 @@ export default function Playground({
   const [activeSidebarTab, setActiveSidebarTab] = useState<'chat' | 'swarm' | 'diff' | 'tools' | 'git' | 'opfs' | 'vault' | 'graph' | 'auditor' | 'privacy' | 'lsp' | 'ghost' | 'composer' | 'vectordb' | 'wasi' | 'debugger' | 'extensions'>('chat');
   const [selectedFile, setSelectedFile] = useState<string | null>('components/Playground.tsx');
   const [activeBlameLine, setActiveBlameLine] = useState<{ author: string; relativeTime: string; message: string; shortSha: string; lineNumber: number } | null>(null);
+  // Real-Time Git Gutters & Range Staging States
+  const [activeGutterEvent, setActiveGutterEvent] = useState<GutterClickEvent | null>(null);
+  const [gitBranch, setGitBranch] = useState<string>('main');
+  const [gitSyncCount, setGitSyncCount] = useState<{ ahead: number; behind: number }>({ ahead: 0, behind: 0 });
+  const [isGitCommitModalOpen, setIsGitCommitModalOpen] = useState<boolean>(false);
+
+  // Inline AI Code Transformer (Cursor-Style Ctrl+K) States
+  const [isInlineAiOpen, setIsInlineAiOpen] = useState<boolean>(false);
+  const [inlineAiSelectedCode, setInlineAiSelectedCode] = useState<string>('');
+  const [inlineAiSelectionRange, setInlineAiSelectionRange] = useState<{ startLine: number; startColumn: number; endLine: number; endColumn: number } | null>(null);
 
   // Real-Time Inline Ghost Text & Native LSP Engine States
   const [inlayHintsEnabled, setInlayHintsEnabled] = useState<boolean>(true);
@@ -917,6 +931,39 @@ export default function Playground({
       updateDapDecorations();
     });
 
+    // 8. Real-Time Git Gutters Engine Attachment
+    gitGutterEngine.attachEditor(editor, monaco, selectedFileRef.current || 'components/Playground.tsx');
+
+    // 9. Cursor-Style Ctrl+K Inline AI Code Transformer Shortcut
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+      const sel = editor.getSelection();
+      const model = editor.getModel();
+      if (sel && model) {
+        let text = model.getValueInRange(sel);
+        let startLine = sel.startLineNumber;
+        let startColumn = sel.startColumn;
+        let endLine = sel.endLineNumber;
+        let endColumn = sel.endColumn;
+
+        if (!text || !text.trim()) {
+          const pos = editor.getPosition();
+          if (pos) {
+            text = model.getLineContent(pos.lineNumber);
+            startLine = pos.lineNumber;
+            startColumn = 1;
+            endLine = pos.lineNumber;
+            endColumn = text.length + 1;
+          }
+        }
+
+        if (text && text.trim()) {
+          setInlineAiSelectedCode(text);
+          setInlineAiSelectionRange({ startLine, startColumn, endLine, endColumn });
+          setIsInlineAiOpen(true);
+        }
+      }
+    });
+
     const updateSelectionCoords = () => {
       const selection = editor.getSelection();
       if (selection && !selection.isEmpty()) {
@@ -969,6 +1016,39 @@ export default function Playground({
       editorRef.current.focus();
     }
   }, []);
+
+  // Listen for Git gutter click events
+  useEffect(() => {
+    const unsub = gitGutterEngine.onGutterClick((ev) => {
+      setActiveGutterEvent(ev);
+    });
+    return unsub;
+  }, []);
+
+  // Poll Git Status for Status Bar
+  useEffect(() => {
+    const checkGitStatus = async () => {
+      try {
+        const res = await fetch('/api/git?action=status');
+        const data = await res.json();
+        if (data.success) {
+          setGitBranch(data.branch || 'main');
+          setGitSyncCount({ ahead: data.ahead || 0, behind: data.behind || 0 });
+        }
+      } catch {}
+    };
+
+    checkGitStatus();
+    const interval = setInterval(checkGitStatus, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Update Git Gutter file on selection change
+  useEffect(() => {
+    if (selectedFile && !selectedFile.startsWith('__')) {
+      gitGutterEngine.setFilePath(selectedFile);
+    }
+  }, [selectedFile]);
 
   const [diffTargetFile, setDiffTargetFile] = useState<string>('components/Playground.tsx');
   const [proposedDiffMap, setProposedDiffMap] = useState<{ [key: string]: string }>({
@@ -1676,6 +1756,58 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         break;
       case 'layout-toggle-zen':
         setIsZenMode(prev => !prev);
+        break;
+      case 'inline-ai-transform': {
+        const editor = editorRef.current;
+        if (editor) {
+          const sel = editor.getSelection();
+          const model = editor.getModel();
+          if (sel && model) {
+            let text = model.getValueInRange(sel);
+            let startLine = sel.startLineNumber;
+            let startColumn = sel.startColumn;
+            let endLine = sel.endLineNumber;
+            let endColumn = sel.endColumn;
+
+            if (!text || !text.trim()) {
+              const pos = editor.getPosition();
+              if (pos) {
+                text = model.getLineContent(pos.lineNumber);
+                startLine = pos.lineNumber;
+                startColumn = 1;
+                endLine = pos.lineNumber;
+                endColumn = text.length + 1;
+              }
+            }
+
+            if (text && text.trim()) {
+              setInlineAiSelectedCode(text);
+              setInlineAiSelectionRange({ startLine, startColumn, endLine, endColumn });
+              setIsInlineAiOpen(true);
+            }
+          }
+        }
+        break;
+      }
+      case 'git-ai-commit':
+        setIsGitCommitModalOpen(true);
+        break;
+      case 'git-stage-file':
+        if (selectedFile) {
+          fetch('/api/git', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'stage-file', file: selectedFile })
+          }).then(res => res.json()).then(data => {
+            if (data.success) {
+              setDiskToastMessage(`🌿 Staged ${selectedFile.split('/').pop()}`);
+              setTimeout(() => setDiskToastMessage(null), 2500);
+              if (editorRef.current) {
+                gitGutterEngine.refreshFile(selectedFile, editorRef.current);
+              }
+            }
+          }).catch(err => console.error('Failed to stage file:', err));
+        }
         break;
       default:
         extensionHost.executeCommand(commandId).catch(err => {
@@ -5005,6 +5137,51 @@ export default function ExtractedVisionUI() {
                         </span>
                       ))}
 
+                      {/* Real-Time Git Status Bar Widget */}
+                      <span className="text-zinc-700">|</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIsGitCommitModalOpen(true)}
+                          className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                          title={`Active Git Branch: ${gitBranch}. Click to checkout/switch/create branch.`}
+                        >
+                          <GitBranch size={11} className="text-emerald-400 shrink-0" />
+                          <span className="font-semibold">{gitBranch}</span>
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch('/api/git', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'sync' })
+                              });
+                              const data = await res.json();
+                              if (data.success) {
+                                setGitSyncCount({ ahead: 0, behind: 0 });
+                                setDiskToastMessage('🌿 Git repository synchronized with remote');
+                                setTimeout(() => setDiskToastMessage(null), 2500);
+                              }
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }}
+                          className="flex items-center gap-0.5 text-zinc-400 hover:text-white transition-colors cursor-pointer text-[10px]"
+                          title={`Sync Status: ${gitSyncCount.behind} to pull, ${gitSyncCount.ahead} to push. Click to sync.`}
+                        >
+                          <span>↓{gitSyncCount.behind}</span>
+                          <span>↑{gitSyncCount.ahead}</span>
+                        </button>
+                        <button
+                          onClick={() => setIsGitCommitModalOpen(true)}
+                          className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-700/50 transition-colors cursor-pointer text-[10px] font-medium"
+                          title="Generate AI Commit Message from Staged Changes"
+                        >
+                          <Sparkles size={10} className="text-purple-400" />
+                          <span>AI Commit</span>
+                        </button>
+                      </div>
+
                       {activeBlameLine && (
                         <>
                           <span className="text-zinc-700">|</span>
@@ -6129,6 +6306,61 @@ export default function ExtractedVisionUI() {
       <GgufQuantizerStudio
         isOpen={isGgufQuantizerOpen}
         onClose={() => setIsGgufQuantizerOpen(false)}
+      />
+
+      {/* Real-Time Git Gutters Line-by-Line Staging Popover (git add -p) */}
+      <GitHunkPopover
+        event={activeGutterEvent}
+        onClose={() => setActiveGutterEvent(null)}
+        onRefreshFile={(filePath) => {
+          if (editorRef.current) {
+            gitGutterEngine.refreshFile(filePath, editorRef.current);
+          }
+        }}
+      />
+
+      {/* Cursor-Style Ctrl+K Inline AI Code Transformer */}
+      <InlineAiDiffTransformer
+        isOpen={isInlineAiOpen}
+        selectedCode={inlineAiSelectedCode}
+        selectionRange={inlineAiSelectionRange}
+        filePath={selectedFile || ''}
+        onAccept={(transformedCode) => {
+          if (editorRef.current && inlineAiSelectionRange) {
+            editorRef.current.pushUndoStop();
+            editorRef.current.executeEdits('inline-ai-transform', [
+              {
+                range: {
+                  startLineNumber: inlineAiSelectionRange.startLine,
+                  startColumn: inlineAiSelectionRange.startColumn,
+                  endLineNumber: inlineAiSelectionRange.endLine,
+                  endColumn: inlineAiSelectionRange.endColumn
+                },
+                text: transformedCode,
+                forceMoveMarkers: true
+              }
+            ]);
+            editorRef.current.pushUndoStop();
+            if (selectedFile) {
+              const updated = editorRef.current.getValue();
+              handleUpdateFile(selectedFile, updated);
+              gitGutterEngine.refreshFile(selectedFile, editorRef.current);
+            }
+          }
+          setIsInlineAiOpen(false);
+        }}
+        onReject={() => setIsInlineAiOpen(false)}
+      />
+
+      {/* Git Commit & Push Modal with AI Commit Message Synthesizer */}
+      <GitCommitModal
+        isOpen={isGitCommitModalOpen}
+        onClose={() => setIsGitCommitModalOpen(false)}
+        onCommitSuccess={() => {
+          if (selectedFile && editorRef.current) {
+            gitGutterEngine.refreshFile(selectedFile, editorRef.current);
+          }
+        }}
       />
 
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}
