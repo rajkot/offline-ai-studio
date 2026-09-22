@@ -699,23 +699,13 @@ export default function Playground({
     // Initialize ThemeEngine with Monaco instance
     themeEngine.setMonacoInstance(monaco);
 
-    // Initialize Prettier formatting & ESLint diagnostics/quickfixes
-    prettierFormatterEngine.registerMonacoFormattingProvider(monaco);
-    browserLinterEngine.registerMonacoLinter(monaco);
-    if (editor.getModel()) {
-      browserLinterEngine.updateMarkers(editor.getModel());
-    }
-
-    editor.onDidChangeModelContent(() => {
-      const model = editor.getModel();
-      if (model) {
-        browserLinterEngine.updateMarkers(model);
-      }
-    });
-
-    // Register World-Class Inline Ghost Text & Native LSP Providers once
+    // Initialize Prettier formatting & ESLint diagnostics/quickfixes once per Monaco instance
     if (!providersRegisteredRef.current && monaco?.languages) {
       providersRegisteredRef.current = true;
+      prettierFormatterEngine.registerMonacoFormattingProvider(monaco);
+      browserLinterEngine.registerMonacoLinter(monaco);
+
+      // Register World-Class Inline Ghost Text & Native LSP Providers once
 
       // 1. Real-Time Inline Ghost Text Provider (Tab to accept multi-token completions)
       monaco.languages.registerInlineCompletionsProvider(
@@ -891,6 +881,26 @@ export default function Playground({
         }
       );
     }
+
+    // Debounced model content change for linter diagnostics to keep editor silky smooth
+    let lintDebounceTimer: any = null;
+    editor.onDidChangeModelContent(() => {
+      if (lintDebounceTimer) clearTimeout(lintDebounceTimer);
+      lintDebounceTimer = setTimeout(() => {
+        const model = editor.getModel();
+        if (model) {
+          browserLinterEngine.updateMarkers(model);
+        }
+      }, 400);
+    });
+
+    // Defer initial linter marker pass so it doesn't block main thread during editor mount
+    setTimeout(() => {
+      const model = editor.getModel();
+      if (model) {
+        browserLinterEngine.updateMarkers(model);
+      }
+    }, 250);
 
     // 6. Interactive DAP Gutter Breakpoints (Click gutter to toggle breakpoint, Right-click to edit)
     editor.onMouseDown((e: any) => {

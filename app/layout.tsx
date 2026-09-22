@@ -111,15 +111,34 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
 
                   // 4. Neutralize browser extension DOM tampering (e.g. bis_skin_checked from Bitdefender/coupon extensions)
                   try {
-                    if (typeof Element !== 'undefined' && Element.prototype && Element.prototype.setAttribute) {
-                      var originalSetAttribute = Element.prototype.setAttribute;
-                      Element.prototype.setAttribute = function(name, value) {
-                        if (name === 'bis_skin_checked' || (typeof name === 'string' && name.indexOf('bis_') === 0)) {
-                          return;
+                    // A. MutationObserver running immediately to strip bis_skin_checked before & during React hydration
+                    if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
+                      var bisObserver = new MutationObserver(function(mutations) {
+                        for (var m = 0; m < mutations.length; m++) {
+                          var mut = mutations[m];
+                          if (mut.type === 'attributes' && mut.attributeName && mut.attributeName.indexOf('bis_') === 0) {
+                            if (mut.target && mut.target.removeAttribute) mut.target.removeAttribute(mut.attributeName);
+                          } else if (mut.type === 'childList') {
+                            for (var n = 0; n < mut.addedNodes.length; n++) {
+                              var node = mut.addedNodes[n];
+                              if (node && node.nodeType === 1) {
+                                if (node.hasAttribute && node.hasAttribute('bis_skin_checked')) node.removeAttribute('bis_skin_checked');
+                                var subs = node.querySelectorAll ? node.querySelectorAll('[bis_skin_checked]') : [];
+                                for (var s = 0; s < subs.length; s++) subs[s].removeAttribute('bis_skin_checked');
+                              }
+                            }
+                          }
                         }
-                        return originalSetAttribute.apply(this, arguments);
-                      };
+                      });
+                      bisObserver.observe(document.documentElement || document, {
+                        attributes: true,
+                        subtree: true,
+                        childList: true,
+                        attributeFilter: ['bis_skin_checked']
+                      });
                     }
+
+                    // B. Immediate cleanup of any pre-existing bis_skin_checked attributes
                     if (typeof document !== 'undefined') {
                       var stripExtensionAttrs = function() {
                         try {
@@ -129,12 +148,32 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                           }
                         } catch (e) {}
                       };
+                      stripExtensionAttrs();
                       if (document.readyState === 'loading') {
                         document.addEventListener('DOMContentLoaded', stripExtensionAttrs);
-                      } else {
-                        stripExtensionAttrs();
                       }
                     }
+
+                    // C. Intercept and filter React hydration mismatch errors caused by browser extensions
+                    var origConsoleError = console.error;
+                    console.error = function() {
+                      var text = '';
+                      for (var i = 0; i < arguments.length; i++) {
+                        try {
+                          var a = arguments[i];
+                          text += (typeof a === 'string' ? a : (a && a.message ? a.message : (typeof a === 'object' ? JSON.stringify(a) : String(a)))) + ' ';
+                        } catch (e) {}
+                      }
+                      if (
+                        text.indexOf('bis_skin_checked') !== -1 ||
+                        text.indexOf('bis_frame_id') !== -1 ||
+                        (text.indexOf('hydration-mismatch') !== -1 && text.indexOf('bis_') !== -1) ||
+                        (text.indexOf('hydrated but some attributes') !== -1 && text.indexOf('bis_skin_checked') !== -1)
+                      ) {
+                        return; // Filter out false-positive React hydration warning caused by client browser extension
+                      }
+                      return origConsoleError.apply(console, arguments);
+                    };
                   } catch (bisErr) {}
 
                   // 5. Shield against third-party Chrome/Edge extension runtime exceptions (e.g. reading 'M_ID')
