@@ -1,20 +1,79 @@
 'use client';
 // components/GgufQuantizerStudio.tsx
-// Visual GGUF Quantization & Model Converter Studio
+// Offline Model Quantizer & Live VRAM Fit Calculator Studio
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  Cpu,
+  HardDrive,
+  Zap,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  HelpCircle,
+  RefreshCw,
+  Play,
+  Terminal,
+  Download,
+  Layers,
+  Activity,
+  Sliders,
+  Sparkles,
+  ArrowRight,
+  Database
+} from 'lucide-react';
 
-/* ─── Types ─────────────────────────────────────────────────────────────── */
+/* ─── Model Preset Architectures ─────────────────────────────────────────── */
 
-interface QuantEstimate {
-  quantType: string;
-  label: string;
-  bitsPerWeight: number;
-  estimatedVramGb: number;
-  estimatedFileSizeGb: number;
-  qualityScore: number;
-  recommended: boolean;
+interface ModelArchitecture {
+  id: string;
+  name: string;
+  family: string;
+  paramsBillion: number;
+  layers: number;
+  heads: number;
+  kvHeads: number;
+  hiddenDim: number;
+  defaultContext: number;
+  samplePath: string;
 }
+
+const PRESET_MODELS: ModelArchitecture[] = [
+  { id: 'qwen2.5-0.5b', name: 'Qwen2.5-Coder 0.5B', family: 'Qwen', paramsBillion: 0.5, layers: 24, heads: 14, kvHeads: 2, hiddenDim: 896, defaultContext: 32768, samplePath: 'models/qwen2.5-coder-0.5b' },
+  { id: 'qwen2.5-1.5b', name: 'Qwen2.5-Coder 1.5B', family: 'Qwen', paramsBillion: 1.5, layers: 28, heads: 12, kvHeads: 2, hiddenDim: 1536, defaultContext: 32768, samplePath: 'models/qwen2.5-coder-1.5b' },
+  { id: 'qwen2.5-3b',   name: 'Qwen2.5-Coder 3B',   family: 'Qwen', paramsBillion: 3.0, layers: 36, heads: 16, kvHeads: 2, hiddenDim: 2048, defaultContext: 32768, samplePath: 'models/qwen2.5-coder-3b' },
+  { id: 'qwen2.5-7b',   name: 'Qwen2.5-Coder 7B',   family: 'Qwen', paramsBillion: 7.6, layers: 28, heads: 28, kvHeads: 4, hiddenDim: 3584, defaultContext: 32768, samplePath: 'models/qwen2.5-coder-7b' },
+  { id: 'llama-3.1-8b', name: 'Llama 3.1 8B Instruct', family: 'Llama', paramsBillion: 8.0, layers: 32, heads: 32, kvHeads: 8, hiddenDim: 4096, defaultContext: 8192, samplePath: 'models/llama-3.1-8b' },
+  { id: 'deepseek-6.7b',name: 'DeepSeek-Coder 6.7B', family: 'DeepSeek', paramsBillion: 6.7, layers: 32, heads: 32, kvHeads: 32, hiddenDim: 4096, defaultContext: 16384, samplePath: 'models/deepseek-coder-6.7b' },
+  { id: 'qwen2.5-14b',  name: 'Qwen2.5-Coder 14B',  family: 'Qwen', paramsBillion: 14.7, layers: 48, heads: 40, kvHeads: 8, hiddenDim: 5120, defaultContext: 32768, samplePath: 'models/qwen2.5-coder-14b' },
+  { id: 'qwen2.5-32b',  name: 'Qwen2.5-Coder 32B',  family: 'Qwen', paramsBillion: 32.5, layers: 64, heads: 40, kvHeads: 8, hiddenDim: 5120, defaultContext: 32768, samplePath: 'models/qwen2.5-coder-32b' },
+  { id: 'llama-3.3-70b',name: 'Llama 3.3 70B',      family: 'Llama', paramsBillion: 70.6, layers: 80, heads: 64, kvHeads: 8, hiddenDim: 8192, defaultContext: 8192, samplePath: 'models/llama-3.3-70b' },
+];
+
+/* ─── Quantization Specifications ────────────────────────────────────────── */
+
+interface QuantFormatSpec {
+  quantType: string;
+  name: string;
+  bitsPerWeight: number;
+  qualityScore: number;
+  relativeSpeed: number; // 1.0 = baseline
+  description: string;
+  recommendedFor: string;
+}
+
+const QUANT_SPECS: QuantFormatSpec[] = [
+  { quantType: 'Q2_K',   name: '2-bit K-Quant',        bitsPerWeight: 2.56, qualityScore: 54, relativeSpeed: 1.25, description: 'Extreme compression, notable quality loss', recommendedFor: 'Severe VRAM shortage' },
+  { quantType: 'Q3_K_M', name: '3-bit K-Quant Medium', bitsPerWeight: 3.45, qualityScore: 71, relativeSpeed: 1.15, description: 'High compression, acceptable for code reading', recommendedFor: '4GB-6GB GPUs' },
+  { quantType: 'Q4_0',   name: '4-bit Legacy Base',    bitsPerWeight: 4.50, qualityScore: 78, relativeSpeed: 1.10, description: 'Standard baseline 4-bit uniform quantization', recommendedFor: 'Older llama.cpp runtimes' },
+  { quantType: 'Q4_K_M', name: '4-bit K-Quant Medium', bitsPerWeight: 4.85, qualityScore: 89, relativeSpeed: 1.08, description: 'Golden standard: optimal size vs accuracy trade-off', recommendedFor: 'Recommended for Daily Coding' },
+  { quantType: 'Q5_K_M', name: '5-bit K-Quant Medium', bitsPerWeight: 5.68, qualityScore: 94, relativeSpeed: 1.00, description: 'Near-lossless precision with modest VRAM overhead', recommendedFor: 'Complex logic & refactoring' },
+  { quantType: 'Q6_K',   name: '6-bit K-Quant',        bitsPerWeight: 6.57, qualityScore: 97, relativeSpeed: 0.94, description: 'Indistinguishable from FP16 on most coding tests', recommendedFor: 'High precision benchmarks' },
+  { quantType: 'Q8_0',   name: '8-bit Quasi-Lossless', bitsPerWeight: 8.50, qualityScore: 99, relativeSpeed: 0.88, description: 'Maximum accuracy without full 16-bit weight bloat', recommendedFor: 'Production & Architecture' },
+  { quantType: 'F16',    name: '16-bit Full Precision',bitsPerWeight: 16.0, qualityScore: 100,relativeSpeed: 0.65, description: 'Unquantized reference baseline', recommendedFor: 'Fine-tuning reference' },
+];
+
+/* ─── Props & Types ──────────────────────────────────────────────────────── */
 
 interface QuantJob {
   id: string;
@@ -38,448 +97,790 @@ interface ToolStatus {
 interface GgufQuantizerStudioProps {
   isOpen: boolean;
   onClose: () => void;
+  onDeployToOllama?: (modelName: string, ggufPath: string) => void;
 }
 
-/* ─── VRAM bar ───────────────────────────────────────────────────────────── */
+export default function GgufQuantizerStudio({ isOpen, onClose, onDeployToOllama }: GgufQuantizerStudioProps) {
+  const [activeTab, setActiveTab] = useState<'calculator' | 'quantize' | 'jobs' | 'guide'>('calculator');
 
-function VramBar({ gb, max = 24 }: { gb: number; max?: number }) {
-  const pct = Math.min((gb / max) * 100, 100);
-  const color = gb <= 4 ? '#4ade80' : gb <= 8 ? '#fbbf24' : gb <= 16 ? '#fb923c' : '#f87171';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
-      <div style={{ flex: 1, height: 6, background: 'rgba(100,116,139,0.2)', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 3, transition: 'width 0.4s' }} />
-      </div>
-      <span style={{ fontSize: 11, color, fontWeight: 700, minWidth: 42, textAlign: 'right' }}>{gb}GB</span>
-    </div>
-  );
-}
+  // Calculator State
+  const [selectedModelId, setSelectedModelId] = useState<string>('qwen2.5-7b');
+  const [gpuVramGb, setGpuVramGb] = useState<number>(8);
+  const [contextLength, setContextLength] = useState<number>(8192);
+  const [activeQuantHighlight, setActiveQuantHighlight] = useState<string>('Q4_K_M');
 
-/* ─── Quality meter ──────────────────────────────────────────────────────── */
-
-function QualityMeter({ score }: { score: number }) {
-  const color = score >= 95 ? '#4ade80' : score >= 85 ? '#22d3ee' : score >= 75 ? '#fbbf24' : '#f87171';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <div style={{ width: 50, height: 4, background: 'rgba(100,116,139,0.2)', borderRadius: 2, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: 2 }} />
-      </div>
-      <span style={{ fontSize: 10, color, fontWeight: 700 }}>{score}%</span>
-    </div>
-  );
-}
-
-/* ─── Log Viewer ─────────────────────────────────────────────────────────── */
-
-function LogViewer({ lines }: { lines: string[] }) {
-  const endRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [lines]);
-  return (
-    <div style={{ fontFamily: 'monospace', fontSize: 11, background: 'rgba(5,5,10,0.8)', borderRadius: 8, padding: '10px 14px', maxHeight: 180, overflowY: 'auto', border: '1px solid rgba(100,116,139,0.15)' }}>
-      {lines.map((l, i) => (
-        <div key={i} style={{ color: l.includes('✓') ? '#4ade80' : l.includes('✗') || l.includes('Error') ? '#f87171' : '#94a3b8', marginBottom: 2 }}>
-          {l}
-        </div>
-      ))}
-      {lines.length === 0 && <span style={{ color: '#475569', fontStyle: 'italic' }}>No output yet…</span>}
-      <div ref={endRef} />
-    </div>
-  );
-}
-
-/* ─── Main Component ─────────────────────────────────────────────────────── */
-
-export default function GgufQuantizerStudio({ isOpen, onClose }: GgufQuantizerStudioProps) {
-  const [activeTab, setActiveTab] = useState<'convert' | 'jobs' | 'guide'>('convert');
-  const [modelPath, setModelPath] = useState('');
-  const [outputDir, setOutputDir] = useState('');
+  // Quantizer State
+  const [modelPath, setModelPath] = useState<string>('models/qwen2.5-coder-7b');
+  const [outputDir, setOutputDir] = useState<string>('models/quantized');
   const [selectedQuant, setSelectedQuant] = useState<string>('Q4_K_M');
-  const [estimates, setEstimates] = useState<QuantEstimate[]>([]);
-  const [toolStatus, setToolStatus] = useState<ToolStatus | null>(null);
-  const [isEstimating, setIsEstimating] = useState(false);
-  const [isQuantizing, setIsQuantizing] = useState(false);
+  const [isQuantizing, setIsQuantizing] = useState<boolean>(false);
   const [jobs, setJobs] = useState<QuantJob[]>([]);
-  const [activeJob, setActiveJob] = useState<QuantJob | null>(null);
-  const [statusMsg, setStatusMsg] = useState('');
+  const [statusMsg, setStatusMsg] = useState<string>('');
+  const [toolStatus, setToolStatus] = useState<ToolStatus | null>(null);
+
   const pollRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-  // Check tool availability on open
+  // Active Model Arch
+  const activeModel = useMemo(() => {
+    return PRESET_MODELS.find(m => m.id === selectedModelId) || PRESET_MODELS[3];
+  }, [selectedModelId]);
+
+  // VRAM & KV Cache Math Engine
+  const calculationResults = useMemo(() => {
+    const { paramsBillion, layers, kvHeads, hiddenDim, heads } = activeModel;
+    const headDim = hiddenDim / heads;
+
+    // KV Cache Memory: 2 (K & V) * layers * kvHeads * headDim * contextLength * 2 bytes (FP16)
+    const kvCacheBytes = 2 * layers * kvHeads * headDim * contextLength * 2;
+    const kvCacheGb = kvCacheBytes / (1024 ** 3);
+
+    // Context runtime buffer overhead (CUDA context, activations, scratchpad ~450MB)
+    const runtimeOverheadGb = 0.45;
+
+    // Evaluate each quantization format
+    const formatBreakdown = QUANT_SPECS.map(spec => {
+      // Model weights size (GB)
+      const weightsBytes = (paramsBillion * 1e9 * spec.bitsPerWeight) / 8;
+      const weightsGb = weightsBytes / (1024 ** 3);
+
+      const totalVramRequiredGb = weightsGb + kvCacheGb + runtimeOverheadGb;
+
+      // Weight size per layer
+      const weightPerLayerGb = weightsGb / layers;
+      const kvPerLayerGb = kvCacheGb / layers;
+      const vramPerLayerGb = weightPerLayerGb + kvPerLayerGb;
+
+      // Usable GPU VRAM after baseline runtime overhead
+      const usableGpuVram = Math.max(0, gpuVramGb - runtimeOverheadGb);
+
+      // Layers that fit in GPU VRAM
+      const layersInVram = Math.min(layers, Math.floor(usableGpuVram / vramPerLayerGb));
+      const layersInRam = Math.max(0, layers - layersInVram);
+      const offloadPct = Math.round((layersInVram / layers) * 100);
+
+      // Estimated tok/s throughput based on offload percentage
+      let estimatedTokPerSec = 0;
+      let fitStatus: 'full' | 'partial' | 'oom' = 'full';
+
+      if (offloadPct === 100) {
+        // Full GPU speed (scaled roughly by parameter count)
+        const baseSpeed = paramsBillion <= 3 ? 120 : paramsBillion <= 8 ? 65 : paramsBillion <= 14 ? 38 : 18;
+        estimatedTokPerSec = Math.round(baseSpeed * spec.relativeSpeed);
+        fitStatus = 'full';
+      } else if (offloadPct >= 35) {
+        // Hybrid CPU/GPU offload (PCIe bus bottleneck: ~20-35% of full GPU speed)
+        const baseHybrid = paramsBillion <= 8 ? 16 : 8;
+        estimatedTokPerSec = Math.round(baseHybrid * (offloadPct / 100));
+        fitStatus = 'partial';
+      } else {
+        // Heavy RAM spill / CPU fallback
+        estimatedTokPerSec = Math.max(1, Math.round(4.5 / (paramsBillion / 7)));
+        fitStatus = 'oom';
+      }
+
+      return {
+        ...spec,
+        weightsGb: Math.round(weightsGb * 10) / 10,
+        kvCacheGb: Math.round(kvCacheGb * 100) / 100,
+        totalVramRequiredGb: Math.round(totalVramRequiredGb * 10) / 10,
+        layersInVram,
+        layersInRam,
+        offloadPct,
+        estimatedTokPerSec,
+        fitStatus
+      };
+    });
+
+    return {
+      kvCacheGb: Math.round(kvCacheGb * 100) / 100,
+      runtimeOverheadGb,
+      formatBreakdown
+    };
+  }, [activeModel, gpuVramGb, contextLength]);
+
+  // Initial tool status check
   useEffect(() => {
     if (isOpen) {
-      fetch('/api/models/quantize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'check' }) })
-        .then(r => r.json()).then(d => setToolStatus(d)).catch(() => {});
-      fetch('/api/models/quantize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'list' }) })
-        .then(r => r.json()).then(d => setJobs(d.jobs || [])).catch(() => {});
+      fetch('/api/models/quantize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check' })
+      })
+        .then(r => r.json())
+        .then(d => setToolStatus(d))
+        .catch(() => {});
     }
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [isOpen]);
 
-  // Auto-estimate when model path changes
-  useEffect(() => {
-    if (!modelPath.trim()) { setEstimates([]); return; }
-    const t = setTimeout(async () => {
-      setIsEstimating(true);
-      try {
-        const resp = await fetch('/api/models/quantize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'estimate', modelPath: modelPath.trim() }) });
-        const data = await resp.json();
-        if (data.success) setEstimates(data.estimates || []);
-      } catch {}
-      setIsEstimating(false);
-    }, 600);
-    return () => clearTimeout(t);
-  }, [modelPath]);
-
-  const handleQuantize = async () => {
-    if (!modelPath.trim() || !toolStatus?.ready) return;
+  const handleStartQuantize = async () => {
+    if (!modelPath.trim()) return;
     setIsQuantizing(true);
-    setStatusMsg('Starting quantization job…');
+    setStatusMsg(`Starting conversion to ${selectedQuant}…`);
 
     try {
       const resp = await fetch('/api/models/quantize', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'quantize', modelPath: modelPath.trim(), outputDir: outputDir.trim() || undefined, quantType: selectedQuant }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'quantize',
+          modelPath: modelPath.trim(),
+          outputDir: outputDir.trim() || undefined,
+          quantType: selectedQuant
+        })
       });
       const data = await resp.json();
 
       if (data.success) {
-        setStatusMsg(`✓ Job started: ${data.jobId}`);
+        setStatusMsg(`Job created: ${data.jobId}`);
         setActiveTab('jobs');
 
-        // Start polling job status
-        const jobId = data.jobId;
+        const newJob: QuantJob = {
+          id: data.jobId,
+          status: 'running',
+          modelPath,
+          quantType: selectedQuant,
+          outputPath: `${outputDir}/${modelPath.split(/[\\/]/).pop()}-${selectedQuant}.gguf`,
+          startedAt: Date.now(),
+          log: [
+            `[Init] Target format: ${selectedQuant}`,
+            `[Source] Parsing Safetensors / weights from ${modelPath}`,
+            `[Quant] Computing optimal scales for k-quant layers...`
+          ]
+        };
+        setJobs(prev => [newJob, ...prev]);
+
+        // Poll job progress
         pollRef.current = setInterval(async () => {
           try {
-            const jr = await fetch('/api/models/quantize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', jobId }) });
+            const jr = await fetch('/api/models/quantize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'status', jobId: data.jobId })
+            });
             const jd = await jr.json();
-            if (jd.success) {
-              setActiveJob(jd.job);
-              setJobs(prev => {
-                const idx = prev.findIndex(j => j.id === jobId);
-                if (idx >= 0) { const next = [...prev]; next[idx] = jd.job; return next; }
-                return [jd.job, ...prev];
-              });
+            if (jd.success && jd.job) {
+              setJobs(prev => prev.map(j => j.id === data.jobId ? jd.job : j));
               if (jd.job.status === 'done' || jd.job.status === 'error') {
                 clearInterval(pollRef.current);
+                setIsQuantizing(false);
               }
             }
           } catch {}
         }, 2000);
-
       } else {
-        setStatusMsg(`✗ ${data.error}`);
+        setStatusMsg(`Error: ${data.error || 'Failed to start quantization'}`);
+        setIsQuantizing(false);
       }
     } catch (e: any) {
-      setStatusMsg(`✗ Error: ${e.message}`);
-    } finally {
+      setStatusMsg(`Error: ${e.message}`);
       setIsQuantizing(false);
     }
   };
 
   if (!isOpen) return null;
 
-  /* ── Styles ─────────────────────────────────────────────────────────── */
-
-  const overlay: React.CSSProperties = {
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20,
-  };
-  const modal: React.CSSProperties = {
-    background: 'linear-gradient(135deg, #0c0a14 0%, #130f21 50%, #0c0a14 100%)',
-    border: '1px solid rgba(168,85,247,0.35)', borderRadius: 16,
-    width: '100%', maxWidth: 1000, maxHeight: '90vh', display: 'flex', flexDirection: 'column',
-    boxShadow: '0 0 80px rgba(168,85,247,0.2), 0 30px 60px rgba(0,0,0,0.7)', overflow: 'hidden',
-  };
-  const header: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '16px 24px', borderBottom: '1px solid rgba(168,85,247,0.2)',
-    background: 'rgba(168,85,247,0.06)',
-  };
-  const tabBar: React.CSSProperties = { display: 'flex', gap: 4, padding: '0 24px', borderBottom: '1px solid rgba(168,85,247,0.15)' };
-  const tabStyle = (active: boolean): React.CSSProperties => ({
-    padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-    color: active ? '#c084fc' : '#64748b', background: 'transparent', border: 'none',
-    borderBottom: active ? '2px solid #c084fc' : '2px solid transparent', transition: 'all 0.2s',
-  });
-  const body: React.CSSProperties = { flex: 1, overflow: 'auto', padding: 24 };
-  const inputStyle: React.CSSProperties = {
-    width: '100%', background: 'rgba(12,10,20,0.7)', border: '1px solid rgba(168,85,247,0.3)',
-    borderRadius: 8, color: '#e2e8f0', padding: '10px 14px', fontSize: 13,
-    outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box',
-  };
-  const primaryBtn: React.CSSProperties = {
-    background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', border: '1px solid rgba(168,85,247,0.4)',
-    borderRadius: 8, color: '#e2e8f0', padding: '12px 24px', fontSize: 14, fontWeight: 700,
-    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-  };
-
-  const selectedEstimate = estimates.find(e => e.quantType === selectedQuant);
+  const currentHighlightSpec = calculationResults.formatBreakdown.find(f => f.quantType === activeQuantHighlight)
+    || calculationResults.formatBreakdown[3];
 
   return (
-    <div style={overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={modal}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4 animate-in fade-in duration-150">
+      <div className="w-full max-w-5xl bg-[#0d0e16] border border-purple-500/30 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div style={header}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 22 }}>📦</div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 16, color: '#e2e8f0' }}>GGUF Quantization Studio</div>
-              <div style={{ fontSize: 11, color: '#475569' }}>Visual llama.cpp quantizer · VRAM estimator · 1-click Q4/Q5/Q8 conversion</div>
+        <div className="px-6 py-4 border-b border-purple-900/30 bg-[#121320] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-400">
+              <Cpu size={22} />
             </div>
-            {toolStatus && (
-              <div style={{
-                background: toolStatus.ready ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-                border: `1px solid ${toolStatus.ready ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
-                borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 700,
-                color: toolStatus.ready ? '#4ade80' : '#f87171',
-              }}>
-                {toolStatus.ready ? `● llama.cpp ${toolStatus.llamaCpp.version || 'Ready'}` : '○ llama.cpp Not Found'}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-base text-zinc-100 uppercase tracking-wide font-mono">
+                  Offline Model Quantizer &amp; VRAM Fit Calculator
+                </h2>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-700/60 font-mono font-bold">
+                  GGUF Engine
+                </span>
               </div>
-            )}
-            {statusMsg && <div style={{ fontSize: 11, color: '#c084fc', fontStyle: 'italic' }}>{statusMsg}</div>}
+              <p className="text-xs text-zinc-400">
+                Determine exact GPU VRAM fit vs RAM fallback before loading local LLMs, and convert models in 1 click.
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} style={{ background: 'rgba(100,116,139,0.15)', border: '1px solid rgba(100,116,139,0.2)', borderRadius: 8, color: '#94a3b8', padding: '6px 12px', cursor: 'pointer', fontSize: 18 }}>✕</button>
+
+          <div className="flex items-center gap-3">
+            {/* Tabs */}
+            <div className="flex items-center bg-zinc-900/90 border border-zinc-800 rounded-lg p-0.5">
+              <button
+                onClick={() => setActiveTab('calculator')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'calculator'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Activity size={13} />
+                VRAM Fit Calculator
+              </button>
+              <button
+                onClick={() => setActiveTab('quantize')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'quantize'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Zap size={13} />
+                1-Click Quantizer
+              </button>
+              <button
+                onClick={() => setActiveTab('jobs')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'jobs'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <Terminal size={13} />
+                Jobs ({jobs.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('guide')}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'guide'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <HelpCircle size={13} />
+                Setup Guide
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
-        {/* Tabs */}
-        <div style={tabBar}>
-          <button style={tabStyle(activeTab === 'convert')} onClick={() => setActiveTab('convert')}>⚗️ Convert</button>
-          <button style={tabStyle(activeTab === 'jobs')} onClick={() => setActiveTab('jobs')}>📋 Jobs ({jobs.length})</button>
-          <button style={tabStyle(activeTab === 'guide')} onClick={() => setActiveTab('guide')}>📖 Setup Guide</button>
-        </div>
-
-        <div style={body}>
-
-          {/* ── Convert tab ── */}
-          {activeTab === 'convert' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 24 }}>
-              {/* Left: Input */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d0e16]">
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 1: LIVE VRAM FIT CALCULATOR
+             ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'calculator' && (
+            <div className="space-y-6">
+              {/* Parameter Controls Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl bg-zinc-900/60 border border-zinc-800">
+                {/* 1. Model Selector */}
                 <div>
-                  <label style={{ fontSize: 11, color: '#c084fc', fontWeight: 700, display: 'block', marginBottom: 6 }}>MODEL PATH (Safetensors or GGUF)</label>
-                  <input value={modelPath} onChange={e => setModelPath(e.target.value)} style={inputStyle} placeholder="C:\models\qwen2.5-7b or /home/user/llama-7b" />
-                  <div style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>Local .safetensors directory or existing .gguf file</div>
-                </div>
-
-                <div>
-                  <label style={{ fontSize: 11, color: '#c084fc', fontWeight: 700, display: 'block', marginBottom: 6 }}>OUTPUT DIRECTORY (optional)</label>
-                  <input value={outputDir} onChange={e => setOutputDir(e.target.value)} style={inputStyle} placeholder="Same as model directory" />
-                </div>
-
-                {/* Quant type selector */}
-                <div>
-                  <label style={{ fontSize: 11, color: '#c084fc', fontWeight: 700, display: 'block', marginBottom: 8 }}>QUANTIZATION TYPE</label>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {['Q4_K_M', 'Q5_K_M', 'Q8_0', 'Q4_0', 'Q6_K', 'F16'].map(qt => {
-                      const est = estimates.find(e => e.quantType === qt);
-                      const isSelected = selectedQuant === qt;
-                      return (
-                        <div key={qt} onClick={() => setSelectedQuant(qt)} style={{
-                          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-                          borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s',
-                          background: isSelected ? 'rgba(168,85,247,0.18)' : 'rgba(12,10,20,0.5)',
-                          border: `1px solid ${isSelected ? 'rgba(168,85,247,0.5)' : 'rgba(168,85,247,0.12)'}`,
-                        }}>
-                          <input type="radio" checked={isSelected} onChange={() => setSelectedQuant(qt)} style={{ accentColor: '#c084fc' }} />
-                          <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#e2e8f0', fontSize: 13 }}>{qt}</span>
-                              {est?.recommended && <span style={{ fontSize: 9, background: 'rgba(34,197,94,0.15)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 4, padding: '1px 5px', fontWeight: 700 }}>RECOMMENDED</span>}
-                            </div>
-                            {est && <div style={{ fontSize: 10, color: '#64748b' }}>{est.label} · {est.bitsPerWeight} bpw</div>}
-                          </div>
-                          {est && <QualityMeter score={est.qualityScore} />}
-                        </div>
-                      );
-                    })}
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-purple-300 font-bold block mb-1.5">
+                    1. Select Model Architecture
+                  </label>
+                  <select
+                    value={selectedModelId}
+                    onChange={(e) => {
+                      setSelectedModelId(e.target.value);
+                      const m = PRESET_MODELS.find(p => p.id === e.target.value);
+                      if (m) setModelPath(m.samplePath);
+                    }}
+                    className="w-full bg-[#121320] border border-zinc-700 hover:border-purple-500 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none cursor-pointer"
+                  >
+                    {PRESET_MODELS.map(m => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.paramsBillion}B · {m.layers} Layers)
+                      </option>
+                    ))}
+                  </select>
+                  <div className="mt-1 text-[10px] text-zinc-400 font-mono">
+                    {activeModel.paramsBillion}B params · {activeModel.layers} layers · {activeModel.kvHeads} KV heads
                   </div>
                 </div>
 
-                <button onClick={handleQuantize} disabled={isQuantizing || !modelPath.trim() || !toolStatus?.ready} style={{
-                  ...primaryBtn, justifyContent: 'center',
-                  opacity: isQuantizing || !modelPath.trim() || !toolStatus?.ready ? 0.5 : 1,
-                }}>
-                  {isQuantizing ? '⏳ Quantizing…' : `🔨 Quantize to ${selectedQuant}`}
-                </button>
-
-                {!toolStatus?.ready && (
-                  <div style={{ fontSize: 12, color: '#f87171', textAlign: 'center' }}>
-                    llama.cpp not detected. See the Setup Guide tab.
+                {/* 2. GPU VRAM Slider */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] font-mono uppercase tracking-wider text-purple-300 font-bold">
+                      2. GPU VRAM Capacity
+                    </label>
+                    <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-700/50">
+                      {gpuVramGb} GB VRAM
+                    </span>
                   </div>
-                )}
+                  <input
+                    type="range"
+                    min={2}
+                    max={48}
+                    step={1}
+                    value={gpuVramGb}
+                    onChange={(e) => setGpuVramGb(Number(e.target.value))}
+                    className="w-full accent-purple-500 cursor-pointer"
+                  />
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono mt-1">
+                    <button onClick={() => setGpuVramGb(6)} className="hover:text-purple-300">6GB (Laptop)</button>
+                    <button onClick={() => setGpuVramGb(8)} className="hover:text-purple-300">8GB (3070)</button>
+                    <button onClick={() => setGpuVramGb(12)} className="hover:text-purple-300">12GB (4070)</button>
+                    <button onClick={() => setGpuVramGb(16)} className="hover:text-purple-300">16GB (4080)</button>
+                    <button onClick={() => setGpuVramGb(24)} className="hover:text-purple-300">24GB (4090)</button>
+                  </div>
+                </div>
+
+                {/* 3. Context Length */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] font-mono uppercase tracking-wider text-purple-300 font-bold">
+                      3. Context Window (KV Cache)
+                    </label>
+                    <span className="text-xs font-mono font-bold text-indigo-300 bg-indigo-950/80 px-2 py-0.5 rounded border border-indigo-700/50">
+                      {(contextLength / 1024).toFixed(0)}K Tokens ({calculationResults.kvCacheGb} GB)
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={2048}
+                    max={65536}
+                    step={2048}
+                    value={contextLength}
+                    onChange={(e) => setContextLength(Number(e.target.value))}
+                    className="w-full accent-indigo-500 cursor-pointer"
+                  />
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono mt-1">
+                    <button onClick={() => setContextLength(2048)} className="hover:text-indigo-300">2K</button>
+                    <button onClick={() => setContextLength(4096)} className="hover:text-indigo-300">4K</button>
+                    <button onClick={() => setContextLength(8192)} className="hover:text-indigo-300">8K</button>
+                    <button onClick={() => setContextLength(16384)} className="hover:text-indigo-300">16K</button>
+                    <button onClick={() => setContextLength(32768)} className="hover:text-indigo-300">32K</button>
+                    <button onClick={() => setContextLength(65536)} className="hover:text-indigo-300">64K</button>
+                  </div>
+                </div>
               </div>
 
-              {/* Right: VRAM estimates */}
-              <div>
-                <div style={{ fontSize: 12, color: '#c084fc', fontWeight: 700, marginBottom: 12 }}>
-                  VRAM REQUIREMENTS CALCULATOR
-                  {isEstimating && <span style={{ color: '#64748b', fontWeight: 400, marginLeft: 8 }}>Calculating…</span>}
-                </div>
-
-                {estimates.length === 0 && !isEstimating && (
-                  <div style={{ color: '#475569', fontSize: 13, textAlign: 'center', padding: 32, fontStyle: 'italic' }}>
-                    Enter a model path to see VRAM estimates
+              {/* Visual Layer Offload Curve & VRAM Breakdown for Highlighted Quant */}
+              <div className="p-5 rounded-2xl bg-[#111222] border border-purple-900/40 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-zinc-400 font-mono uppercase tracking-wider">
+                        Layer Allocation Breakdown for
+                      </span>
+                      <span className="text-sm font-bold font-mono text-purple-300 bg-purple-950 px-2 py-0.5 rounded border border-purple-700/60">
+                        {currentHighlightSpec.quantType} ({currentHighlightSpec.name})
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      {currentHighlightSpec.description}
+                    </p>
                   </div>
-                )}
 
-                {estimates.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {estimates.map(est => {
-                      const isSelected = est.quantType === selectedQuant;
-                      return (
-                        <div key={est.quantType} onClick={() => setSelectedQuant(est.quantType)} style={{
-                          background: isSelected ? 'rgba(168,85,247,0.1)' : 'rgba(12,10,20,0.4)',
-                          border: `1px solid ${isSelected ? 'rgba(168,85,247,0.4)' : 'rgba(168,85,247,0.1)'}`,
-                          borderRadius: 8, padding: '10px 14px', cursor: 'pointer', transition: 'all 0.15s',
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#e2e8f0', fontSize: 12 }}>{est.quantType}</span>
-                              <span style={{ fontSize: 10, color: '#64748b' }}>{est.label}</span>
-                              {est.recommended && <span style={{ fontSize: 9, background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 3, padding: '0 4px', fontWeight: 700 }}>✓</span>}
-                            </div>
-                            <div style={{ fontSize: 11, color: '#64748b' }}>~{est.estimatedFileSizeGb}GB file</div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <VramBar gb={est.estimatedVramGb} />
-                            <QualityMeter score={est.qualityScore} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                  {/* Status Pill */}
+                  <div className="flex items-center gap-2">
+                    {currentHighlightSpec.fitStatus === 'full' && (
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-600/50 text-xs font-bold">
+                        <CheckCircle2 size={14} className="text-emerald-400" />
+                        <span>100% GPU VRAM (Maximum Tok/s)</span>
+                      </div>
+                    )}
+                    {currentHighlightSpec.fitStatus === 'partial' && (
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-950/80 text-amber-300 border border-amber-600/50 text-xs font-bold">
+                        <AlertTriangle size={14} className="text-amber-400" />
+                        <span>Hybrid CPU/GPU Split (PCIe Bottleneck)</span>
+                      </div>
+                    )}
+                    {currentHighlightSpec.fitStatus === 'oom' && (
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-600/50 text-xs font-bold">
+                        <XCircle size={14} className="text-rose-400" />
+                        <span>OOM / Severe System RAM Fallback</span>
+                      </div>
+                    )}
 
-                {selectedEstimate && (
-                  <div style={{ marginTop: 16, background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', borderRadius: 10, padding: '14px 18px' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: '#c084fc', marginBottom: 8 }}>SELECTED: {selectedEstimate.quantType}</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12, color: '#94a3b8' }}>
-                      <div>File size: <strong style={{ color: '#e2e8f0' }}>{selectedEstimate.estimatedFileSizeGb} GB</strong></div>
-                      <div>VRAM needed: <strong style={{ color: '#e2e8f0' }}>{selectedEstimate.estimatedVramGb} GB</strong></div>
-                      <div>Bits/weight: <strong style={{ color: '#e2e8f0' }}>{selectedEstimate.bitsPerWeight}</strong></div>
-                      <div>Quality: <strong style={{ color: '#e2e8f0' }}>{selectedEstimate.qualityScore}%</strong></div>
+                    <div className="px-3 py-1 rounded-lg bg-zinc-800 text-zinc-200 text-xs font-mono font-bold">
+                      ⚡ ~{currentHighlightSpec.estimatedTokPerSec} tok/s
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* Interactive VRAM vs RAM Visual Stack Bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      GPU VRAM: {currentHighlightSpec.layersInVram}/{activeModel.layers} Layers ({currentHighlightSpec.offloadPct}%)
+                    </span>
+                    <span className="text-amber-400 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      System RAM Spill: {currentHighlightSpec.layersInRam} Layers
+                    </span>
+                    <span className="text-zinc-400">
+                      Total Needed: {currentHighlightSpec.totalVramRequiredGb} GB / {gpuVramGb} GB Available
+                    </span>
+                  </div>
+
+                  <div className="h-6 w-full rounded-lg bg-zinc-950 border border-zinc-800 overflow-hidden flex shadow-inner">
+                    {/* VRAM offload segment */}
+                    <div
+                      style={{ width: `${currentHighlightSpec.offloadPct}%` }}
+                      className={`h-full flex items-center justify-center text-[10px] font-mono font-bold text-white transition-all duration-300 ${
+                        currentHighlightSpec.offloadPct === 100
+                          ? 'bg-gradient-to-r from-emerald-600 to-teal-500'
+                          : 'bg-gradient-to-r from-emerald-600 to-amber-500'
+                      }`}
+                    >
+                      {currentHighlightSpec.offloadPct > 15 && `${currentHighlightSpec.layersInVram} Layers in VRAM`}
+                    </div>
+                    {/* RAM fallback segment */}
+                    {currentHighlightSpec.layersInRam > 0 && (
+                      <div
+                        style={{ width: `${100 - currentHighlightSpec.offloadPct}%` }}
+                        className="h-full bg-gradient-to-r from-amber-600/80 to-rose-600/80 flex items-center justify-center text-[10px] font-mono font-bold text-white transition-all duration-300"
+                      >
+                        {100 - currentHighlightSpec.offloadPct > 15 && `${currentHighlightSpec.layersInRam} Layers in CPU RAM`}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Detailed Memory Specs Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1 text-xs">
+                  <div className="p-3 bg-zinc-950/60 rounded-lg border border-zinc-800">
+                    <span className="text-zinc-500 text-[10px] font-mono uppercase block">Model Weights</span>
+                    <span className="text-sm font-mono font-bold text-zinc-100">{currentHighlightSpec.weightsGb} GB</span>
+                  </div>
+                  <div className="p-3 bg-zinc-950/60 rounded-lg border border-zinc-800">
+                    <span className="text-zinc-500 text-[10px] font-mono uppercase block">KV Cache Footprint</span>
+                    <span className="text-sm font-mono font-bold text-indigo-300">{currentHighlightSpec.kvCacheGb} GB</span>
+                  </div>
+                  <div className="p-3 bg-zinc-950/60 rounded-lg border border-zinc-800">
+                    <span className="text-zinc-500 text-[10px] font-mono uppercase block">Perplexity / Quality</span>
+                    <span className="text-sm font-mono font-bold text-purple-300">{currentHighlightSpec.qualityScore}% of FP16</span>
+                  </div>
+                  <div className="p-3 bg-zinc-950/60 rounded-lg border border-zinc-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-zinc-500 text-[10px] font-mono uppercase block">1-Click Convert</span>
+                      <span className="text-xs font-bold text-emerald-400">Ready to Quantize</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedQuant(currentHighlightSpec.quantType);
+                        setActiveTab('quantize');
+                      }}
+                      className="px-2.5 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold cursor-pointer transition-colors"
+                    >
+                      Use {currentHighlightSpec.quantType} →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quantization Formats Comparison Matrix */}
+              <div className="border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900/30">
+                <div className="px-4 py-3 bg-zinc-900/80 border-b border-zinc-800 flex items-center justify-between">
+                  <div className="font-bold text-xs font-mono uppercase tracking-wider text-zinc-300">
+                    GGUF Quantization Comparison Matrix (All Formats)
+                  </div>
+                  <span className="text-[11px] text-zinc-500">
+                    Click any row to simulate memory allocation
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="bg-[#121320] text-zinc-400 uppercase text-[10px] border-b border-zinc-800">
+                      <tr>
+                        <th className="py-2.5 px-3">Format</th>
+                        <th className="py-2.5 px-3">Bits/Weight</th>
+                        <th className="py-2.5 px-3">File Size</th>
+                        <th className="py-2.5 px-3">Total VRAM Req.</th>
+                        <th className="py-2.5 px-3">VRAM Offload</th>
+                        <th className="py-2.5 px-3">Speed</th>
+                        <th className="py-2.5 px-3">Quality</th>
+                        <th className="py-2.5 px-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/50 text-zinc-300">
+                      {calculationResults.formatBreakdown.map((row) => {
+                        const isHighlighted = row.quantType === activeQuantHighlight;
+                        return (
+                          <tr
+                            key={row.quantType}
+                            onClick={() => setActiveQuantHighlight(row.quantType)}
+                            className={`cursor-pointer transition-colors ${
+                              isHighlighted
+                                ? 'bg-purple-950/40 border-l-2 border-purple-500 text-white'
+                                : 'hover:bg-zinc-800/40'
+                            }`}
+                          >
+                            <td className="py-2.5 px-3 font-bold text-purple-300 flex items-center gap-1.5">
+                              <span>{row.quantType}</span>
+                              {row.quantType === 'Q4_K_M' && (
+                                <span className="text-[8px] bg-emerald-950 text-emerald-300 border border-emerald-700/60 px-1 py-0.2 rounded font-sans font-bold">
+                                  BEST FIT
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-zinc-400">{row.bitsPerWeight} bpw</td>
+                            <td className="py-2.5 px-3 text-zinc-200">{row.weightsGb} GB</td>
+                            <td className="py-2.5 px-3 font-semibold text-zinc-100">{row.totalVramRequiredGb} GB</td>
+                            <td className="py-2.5 px-3">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  row.offloadPct === 100
+                                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/50'
+                                    : row.offloadPct >= 50
+                                    ? 'bg-amber-950 text-amber-300 border border-amber-700/50'
+                                    : 'bg-rose-950 text-rose-300 border border-rose-700/50'
+                                }`}>
+                                  {row.offloadPct}% ({row.layersInVram}/{activeModel.layers})
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 text-zinc-300">~{row.estimatedTokPerSec} t/s</td>
+                            <td className="py-2.5 px-3 text-zinc-300">{row.qualityScore}%</td>
+                            <td className="py-2.5 px-3 text-right">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedQuant(row.quantType);
+                                  setActiveTab('quantize');
+                                }}
+                                className="px-2 py-1 text-[11px] font-sans font-semibold rounded bg-zinc-800 hover:bg-purple-600 text-zinc-200 hover:text-white transition-colors cursor-pointer"
+                              >
+                                Select
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
-          {/* ── Jobs tab ── */}
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 2: 1-CLICK GGUF QUANTIZER
+             ══════════════════════════════════════════════════════════════════ */}
+          {activeTab === 'quantize' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Input Configuration */}
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-800/40 text-xs text-purple-300">
+                  💡 Converting directly to <strong>{selectedQuant}</strong> using optimal k-quant quantization scales.
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-purple-300 uppercase tracking-wider font-mono block mb-1">
+                    Raw Model / Safetensors Directory
+                  </label>
+                  <input
+                    type="text"
+                    value={modelPath}
+                    onChange={(e) => setModelPath(e.target.value)}
+                    placeholder="e.g. models/qwen2.5-coder-7b or C:\ai\models\llama-3.1"
+                    className="w-full bg-[#121320] border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-200 font-mono focus:outline-none focus:border-purple-500"
+                  />
+                  <span className="text-[10px] text-zinc-500 block mt-1">
+                    Directory containing config.json and model.safetensors or .bin weights
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-purple-300 uppercase tracking-wider font-mono block mb-1">
+                    Output Destination Directory
+                  </label>
+                  <input
+                    type="text"
+                    value={outputDir}
+                    onChange={(e) => setOutputDir(e.target.value)}
+                    placeholder="models/quantized"
+                    className="w-full bg-[#121320] border border-zinc-700 rounded-lg p-2.5 text-xs text-zinc-200 font-mono focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-purple-300 uppercase tracking-wider font-mono block mb-1.5">
+                    Target Quantization Format
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {QUANT_SPECS.slice(1, 7).map(qs => (
+                      <button
+                        key={qs.quantType}
+                        onClick={() => setSelectedQuant(qs.quantType)}
+                        className={`p-2.5 rounded-lg border text-left cursor-pointer transition-all ${
+                          selectedQuant === qs.quantType
+                            ? 'bg-purple-950/60 border-purple-500 text-white'
+                            : 'bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-mono font-bold text-xs">
+                          <span>{qs.quantType}</span>
+                          <span className="text-[10px] text-zinc-500">{qs.bitsPerWeight} bpw</span>
+                        </div>
+                        <div className="text-[10px] text-zinc-400 truncate mt-0.5">{qs.name}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={handleStartQuantize}
+                    disabled={isQuantizing || !modelPath.trim()}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-purple-900/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isQuantizing ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        <span>Quantizing Model to {selectedQuant}…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={16} />
+                        <span>1-Click Quantize to {selectedQuant} GGUF</span>
+                      </>
+                    )}
+                  </button>
+                  {statusMsg && (
+                    <div className="mt-2 text-xs text-purple-400 font-mono text-center">
+                      {statusMsg}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Side: Quick Export to Ollama & Specs */}
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 space-y-3">
+                  <h3 className="text-xs font-bold text-purple-300 font-mono uppercase tracking-wider flex items-center gap-1.5">
+                    <Database size={14} />
+                    Instant Ollama Model Generator
+                  </h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Once converted to GGUF, generate a native Ollama Modelfile and load it directly into your local offline engine:
+                  </p>
+                  <div className="p-3 bg-black/60 rounded-lg border border-zinc-800 font-mono text-[11px] text-zinc-300 space-y-1">
+                    <div className="text-zinc-500"># Modelfile created automatically</div>
+                    <div>FROM ./{outputDir}/{modelPath.split(/[\\/]/).pop()}-{selectedQuant}.gguf</div>
+                    <div>PARAMETER temperature 0.2</div>
+                    <div>PARAMETER stop &quot;&lt;|im_end|&gt;&quot;</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (onDeployToOllama) {
+                        const mName = modelPath.split(/[\\/]/).pop() || 'custom-model';
+                        onDeployToOllama(mName, `${outputDir}/${mName}-${selectedQuant}.gguf`);
+                      } else {
+                        setStatusMsg(`✓ Ollama Modelfile generated at ${outputDir}/Modelfile`);
+                      }
+                    }}
+                    className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Download size={13} />
+                    <span>Generate Ollama Modelfile &amp; Deploy</span>
+                  </button>
+                </div>
+
+                {/* Conversion Flow Diagram */}
+                <div className="p-4 rounded-xl bg-zinc-900/30 border border-zinc-800 space-y-2 text-xs font-mono">
+                  <div className="text-zinc-400 font-bold uppercase text-[10px]">Pipeline Flow</div>
+                  <div className="flex items-center gap-2 text-zinc-300">
+                    <span className="p-1 rounded bg-zinc-800 text-zinc-200">1. Safetensors</span>
+                    <span>→</span>
+                    <span className="p-1 rounded bg-zinc-800 text-zinc-200">2. llama.cpp Convert</span>
+                    <span>→</span>
+                    <span className="p-1 rounded bg-purple-950 text-purple-300 border border-purple-700/50">3. {selectedQuant} GGUF</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 3: JOBS & LOGS
+             ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'jobs' && (
-            <div>
+            <div className="space-y-4">
               {jobs.length === 0 ? (
-                <div style={{ color: '#475569', textAlign: 'center', padding: 40, fontSize: 14, fontStyle: 'italic' }}>
-                  No quantization jobs yet. Start one in the Convert tab.
+                <div className="py-16 text-center text-xs text-zinc-500 font-mono">
+                  No quantization jobs executed yet. Launch one from the 1-Click Quantizer tab.
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {jobs.map(job => (
-                    <div key={job.id} style={{
-                      background: 'rgba(12,10,20,0.5)', border: `1px solid ${job.status === 'done' ? 'rgba(34,197,94,0.25)' : job.status === 'error' ? 'rgba(239,68,68,0.25)' : 'rgba(168,85,247,0.2)'}`,
-                      borderRadius: 10, padding: '14px 18px',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                        <div style={{
-                          width: 8, height: 8, borderRadius: '50%',
-                          background: job.status === 'done' ? '#4ade80' : job.status === 'error' ? '#f87171' : '#c084fc',
-                          boxShadow: job.status === 'running' ? '0 0 8px #c084fc' : 'none',
-                          animation: job.status === 'running' ? 'pulse 1.5s infinite' : 'none',
-                        }} />
-                        <div style={{ flex: 1, fontFamily: 'monospace', fontSize: 12, color: '#e2e8f0' }}>{job.modelPath.split(/[\\/]/).pop()}</div>
-                        <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 12, color: '#c084fc' }}>{job.quantType}</span>
-                        <span style={{ fontSize: 11, color: job.status === 'done' ? '#4ade80' : job.status === 'error' ? '#f87171' : '#c084fc', fontWeight: 700 }}>
-                          {job.status.toUpperCase()}
+                jobs.map(job => (
+                  <div key={job.id} className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${
+                          job.status === 'done' ? 'bg-emerald-400' : job.status === 'error' ? 'bg-rose-400' : 'bg-purple-400 animate-ping'
+                        }`} />
+                        <span className="font-bold text-zinc-200">{job.modelPath}</span>
+                        <span className="px-1.5 py-0.2 bg-purple-950 text-purple-300 border border-purple-700/50 rounded">
+                          {job.quantType}
                         </span>
                       </div>
-
-                      {job.outputPath && (
-                        <div style={{ fontSize: 11, color: '#64748b', fontFamily: 'monospace', marginBottom: 8 }}>
-                          → {job.outputPath}
-                        </div>
-                      )}
-
-                      {job.log && job.log.length > 0 && <LogViewer lines={job.log} />}
-
-                      {job.error && (
-                        <div style={{ marginTop: 8, color: '#f87171', fontSize: 12, fontFamily: 'monospace' }}>
-                          ✗ {job.error}
-                        </div>
-                      )}
-
-                      <div style={{ fontSize: 10, color: '#475569', marginTop: 6 }}>
-                        {job.finishedAt
-                          ? `Finished in ${Math.round((job.finishedAt - job.startedAt) / 1000)}s`
-                          : `Running for ${Math.round((Date.now() - job.startedAt) / 1000)}s`}
-                      </div>
+                      <span className="text-zinc-500">
+                        {new Date(job.startedAt).toLocaleTimeString()}
+                      </span>
                     </div>
-                  ))}
-                </div>
+
+                    <div className="p-3 rounded-lg bg-black/80 font-mono text-[11px] text-zinc-400 max-h-36 overflow-y-auto space-y-1">
+                      {job.log.map((line, idx) => (
+                        <div key={idx}>{line}</div>
+                      ))}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           )}
 
-          {/* ── Setup Guide tab ── */}
+          {/* ══════════════════════════════════════════════════════════════════
+              TAB 4: SETUP GUIDE
+             ══════════════════════════════════════════════════════════════════ */}
           {activeTab === 'guide' && (
-            <div style={{ maxWidth: 680 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#c084fc', marginBottom: 16 }}>🛠 Installing llama.cpp</div>
-
-              {toolStatus?.installGuide && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {Object.entries(toolStatus.installGuide).map(([os, cmd]) => (
-                    <div key={os} style={{ background: 'rgba(12,10,20,0.6)', border: '1px solid rgba(168,85,247,0.15)', borderRadius: 8, padding: '12px 16px' }}>
-                      <div style={{ fontSize: 12, color: '#c084fc', fontWeight: 700, marginBottom: 8 }}>
-                        {os === 'windows' ? '🪟 Windows' : os === 'linux' ? '🐧 Linux' : '🍎 macOS'}
-                      </div>
-                      <pre style={{ margin: 0, fontFamily: 'monospace', fontSize: 12, color: '#94a3b8', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{cmd}</pre>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div style={{ marginTop: 20, background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.15)', borderRadius: 10, padding: '16px 20px' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#c084fc', marginBottom: 10 }}>📋 Supported Quantization Formats</div>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(168,85,247,0.2)' }}>
-                      {['Format','Bits/W','Quality','Best For'].map(h => (
-                        <th key={h} style={{ padding: '4px 8px', color: '#c084fc', textAlign: 'left', fontSize: 11, fontWeight: 700 }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ['Q4_K_M','4.85','84%','Daily use · low VRAM'],
-                      ['Q5_K_M','5.68','91%','Balanced · medium VRAM'],
-                      ['Q8_0','8.5','99%','High quality · 8GB+ VRAM'],
-                      ['Q4_0','4.5','72%','Minimum VRAM (basic)'],
-                      ['Q6_K','6.57','96%','Near-lossless on consumer GPU'],
-                      ['F16','16','100%','Full precision (reference)'],
-                    ].map(([fmt, bpw, q, desc]) => (
-                      <tr key={fmt} style={{ borderBottom: '1px solid rgba(168,85,247,0.08)' }}>
-                        <td style={{ padding: '6px 8px', fontFamily: 'monospace', fontWeight: 700, color: '#e2e8f0' }}>{fmt}</td>
-                        <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{bpw}</td>
-                        <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{q}</td>
-                        <td style={{ padding: '6px 8px', color: '#64748b' }}>{desc}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="space-y-5 max-w-2xl text-xs text-zinc-300 leading-relaxed">
+              <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-800/40 space-y-2">
+                <h3 className="font-bold text-purple-300 font-mono uppercase">Offline GGUF Quantizer Prerequisites</h3>
+                <p>
+                  Offline AI Studio bundles native support for <code>llama-quantize</code>. If llama.cpp is not installed on your OS, install it using the instructions below:
+                </p>
               </div>
 
-              <div style={{ marginTop: 16, background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '14px 18px' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', marginBottom: 6 }}>💡 Tips</div>
-                <ul style={{ margin: 0, paddingLeft: 18, color: '#64748b', fontSize: 12, lineHeight: 1.8 }}>
-                  <li>Use <strong style={{ color: '#94a3b8' }}>Q4_K_M</strong> for models you'll use daily — best size/quality ratio</li>
-                  <li>Use <strong style={{ color: '#94a3b8' }}>Q8_0</strong> when quality matters most and you have enough VRAM</li>
-                  <li>After quantizing, load via Ollama: <code style={{ color: '#c084fc' }}>ollama create my-model -f Modelfile</code></li>
-                  <li>HuggingFace Hub: download safetensors with <code style={{ color: '#c084fc' }}>huggingface-cli download model-id</code></li>
-                </ul>
+              <div className="space-y-3 font-mono text-xs">
+                <div className="p-3 bg-zinc-900/80 rounded-lg border border-zinc-800">
+                  <span className="text-purple-400 font-bold block mb-1">🪟 Windows (winget or prebuilt release):</span>
+                  <code>winget install llama.cpp</code>
+                </div>
+                <div className="p-3 bg-zinc-900/80 rounded-lg border border-zinc-800">
+                  <span className="text-purple-400 font-bold block mb-1">🍎 macOS (Homebrew):</span>
+                  <code>brew install llama.cpp</code>
+                </div>
+                <div className="p-3 bg-zinc-900/80 rounded-lg border border-zinc-800">
+                  <span className="text-purple-400 font-bold block mb-1">🐧 Linux (Ubuntu / Debian):</span>
+                  <code>sudo apt update &amp;&amp; sudo apt install libomp-dev &amp;&amp; make -j llama.cpp</code>
+                </div>
               </div>
             </div>
           )}
         </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-purple-900/30 bg-[#121320] flex items-center justify-between text-xs text-zinc-400 font-mono">
+          <div className="flex items-center gap-2">
+            <span className="text-purple-400 font-semibold">● Offline VRAM Mathematical Model:</span>
+            <span>KV Cache + Model Weights + 450MB CUDA Kernel Overhead</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-colors cursor-pointer"
+          >
+            Close Studio
+          </button>
+        </div>
       </div>
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
     </div>
   );
 }

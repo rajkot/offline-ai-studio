@@ -576,6 +576,26 @@ export class ThemeEngine {
     }
   }
 
+  public updateThemeLive(theme: VsCodeThemeJson): void {
+    const id = this.slugify(theme.name || 'custom-live-theme');
+    this.themes.set(id, theme);
+    this.activeThemeId = id;
+    this.previewThemeId = id;
+    applyThemeToDom(theme);
+    if (this.monacoInstance?.editor) {
+      const monacoThemeData = convertVsCodeToMonacoTheme(theme);
+      this.monacoInstance.editor.defineTheme(id, monacoThemeData);
+      this.monacoInstance.editor.setTheme(id);
+    }
+    this.notify();
+  }
+
+  public exportThemeJson(themeId?: string): string {
+    const id = themeId || this.getActiveThemeId();
+    const theme = this.themes.get(id) || this.getActiveTheme();
+    return JSON.stringify(theme, null, 2);
+  }
+
   public registerTheme(theme: VsCodeThemeJson): string {
     const id = this.slugify(theme.name);
     this.themes.set(id, theme);

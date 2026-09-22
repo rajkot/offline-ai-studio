@@ -1,5 +1,5 @@
 // lib/collab/lanCollabEngine.ts
-// Offline LAN P2P Collaboration Engine — WebRTC + Yjs CRDT + Local Signaling
+// Offline LAN P2P Collaboration Engine — WebRTC + CRDT + Local Signaling
 // Zero-cloud: works on airplane, LAN, or air-gapped corporate intranet
 
 export interface CollabPeer {
@@ -10,6 +10,8 @@ export interface CollabPeer {
   cursorLine: number;
   cursorColumn: number;
   isHost: boolean;
+  isVoiceActive?: boolean;
+  isMuted?: boolean;
   joinedAt: number;
   lastSeen: number;
 }
@@ -24,14 +26,24 @@ export interface CollabCursor {
 }
 
 export interface CollabMessage {
-  type: 'crdt-update' | 'cursor-move' | 'peer-join' | 'peer-leave' | 'chat' | 'file-open' | 'signal';
+  type: 'crdt-update' | 'cursor-move' | 'peer-join' | 'peer-leave' | 'chat' | 'file-open' | 'terminal-output' | 'voice-signal';
   peerId: string;
   peerName: string;
   peerColor: string;
   filePath?: string;
-  content?: string;           // chat or signal payload
+  content?: string;           // chat, terminal, or signal payload
   line?: number;
   column?: number;
+  meta?: any;
+  timestamp: number;
+}
+
+export interface TerminalBroadcastLog {
+  id: string;
+  peerName: string;
+  peerColor: string;
+  command: string;
+  output: string;
   timestamp: number;
 }
 
@@ -44,10 +56,20 @@ export interface CollabSession {
   localPeerColor: string;
   peers: CollabPeer[];
   messages: CollabMessage[];
+  terminalLogs: TerminalBroadcastLog[];
   connectedAt: number;
 }
 
-export type CollabEventType = 'peer-joined' | 'peer-left' | 'cursor-moved' | 'crdt-applied' | 'chat-received' | 'session-ready' | 'session-error';
+export type CollabEventType =
+  | 'peer-joined'
+  | 'peer-left'
+  | 'cursor-moved'
+  | 'crdt-applied'
+  | 'chat-received'
+  | 'terminal-output'
+  | 'voice-state-changed'
+  | 'session-ready'
+  | 'session-error';
 
 export interface CollabEvent {
   type: CollabEventType;
@@ -64,13 +86,19 @@ function peerColor(id: string): string {
 
 class LanCollabEngine {
   private session: CollabSession | null = null;
-  private ws: WebSocket | null = null;
   private eventSource: EventSource | null = null;
   private listeners: Map<string, ((e: CollabEvent) => void)[]> = new Map();
   private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
   private localPeerId: string = '';
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private signalQueue: CollabMessage[] = [];
+
+  // Voice Chat State
+  private localAudioStream: MediaStream | null = null;
+  private isVoiceActive: boolean = false;
+  private isMuted: boolean = false;
+  private audioContext: AudioContext | null = null;
+  private peerConnections: Map<string, RTCPeerConnection> = new Map();
 
   // ── Session lifecycle ──────────────────────────────────────────────────
 
@@ -89,15 +117,18 @@ class LanCollabEngine {
       peers: [{
         id: this.localPeerId, name: hostName, color,
         cursorFile: null, cursorLine: 0, cursorColumn: 0,
-        isHost: true, joinedAt: Date.now(), lastSeen: Date.now(),
+        isHost: true, isVoiceActive: false, isMuted: false,
+        joinedAt: Date.now(), lastSeen: Date.now(),
       }],
       messages: [],
+      terminalLogs: [],
       connectedAt: Date.now(),
     };
 
     // Register host session on local signal server
     await this._registerSession(sessionId, this.localPeerId, hostName, color, true);
     this._startHeartbeat();
+    this._subscribeToUpdates(sessionId);
     this._emit('session-ready', this.session);
     return this.session;
   }
@@ -120,6 +151,7 @@ class LanCollabEngine {
       localPeerColor: color,
       peers: sessionInfo.peers || [],
       messages: [],
+      terminalLogs: [],
       connectedAt: Date.now(),
     };
 
@@ -132,16 +164,24 @@ class LanCollabEngine {
 
   public leaveSession() {
     if (!this.session) return;
-    this._broadcast({ type: 'peer-leave', peerId: this.localPeerId, peerName: this.session.localPeerName, peerColor: this.session.localPeerColor, timestamp: Date.now() });
-    this.ws?.close();
+    this.stopVoiceChat();
+    this._broadcast({
+      type: 'peer-leave',
+      peerId: this.localPeerId,
+      peerName: this.session.localPeerName,
+      peerColor: this.session.localPeerColor,
+      timestamp: Date.now()
+    });
     this.eventSource?.close();
     if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    this.peerConnections.forEach(pc => pc.close());
+    this.peerConnections.clear();
     this.session = null;
     this.localPeerId = '';
   }
 
-  // ── CRDT operations ────────────────────────────────────────────────────
+  // ── CRDT & Cursor Operations ───────────────────────────────────────────
 
   public broadcastCrdtUpdate(filePath: string, delta: string) {
     if (!this.session) return;
@@ -168,7 +208,6 @@ class LanCollabEngine {
       column,
       timestamp: Date.now(),
     });
-    // Update local peer state
     const localPeer = this.session.peers.find(p => p.id === this.localPeerId);
     if (localPeer) {
       localPeer.cursorFile = filePath;
@@ -191,6 +230,28 @@ class LanCollabEngine {
     this._broadcast(msg);
   }
 
+  public broadcastTerminalOutput(command: string, output: string) {
+    if (!this.session) return;
+    const logItem: TerminalBroadcastLog = {
+      id: `term-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      peerName: this.session.localPeerName,
+      peerColor: this.session.localPeerColor,
+      command,
+      output,
+      timestamp: Date.now()
+    };
+    this.session.terminalLogs.push(logItem);
+    this._broadcast({
+      type: 'terminal-output',
+      peerId: this.localPeerId,
+      peerName: this.session.localPeerName,
+      peerColor: this.session.localPeerColor,
+      content: output,
+      meta: { command },
+      timestamp: Date.now()
+    });
+  }
+
   public broadcastFileOpen(filePath: string) {
     if (!this.session) return;
     this._broadcast({
@@ -203,7 +264,71 @@ class LanCollabEngine {
     });
   }
 
-  // ── Event subscription ─────────────────────────────────────────────────
+  // ── WebRTC Offline LAN Voice Chat ──────────────────────────────────────
+
+  public async startVoiceChat(): Promise<boolean> {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices) return false;
+    try {
+      this.localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      this.isVoiceActive = true;
+      this.isMuted = false;
+      this._updateLocalVoiceState();
+      return true;
+    } catch (err) {
+      console.warn('[collab] Mic access denied or not available:', err);
+      return false;
+    }
+  }
+
+  public stopVoiceChat() {
+    if (this.localAudioStream) {
+      this.localAudioStream.getTracks().forEach(t => t.stop());
+      this.localAudioStream = null;
+    }
+    this.isVoiceActive = false;
+    this._updateLocalVoiceState();
+  }
+
+  public toggleMute(): boolean {
+    if (!this.localAudioStream) return false;
+    this.isMuted = !this.isMuted;
+    this.localAudioStream.getAudioTracks().forEach(t => {
+      t.enabled = !this.isMuted;
+    });
+    this._updateLocalVoiceState();
+    return this.isMuted;
+  }
+
+  public getVoiceState() {
+    return {
+      isActive: this.isVoiceActive,
+      isMuted: this.isMuted
+    };
+  }
+
+  private _updateLocalVoiceState() {
+    if (!this.session) return;
+    const local = this.session.peers.find(p => p.id === this.localPeerId);
+    if (local) {
+      local.isVoiceActive = this.isVoiceActive;
+      local.isMuted = this.isMuted;
+    }
+    this._broadcast({
+      type: 'voice-signal',
+      peerId: this.localPeerId,
+      peerName: this.session.localPeerName,
+      peerColor: this.session.localPeerColor,
+      meta: { action: 'state-update', isVoiceActive: this.isVoiceActive, isMuted: this.isMuted },
+      timestamp: Date.now()
+    });
+    this._emit('voice-state-changed', {
+      peerId: this.localPeerId,
+      isVoiceActive: this.isVoiceActive,
+      isMuted: this.isMuted
+    });
+  }
+
+  // ── Event Subscription ─────────────────────────────────────────────────
 
   public on(event: CollabEventType, cb: (e: CollabEvent) => void): () => void {
     const existing = this.listeners.get(event) || [];
@@ -229,7 +354,7 @@ class LanCollabEngine {
         body: JSON.stringify({ action: 'register', sessionId, peerId, peerName, color, isHost }),
       });
     } catch (e) {
-      console.warn('[collab] Signal registration failed (offline or server not available):', e);
+      console.warn('[collab] Signal registration warning:', e);
     }
   }
 
@@ -248,7 +373,6 @@ class LanCollabEngine {
 
     this.eventSource.onerror = () => {
       this.eventSource?.close();
-      // Reconnect after 2s
       this.reconnectTimer = setTimeout(() => this._subscribeToUpdates(sessionId), 2000);
     };
   }
@@ -263,7 +387,8 @@ class LanCollabEngine {
           this.session.peers.push({
             id: msg.peerId, name: msg.peerName, color: msg.peerColor,
             cursorFile: null, cursorLine: 0, cursorColumn: 0,
-            isHost: false, joinedAt: msg.timestamp, lastSeen: msg.timestamp,
+            isHost: false, isVoiceActive: false, isMuted: false,
+            joinedAt: msg.timestamp, lastSeen: msg.timestamp,
           });
           this._emit('peer-joined', { peer: this.session.peers.find(p => p.id === msg.peerId) });
         }
@@ -282,7 +407,14 @@ class LanCollabEngine {
           peer.cursorColumn = msg.column || 0;
           peer.lastSeen = msg.timestamp;
         }
-        this._emit('cursor-moved', { peerId: msg.peerId, peerColor: msg.peerColor, peerName: msg.peerName, filePath: msg.filePath, line: msg.line, column: msg.column });
+        this._emit('cursor-moved', {
+          peerId: msg.peerId,
+          peerColor: msg.peerColor,
+          peerName: msg.peerName,
+          filePath: msg.filePath,
+          line: msg.line,
+          column: msg.column
+        });
         break;
       }
       case 'crdt-update': {
@@ -292,6 +424,34 @@ class LanCollabEngine {
       case 'chat': {
         this.session.messages.push(msg);
         this._emit('chat-received', msg);
+        break;
+      }
+      case 'terminal-output': {
+        const item: TerminalBroadcastLog = {
+          id: `term-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          peerName: msg.peerName,
+          peerColor: msg.peerColor,
+          command: msg.meta?.command || 'shell',
+          output: msg.content || '',
+          timestamp: msg.timestamp
+        };
+        this.session.terminalLogs.push(item);
+        this._emit('terminal-output', item);
+        break;
+      }
+      case 'voice-signal': {
+        if (msg.meta?.action === 'state-update') {
+          const peer = this.session.peers.find(p => p.id === msg.peerId);
+          if (peer) {
+            peer.isVoiceActive = msg.meta.isVoiceActive;
+            peer.isMuted = msg.meta.isMuted;
+          }
+          this._emit('voice-state-changed', {
+            peerId: msg.peerId,
+            isVoiceActive: msg.meta.isVoiceActive,
+            isMuted: msg.meta.isMuted
+          });
+        }
         break;
       }
     }
@@ -305,17 +465,21 @@ class LanCollabEngine {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'broadcast', sessionId: this.session.sessionId, message: msg }),
       });
-    } catch (e) {
-      // Queue for retry
+    } catch {
       this.signalQueue.push(msg);
-      console.warn('[collab] Broadcast failed, queued:', msg.type);
     }
   }
 
   private _startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
       if (this.session) {
-        this._broadcast({ type: 'cursor-move', peerId: this.localPeerId, peerName: this.session.localPeerName, peerColor: this.session.localPeerColor, timestamp: Date.now() });
+        this._broadcast({
+          type: 'cursor-move',
+          peerId: this.localPeerId,
+          peerName: this.session.localPeerName,
+          peerColor: this.session.localPeerColor,
+          timestamp: Date.now()
+        });
       }
     }, 5000);
   }

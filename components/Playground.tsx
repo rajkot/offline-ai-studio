@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff } from 'lucide-react';
+import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff, Palette } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import JSZip from 'jszip';
 import CommandPalette, { getActiveKeybindings } from './CommandPalette';
@@ -76,6 +76,7 @@ import AgenticComposerModal from '@/client/components/AgenticComposerModal';
 import PreCommitReviewModal from '@/client/components/PreCommitReviewModal';
 import DockerSandboxPanel from './DockerSandboxPanel';
 import LanCollabPanel from './LanCollabPanel';
+import { lanCollabEngine, CollabPeer } from '@/lib/collab/lanCollabEngine';
 import SemanticSearchPalette from './SemanticSearchPalette';
 import GgufQuantizerStudio from './GgufQuantizerStudio';
 import { gitGutterEngine, GutterClickEvent } from '@/lib/git/gitGutterEngine';
@@ -518,6 +519,51 @@ export default function Playground({
   const dapUnsubRef = useRef<(() => void) | null>(null);
   const testDecorationsRef = useRef<string[]>([]);
   const testUnsubRef = useRef<(() => void) | null>(null);
+
+  // Peer-to-Peer Offline LAN Pair Programming Cursors
+  const [cursorPosition, setCursorPosition] = useState<{ line: number; column: number }>({ line: 1, column: 1 });
+  const [collabPeers, setCollabPeers] = useState<CollabPeer[]>([]);
+  const peerDecorationsRef = useRef<string[]>([]);
+
+  // Subscribe to offline LAN pair programming peer cursors
+  useEffect(() => {
+    const unsub = lanCollabEngine.on('cursor-moved', () => {
+      const sess = lanCollabEngine.getSession();
+      if (sess) {
+        setCollabPeers([...sess.peers]);
+      }
+    });
+    return unsub;
+  }, []);
+
+  // Update remote peer cursor decorations in Monaco
+  useEffect(() => {
+    if (!editorRef.current || !monacoRef.current) return;
+    const currentFile = selectedFileRef.current;
+    if (!currentFile || currentFile.startsWith('__')) {
+      peerDecorationsRef.current = editorRef.current.deltaDecorations(peerDecorationsRef.current, []);
+      return;
+    }
+
+    const localPeerId = lanCollabEngine.getLocalPeerId();
+    const otherPeers = collabPeers.filter(p => p.id !== localPeerId && p.cursorFile === currentFile && p.cursorLine > 0);
+
+    const decorations: any[] = otherPeers.map(p => ({
+      range: new monacoRef.current.Range(p.cursorLine, p.cursorColumn || 1, p.cursorLine, (p.cursorColumn || 1) + 1),
+      options: {
+        className: 'peer-cursor-marker',
+        overviewRuler: {
+          color: p.color || '#22d3ee',
+          position: monacoRef.current.editor.OverviewRulerLane.Right
+        },
+        hoverMessage: {
+          value: `👤 **${p.name}** is editing here (Line ${p.cursorLine})`
+        }
+      }
+    }));
+
+    peerDecorationsRef.current = editorRef.current.deltaDecorations(peerDecorationsRef.current, decorations);
+  }, [collabPeers, selectedFile]);
 
   useEffect(() => {
     selectedFileRef.current = selectedFile;
@@ -977,6 +1023,16 @@ export default function Playground({
             const bp = dapDebugger.addBreakpoint(file, line);
             setActiveBreakpointToEdit(bp);
           }
+        }
+      }
+    });
+
+    // Real-Time Cursor position tracking for Offline LAN Pair Programming
+    editor.onDidChangeCursorPosition((e: any) => {
+      if (e.position) {
+        setCursorPosition({ line: e.position.lineNumber, column: e.position.column });
+        if (selectedFileRef.current && !selectedFileRef.current.startsWith('__')) {
+          lanCollabEngine.broadcastCursorMove(selectedFileRef.current, e.position.lineNumber, e.position.column);
         }
       }
     });
@@ -3958,6 +4014,36 @@ export default function ExtractedVisionUI() {
               <Maximize2 size={13} />
             </button>
           </div>
+
+          {/* Peer-to-Peer Offline LAN Pair Programming Button */}
+          <button
+            id="header-lan-collab-button"
+            onClick={() => setIsLanCollabOpen(true)}
+            title="P2P Offline LAN Pair Programming (Zero Cloud · WebRTC)"
+            className="p-1 h-7 w-7 border border-[#27272a] rounded bg-[#18181b] hover:bg-cyan-950/60 text-cyan-400 hover:border-cyan-700/60 transition-colors cursor-pointer flex items-center justify-center shrink-0"
+          >
+            <Users size={12} />
+          </button>
+
+          {/* Offline Model Quantizer & Live VRAM Fit Calculator */}
+          <button
+            id="header-vram-quantizer-button"
+            onClick={() => setIsGgufQuantizerOpen(true)}
+            title="Offline Model Quantizer & VRAM Fit Calculator"
+            className="p-1 h-7 w-7 border border-[#27272a] rounded bg-[#18181b] hover:bg-purple-950/60 text-purple-400 hover:border-purple-700/60 transition-colors cursor-pointer flex items-center justify-center shrink-0"
+          >
+            <Cpu size={12} />
+          </button>
+
+          {/* Theme Studio & Live Customizer Button */}
+          <button
+            id="header-theme-studio-button"
+            onClick={() => setIsThemePickerOpen(true)}
+            title="Live Theme Studio & VS Code Theme Customizer (Ctrl+K Ctrl+T)"
+            className="p-1 h-7 w-7 border border-[#27272a] rounded bg-[#18181b] hover:bg-indigo-950/60 text-indigo-400 hover:border-indigo-700/60 transition-colors cursor-pointer flex items-center justify-center shrink-0"
+          >
+            <Palette size={12} />
+          </button>
 
           {/* Theme Toggle Button */}
           <button
@@ -7127,8 +7213,8 @@ export default function ExtractedVisionUI() {
         isOpen={isLanCollabOpen}
         onClose={() => setIsLanCollabOpen(false)}
         activeFile={selectedFile}
-        cursorLine={undefined}
-        cursorColumn={undefined}
+        cursorLine={cursorPosition.line}
+        cursorColumn={cursorPosition.column}
         onIncomingEdit={(filePath, delta, _peerId) => {
           if (parsedFiles[filePath] !== undefined) {
             handleUpdateFile(filePath, delta);
