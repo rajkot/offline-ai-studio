@@ -43,7 +43,7 @@ import {
   McpCallLog,
   McpServerConfig
 } from '@/lib/mcp/McpClient';
-import { MCP_SERVERS_REGISTRY, McpMarketplaceServer } from '@/app/api/mcp/registry/route';
+import { MCP_SERVERS_REGISTRY, McpMarketplaceServer } from '@/lib/mcp/registryCatalog';
 
 interface McpStudioPanelProps {
   workspaceFiles: Record<string, string>;

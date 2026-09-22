@@ -43,7 +43,7 @@ import {
   ExtensionManifest,
   VscodeConfigurationProperty
 } from '@/lib/extensions/ExtensionHost';
-import { OFFLINE_EXTENSIONS_CATALOG, VscodeMarketplaceItem } from '@/app/api/extensions/marketplace/route';
+import { OFFLINE_EXTENSIONS_CATALOG, VscodeMarketplaceItem } from '@/lib/extensions/marketplaceCatalog';
 
 interface ExtensionsManagerStudioProps {
   onExecuteCommand?: (cmd: string) => void;
