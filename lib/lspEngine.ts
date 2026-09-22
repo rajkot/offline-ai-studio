@@ -87,6 +87,31 @@ export class LSPEngine {
 
   /**
    * Extracts symbols from code using regex and AST-pattern parsing
+  /**
+   * Helper to find closing bracket of a code block starting at lineIdx
+   */
+  private findBlockEnd(lines: string[], startIdx: number): number {
+    let openBrackets = 0;
+    let started = false;
+    for (let i = startIdx; i < lines.length; i++) {
+      const l = lines[i];
+      for (let c = 0; c < l.length; c++) {
+        if (l[c] === '{') {
+          openBrackets++;
+          started = true;
+        } else if (l[c] === '}') {
+          openBrackets--;
+          if (started && openBrackets <= 0) {
+            return i + 1;
+          }
+        }
+      }
+    }
+    return Math.min(lines.length, startIdx + 1);
+  }
+
+  /**
+   * Extracts symbols from code using regex and AST-pattern parsing
    */
   private extractSymbols(filePath: string, code: string): LSPSymbol[] {
     const symbols: LSPSymbol[] = [];
@@ -96,14 +121,15 @@ export class LSPEngine {
       const lineNum = lineIdx + 1;
       const trimmed = lineText.trim();
 
-      // 1. Functions & Arrow Functions: export function name(...) or function name(...)
-      const fnMatch = lineText.match(/(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?/);
+      // 1. Functions & React Components: export default? function name(...) or function name(...)
+      const fnMatch = lineText.match(/(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?/);
       if (fnMatch) {
         const name = fnMatch[1];
         const rawParams = fnMatch[2];
         const returnType = fnMatch[3]?.trim() || 'void';
         const col = lineText.indexOf(name) + 1;
         const params = this.parseParams(rawParams);
+        const endLine = this.findBlockEnd(lines, lineIdx);
 
         symbols.push({
           name,
@@ -111,7 +137,7 @@ export class LSPEngine {
           filePath,
           line: lineNum,
           column: col,
-          endLine: lineNum,
+          endLine,
           endColumn: col + name.length,
           signature: `function ${name}(${rawParams}): ${returnType}`,
           returnType,
@@ -121,14 +147,15 @@ export class LSPEngine {
         });
       }
 
-      // Arrow functions: const name = (params) => ...
-      const arrowMatch = lineText.match(/(?:export\s+)?(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*(?:async\s*)?\(([^)]*)\)(?:\s*:\s*([^{=]+))?\s*=>/);
+      // Arrow functions & hooks: const name = (params) => ... or const name = useCallback(...)
+      const arrowMatch = lineText.match(/(?:export\s+)?(?:const|let|var)\s+([a-zA-Z0-9_$]+)\s*=\s*(?:async\s*)?(?:\(([^)]*)\)|useCallback\(\s*(?:async\s*)?\(([^)]*)\)|([a-zA-Z0-9_$]+)\s*=>)(?:\s*:\s*([^{=]+))?\s*=>/);
       if (arrowMatch) {
         const name = arrowMatch[1];
-        const rawParams = arrowMatch[2];
-        const returnType = arrowMatch[3]?.trim() || 'any';
+        const rawParams = arrowMatch[2] || arrowMatch[3] || arrowMatch[4] || '';
+        const returnType = arrowMatch[5]?.trim() || 'any';
         const col = lineText.indexOf(name) + 1;
         const params = this.parseParams(rawParams);
+        const endLine = this.findBlockEnd(lines, lineIdx);
 
         symbols.push({
           name,
@@ -136,7 +163,7 @@ export class LSPEngine {
           filePath,
           line: lineNum,
           column: col,
-          endLine: lineNum,
+          endLine,
           endColumn: col + name.length,
           signature: `const ${name} = (${rawParams}): ${returnType} =>`,
           returnType,
@@ -146,18 +173,47 @@ export class LSPEngine {
         });
       }
 
+      // Class / Object Methods: public/private/async name(...) {
+      const methodMatch = lineText.match(/^\s*(?:public|private|protected|static|override)?\s*(?:async\s+)?([a-zA-Z0-9_$]+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?\s*\{/);
+      if (methodMatch && !fnMatch && !arrowMatch && !lineText.includes('if') && !lineText.includes('for') && !lineText.includes('switch') && !lineText.includes('while') && !lineText.includes('catch')) {
+        const name = methodMatch[1];
+        if (name !== 'constructor' && name !== 'render') {
+          const rawParams = methodMatch[2];
+          const returnType = methodMatch[3]?.trim() || 'void';
+          const col = lineText.indexOf(name) + 1;
+          const params = this.parseParams(rawParams);
+          const endLine = this.findBlockEnd(lines, lineIdx);
+
+          symbols.push({
+            name,
+            kind: 'method',
+            filePath,
+            line: lineNum,
+            column: col,
+            endLine,
+            endColumn: col + name.length,
+            signature: `${name}(${rawParams}): ${returnType}`,
+            returnType,
+            params,
+            documentation: `Method ${name} in ${filePath}`,
+            exported: false
+          });
+        }
+      }
+
       // 2. Classes: class Name ...
-      const classMatch = lineText.match(/(?:export\s+)?(?:abstract\s+)?class\s+([a-zA-Z0-9_$]+)(?:\s+extends\s+([a-zA-Z0-9_$]+))?/);
+      const classMatch = lineText.match(/(?:export\s+(?:default\s+)?)?(?:abstract\s+)?class\s+([a-zA-Z0-9_$]+)(?:\s+extends\s+([a-zA-Z0-9_$]+))?/);
       if (classMatch) {
         const name = classMatch[1];
         const col = lineText.indexOf(name) + 1;
+        const endLine = this.findBlockEnd(lines, lineIdx);
         symbols.push({
           name,
           kind: 'class',
           filePath,
           line: lineNum,
           column: col,
-          endLine: lineNum,
+          endLine,
           endColumn: col + name.length,
           signature: classMatch[0].trim(),
           documentation: `Class ${name} declared in ${filePath}`,
@@ -170,13 +226,14 @@ export class LSPEngine {
       if (interfaceMatch) {
         const name = interfaceMatch[1];
         const col = lineText.indexOf(name) + 1;
+        const endLine = this.findBlockEnd(lines, lineIdx);
         symbols.push({
           name,
           kind: 'interface',
           filePath,
           line: lineNum,
           column: col,
-          endLine: lineNum,
+          endLine,
           endColumn: col + name.length,
           signature: `interface ${name}`,
           documentation: `TypeScript Interface ${name} in ${filePath}`,
@@ -189,13 +246,14 @@ export class LSPEngine {
       if (typeMatch) {
         const name = typeMatch[1];
         const col = lineText.indexOf(name) + 1;
+        const endLine = lineText.includes(';') ? lineNum : this.findBlockEnd(lines, lineIdx);
         symbols.push({
           name,
           kind: 'type',
           filePath,
           line: lineNum,
           column: col,
-          endLine: lineNum,
+          endLine,
           endColumn: col + name.length,
           signature: `type ${name}`,
           documentation: `TypeScript Type Alias ${name} in ${filePath}`,
@@ -467,6 +525,26 @@ export class LSPEngine {
       all.push(...list);
     }
     return all;
+  }
+
+  /**
+   * Returns symbols enclosing a specific line, sorted outermost to innermost
+   * (e.g. [Playground, handleExecuteCommand]) for breadcrumbs navigation
+   */
+  public getEnclosingSymbols(filePath: string, line: number): LSPSymbol[] {
+    const symbols = this.symbolIndex.get(filePath) || [];
+    const matching = symbols.filter(s => line >= s.line && line <= s.endLine);
+    // Sort from outermost (larger line span) to innermost (smaller line span)
+    matching.sort((a, b) => (b.endLine - b.line) - (a.endLine - a.line));
+    return matching;
+  }
+
+  /**
+   * Finds all exported symbols matching a query for auto-import Quick Fixes (Ctrl+.)
+   */
+  public findExportedSymbols(name?: string): LSPSymbol[] {
+    const all = this.getAllSymbols();
+    return all.filter(s => s.exported && (!name || s.name.toLowerCase() === name.toLowerCase()));
   }
 
   private escapeRegex(str: string): string {

@@ -62,12 +62,15 @@ import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
 import GitHunkPopover from '@/client/components/GitHunkPopover';
 import InlineAiDiffTransformer from '@/client/components/InlineAiDiffTransformer';
 import GitCommitModal from '@/client/components/GitCommitModal';
+import BreadcrumbsBar from '@/client/components/BreadcrumbsBar';
+import ReferencesPeekModal from '@/client/components/ReferencesPeekModal';
 import MultiFileComposerModal from './MultiFileComposerModal';
 import DockerSandboxPanel from './DockerSandboxPanel';
 import LanCollabPanel from './LanCollabPanel';
 import SemanticSearchPalette from './SemanticSearchPalette';
 import GgufQuantizerStudio from './GgufQuantizerStudio';
 import { gitGutterEngine, GutterClickEvent } from '@/lib/git/gitGutterEngine';
+import { crossFileLspManager, ReferencesPeekData } from '@/lib/lsp/crossFileLspManager';
 import { localWhisperEngine } from '@/lib/ai/localWhisperEngine';
 import { webGpuEngine } from '@/lib/ai/webGpuEngine';
 import { autonomousAgentEngine } from '@/lib/ai/autonomousAgentEngine';
@@ -471,6 +474,10 @@ export default function Playground({
   const [isInlineAiOpen, setIsInlineAiOpen] = useState<boolean>(false);
   const [inlineAiSelectedCode, setInlineAiSelectedCode] = useState<string>('');
   const [inlineAiSelectionRange, setInlineAiSelectionRange] = useState<{ startLine: number; startColumn: number; endLine: number; endColumn: number } | null>(null);
+
+  // Cross-File LSP Intelligence & Breadcrumbs Navigation States
+  const [activeReferencesPeek, setActiveReferencesPeek] = useState<ReferencesPeekData | null>(null);
+  const [activeCursorLine, setActiveCursorLine] = useState<number>(1);
 
   // Real-Time Inline Ghost Text & Native LSP Engine States
   const [inlayHintsEnabled, setInlayHintsEnabled] = useState<boolean>(true);
@@ -964,6 +971,30 @@ export default function Playground({
       }
     });
 
+    // 10. Cross-File LSP Intelligence Manager (F12 Go To Definition, Shift+F12 References, F2 Rename, Ctrl+. Quick Fix)
+    crossFileLspManager.attach(monaco, editor);
+    crossFileLspManager.setOnOpenFile((filePath, line, column) => {
+      setOpenTabs(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
+      setSelectedFile(filePath);
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.revealLineInCenter(line);
+          editorRef.current.setPosition({ lineNumber: line, column: column || 1 });
+          editorRef.current.focus();
+        }
+      }, 80);
+    });
+    crossFileLspManager.setOnBatchApplyFiles((files, message) => {
+      handleBatchApplyFiles(files);
+      if (message) {
+        setDiskToastMessage(message);
+        setTimeout(() => setDiskToastMessage(null), 3000);
+      }
+    });
+    crossFileLspManager.setOnReferencesFound((data) => {
+      setActiveReferencesPeek(data);
+    });
+
     const updateSelectionCoords = () => {
       const selection = editor.getSelection();
       if (selection && !selection.isEmpty()) {
@@ -994,6 +1025,7 @@ export default function Playground({
 
     editor.onDidChangeCursorPosition((e: any) => {
       const line = e.position.lineNumber;
+      setActiveCursorLine(line);
       const current = selectedFileRef.current;
       if (current && !current.startsWith('__')) {
         const blame = gitEngine.computeBlame(current, parsedFilesRef.current[current]);
@@ -1009,13 +1041,34 @@ export default function Playground({
     });
   };
 
-  const handleJumpToLine = useCallback((lineNum: number) => {
+  const handleJumpToLine = useCallback((lineNum: number, column?: number) => {
     if (editorRef.current) {
       editorRef.current.revealLineInCenter(lineNum);
-      editorRef.current.setPosition({ lineNumber: lineNum, column: 1 });
+      editorRef.current.setPosition({ lineNumber: lineNum, column: column || 1 });
       editorRef.current.focus();
     }
   }, []);
+
+  const handleJumpToLocation = useCallback((filePath: string, lineNum?: number, column?: number) => {
+    if (filePath && !filePath.startsWith('__')) {
+      setOpenTabs(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
+      setSelectedFile(filePath);
+      if (lineNum !== undefined && lineNum > 0) {
+        setTimeout(() => {
+          if (editorRef.current) {
+            editorRef.current.revealLineInCenter(lineNum);
+            editorRef.current.setPosition({ lineNumber: lineNum, column: column || 1 });
+            editorRef.current.focus();
+          }
+        }, 80);
+      }
+    }
+  }, []);
+
+  // Synchronize Monaco multi-models for cross-file LSP navigation
+  useEffect(() => {
+    crossFileLspManager.syncWorkspaceModels(parsedFiles);
+  }, [parsedFiles]);
 
   // Listen for Git gutter click events
   useEffect(() => {
@@ -1266,22 +1319,6 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       return result;
     });
   }, []);
-
-  const handleJumpToLocation = useCallback((filePath: string, lineNum?: number) => {
-    if (filePath !== selectedFile) {
-      setOpenTabs(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
-      setSelectedFile(filePath);
-    }
-    if (lineNum !== undefined) {
-      setTimeout(() => {
-        if (editorRef.current) {
-          editorRef.current.revealLineInCenter(lineNum);
-          editorRef.current.setPosition({ lineNumber: lineNum, column: 1 });
-          editorRef.current.focus();
-        }
-      }, 60);
-    }
-  }, [selectedFile]);
 
   const [commitMessage, setCommitMessage] = useState('');
   const [auditResults, setAuditResults] = useState('');
@@ -4943,6 +4980,17 @@ export default function ExtractedVisionUI() {
                     </div>
                   )}
 
+                  {/* Breadcrumbs Symbol & Path Navigation Bar */}
+                  {selectedFile && !selectedFile.startsWith('__') && (
+                    <BreadcrumbsBar
+                      currentFilePath={selectedFile}
+                      cursorLine={activeCursorLine}
+                      workspaceFiles={parsedFiles}
+                      onSelectFile={handleSelectFile}
+                      onJumpToLine={handleJumpToLine}
+                    />
+                  )}
+
                   <div className="flex-1 w-full relative min-h-0 flex flex-row overflow-hidden">
                     <div className={`h-full transition-all ${isLivePreviewOpen ? 'w-1/2 border-r border-slate-800' : 'w-full'}`}>
                       <MonacoEditor
@@ -4974,7 +5022,9 @@ export default function ExtractedVisionUI() {
                           cursorBlinking: 'smooth',
                           contextmenu: true,
                           inlineSuggest: { enabled: ghostTextEnabled, mode: 'subwordSmart' },
-                          inlayHints: { enabled: inlayHintsEnabled ? 'on' : 'off' }
+                          inlayHints: { enabled: inlayHintsEnabled ? 'on' : 'off' },
+                          stickyScroll: { enabled: true, maxLineCount: 5 },
+                          glyphMargin: true
                         }}
                       />
                     </div>
@@ -6361,6 +6411,13 @@ export default function ExtractedVisionUI() {
             gitGutterEngine.refreshFile(selectedFile, editorRef.current);
           }
         }}
+      />
+
+      {/* Cross-File References Peek Panel (Shift+F12) */}
+      <ReferencesPeekModal
+        data={activeReferencesPeek}
+        onClose={() => setActiveReferencesPeek(null)}
+        onJumpToLocation={handleJumpToLocation}
       />
 
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}
