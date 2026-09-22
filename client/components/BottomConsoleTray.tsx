@@ -294,7 +294,7 @@ export default function BottomConsoleTray({
       <div className="h-11 min-h-[44px] px-4 bg-[#141416] border-b border-[#27272a] flex items-center justify-between gap-4 shrink-0 relative z-10">
         <div className="flex items-center gap-1 overflow-x-auto scrollbar-none h-full">
           
-          {/* PROBLEMS (LSP DIAGNOSTICS) TAB */}
+          {/* 1. PROBLEMS (LSP DIAGNOSTICS) TAB */}
           <button
             onClick={() => { setActiveTab('problems'); setIsCollapsed(false); }}
             className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
@@ -325,31 +325,7 @@ export default function BottomConsoleTray({
             )}
           </button>
 
-          {/* MCP HUB TAB */}
-          <button
-            onClick={() => { setActiveTab('mcp'); setIsCollapsed(false); }}
-            className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
-              activeTab === 'mcp' && !isCollapsed
-                ? 'border-indigo-500 text-white bg-[#18181b]'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#18181b]/40'
-            }`}
-          >
-            <Radio size={12} className="text-purple-400" />
-            <span>MCP Hub</span>
-          </button>
-
-          <button
-            onClick={() => { setActiveTab('terminal'); setIsCollapsed(false); }}
-            className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
-              activeTab === 'terminal' && !isCollapsed
-                ? 'border-indigo-500 text-white bg-[#18181b]'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#18181b]/40'
-            }`}
-          >
-            <TerminalIcon size={12} className="text-emerald-400" />
-            Terminal
-          </button>
-
+          {/* 2. OUTPUT (COMPILER & TASKS LOGS) TAB */}
           <button
             onClick={() => { setActiveTab('build'); setIsCollapsed(false); }}
             className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
@@ -362,6 +338,46 @@ export default function BottomConsoleTray({
             Output
           </button>
 
+          {/* 3. DEBUG CONSOLE (DAP RUNTIME & REPL) TAB */}
+          <button
+            onClick={() => { setActiveTab('dap'); setIsCollapsed(false); }}
+            className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
+              activeTab === 'dap' && !isCollapsed
+                ? 'border-indigo-500 text-white bg-[#18181b]'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#18181b]/40'
+            }`}
+          >
+            <Bug size={12} className="text-rose-400" />
+            Debug Console
+          </button>
+
+          {/* 4. TERMINAL (PTY SHELL & AI FIX) TAB */}
+          <button
+            onClick={() => { setActiveTab('terminal'); setIsCollapsed(false); }}
+            className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
+              activeTab === 'terminal' && !isCollapsed
+                ? 'border-indigo-500 text-white bg-[#18181b]'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#18181b]/40'
+            }`}
+          >
+            <TerminalIcon size={12} className="text-emerald-400" />
+            Terminal
+          </button>
+
+          {/* 5. MCP HUB TAB */}
+          <button
+            onClick={() => { setActiveTab('mcp'); setIsCollapsed(false); }}
+            className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
+              activeTab === 'mcp' && !isCollapsed
+                ? 'border-indigo-500 text-white bg-[#18181b]'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#18181b]/40'
+            }`}
+          >
+            <Radio size={12} className="text-purple-400" />
+            <span>MCP Hub</span>
+          </button>
+
+          {/* 6. WEBCONTAINER (WASI) TAB */}
           <button
             onClick={() => { setActiveTab('wasi'); setIsCollapsed(false); }}
             className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
@@ -374,18 +390,7 @@ export default function BottomConsoleTray({
             WebContainer
           </button>
 
-          <button
-            onClick={() => { setActiveTab('dap'); setIsCollapsed(false); }}
-            className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
-              activeTab === 'dap' && !isCollapsed
-                ? 'border-indigo-500 text-white bg-[#18181b]'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#18181b]/40'
-            }`}
-          >
-            <Bug size={12} className="text-rose-400" />
-            Debug
-          </button>
-
+          {/* 7. GIT DAG TAB */}
           <button
             onClick={() => { setActiveTab('git'); setIsCollapsed(false); }}
             className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
@@ -398,6 +403,7 @@ export default function BottomConsoleTray({
             Git DAG
           </button>
 
+          {/* 8. STORAGE (OPFS) TAB */}
           <button
             onClick={() => { setActiveTab('opfs'); setIsCollapsed(false); }}
             className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
@@ -410,18 +416,7 @@ export default function BottomConsoleTray({
             Storage
           </button>
 
-          <button
-            onClick={() => { setActiveTab('plugins'); setIsCollapsed(false); }}
-            className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${
-              activeTab === 'plugins' && !isCollapsed
-                ? 'border-indigo-500 text-white bg-[#18181b]'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-[#18181b]/40'
-            }`}
-          >
-            <Package size={12} className="text-purple-400" />
-            Extensions
-          </button>
-
+          {/* 9. TELEMETRY TAB */}
           <button
             onClick={() => { setActiveTab('telemetry'); setIsCollapsed(false); }}
             className={`h-full px-3.5 text-xs font-semibold flex items-center gap-1.5 transition-colors border-b-2 cursor-pointer uppercase tracking-wider ${

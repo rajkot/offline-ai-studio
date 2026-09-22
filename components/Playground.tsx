@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff } from 'lucide-react';
+import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import JSZip from 'jszip';
 import CommandPalette, { getActiveKeybindings } from './CommandPalette';
@@ -1583,9 +1583,18 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
   };
 
   const [editorMenuDropdown, setEditorMenuDropdown] = useState<'ai' | 'tools' | null>(null);
-  const [activeActivityTab, setActiveActivityTab] = useState<'explorer' | 'search' | 'git' | 'debug' | 'swarm' | 'training' | 'wasi' | 'composer' | 'plugins' | 'hitl'>('explorer');
+  const [activeActivityTab, setActiveActivityTab] = useState<'explorer' | 'search' | 'git' | 'debug' | 'extensions' | 'chat' | 'mcp' | 'swarm' | 'database' | 'training' | 'wasi' | 'composer' | 'plugins' | 'hitl'>('explorer');
   const [activeMenuDropdown, setActiveMenuDropdown] = useState<string | null>(null);
   const [isZenMode, setIsZenMode] = useState(false);
+  
+  // VS Code Explorer Accordions & Activity Popups
+  const [isOpenEditorsOpen, setIsOpenEditorsOpen] = useState(true);
+  const [isWorkspaceFilesOpen, setIsWorkspaceFilesOpen] = useState(true);
+  const [isOutlineOpen, setIsOutlineOpen] = useState(false);
+  const [isDevHubsOpen, setIsDevHubsOpen] = useState(false);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+
   const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
   const [sidebarReplaceQuery, setSidebarReplaceQuery] = useState('');
   const [literalSearchResults, setLiteralSearchResults] = useState<FileSearchResult[]>([]);
@@ -1609,6 +1618,12 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       }
       if (!target.closest('#editor-actions-menu')) {
         setEditorMenuDropdown(null);
+      }
+      if (!target.closest('#activity-settings-btn') && !target.closest('#activity-settings-menu')) {
+        setIsSettingsMenuOpen(false);
+      }
+      if (!target.closest('#activity-account-btn') && !target.closest('#activity-account-menu')) {
+        setIsAccountMenuOpen(false);
       }
     };
     document.addEventListener('click', handleDocumentClick);
@@ -2005,11 +2020,50 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         return;
       }
 
+      // Ctrl+Shift+E: Explorer Sidebar
+      if ((e.key === 'E' || e.key === 'e') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        setActiveActivityTab('explorer');
+        setIsLeftPanelOpen(true);
+        return;
+      }
+
       // Ctrl+Shift+F: Dedicated Find & Replace Across Files Sidebar
       if ((e.key === 'F' || e.key === 'f') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         e.preventDefault();
         setActiveActivityTab('search');
         setIsLeftPanelOpen(true);
+        return;
+      }
+
+      // Ctrl+Shift+G: Source Control Sidebar
+      if ((e.key === 'G' || e.key === 'g') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        setActiveActivityTab('git');
+        setIsLeftPanelOpen(true);
+        return;
+      }
+
+      // Ctrl+Shift+D: Run & Debug Sidebar
+      if ((e.key === 'D' || e.key === 'd') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        setActiveActivityTab('debug');
+        setIsLeftPanelOpen(true);
+        return;
+      }
+
+      // Ctrl+Shift+X: Extensions Marketplace Sidebar
+      if ((e.key === 'X' || e.key === 'x') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        setActiveActivityTab('extensions');
+        setIsLeftPanelOpen(true);
+        return;
+      }
+
+      // Ctrl+Alt+A: Toggle AI Assistant Panel
+      if ((e.key === 'A' || e.key === 'a') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        setIsSidebarOpen(prev => !prev);
         return;
       }
 
@@ -3497,18 +3551,18 @@ export default function ExtractedVisionUI() {
         </div>
 
         {/* Center: Dynamic Command & File Search Bar */}
-        <div id="header-center" className="flex-1 max-w-sm mx-4 hidden md:block">
+        <div id="header-center" className="flex-1 max-w-md mx-4 hidden md:block">
           <div 
             onClick={() => setIsCommandPaletteOpen(true)}
             className="flex items-center gap-2 w-full h-7 bg-[#18181b] border border-[#27272a] hover:border-zinc-600 px-2.5 rounded-md text-[11px] text-zinc-400 cursor-pointer transition-all shadow-inner group"
           >
             <Search size={12} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-            <span className="truncate flex-1">Search files or execute commands...</span>
+            <span className="truncate flex-1">offline-ai-studio — Search files (Ctrl+P) or commands</span>
             <kbd className="text-[9px] bg-zinc-800 border border-zinc-700 text-zinc-400 px-1 py-0.5 rounded font-mono font-medium">Ctrl+P</kbd>
           </div>
         </div>
 
-        {/* Right: Ollama, Language, Role & VS Code Layout Sliders */}
+        {/* Right: Ollama, Online AI, Run Task, Webview, Voice & VS Code Layout Sliders */}
         <div id="header-right" className="flex gap-2 items-center">
           {/* Live Ollama Daemon Status & Model Switcher Widget */}
           <OllamaStatusBar onModelSelect={(m) => setActiveOllamaModel(m)} />
@@ -3516,24 +3570,32 @@ export default function ExtractedVisionUI() {
           {/* Online AI Hub & Model Connection Widget */}
           <OnlineAiStatusBar onOpenHub={() => setIsOnlineAiHubOpen(true)} />
 
-          {/* Autonomous Agent Mode (Devin / Claude Code) */}
+          {/* Run Build Task Quick Action (Ctrl+Shift+B) */}
           <button
-            onClick={() => setIsAutonomousAgentOpen(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-indigo-950 to-purple-950 hover:from-indigo-900 hover:to-purple-900 border border-indigo-700/60 rounded-md text-[11px] text-indigo-200 font-medium transition-all shadow-sm cursor-pointer h-7"
-            title="Launch Autonomous Agent (Self-Healing Feedback Loop: Prompt -> Plan -> Code -> Test -> Patch)"
+            onClick={() => {
+              taskRunnerEngine.runBuildTask();
+              setIsTasksLauncherOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-2 py-0.5 bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700/60 rounded text-[11px] text-indigo-200 font-medium transition-all shadow-xs cursor-pointer h-7"
+            title="Run Build Task (Ctrl+Shift+B)"
           >
-            <Bot size={13} className="text-indigo-400" />
-            <span className="font-bold">Agent Mode</span>
+            <Play size={11} className="text-indigo-400 fill-indigo-400" />
+            <span>Build</span>
+            <kbd className="text-[9px] bg-indigo-900/80 text-indigo-300 px-1 rounded font-mono hidden sm:inline">Ctrl+Shift+B</kbd>
           </button>
 
-          {/* WebGPU Zero-Install Local Inference */}
+          {/* Live Split-Screen Webview Toggle */}
           <button
-            onClick={() => setIsWebGpuStudioOpen(true)}
-            className="flex items-center gap-1.5 px-2 py-1 bg-[#18181b] hover:bg-[#202024] border border-[#27272a] hover:border-cyan-700/60 rounded-md text-[11px] text-cyan-300 font-medium transition-all h-7 cursor-pointer"
-            title="WebGPU Zero-Install Local Inference (Run Qwen2.5-Coder & SmolLM2 in Browser Memory)"
+            onClick={() => setIsLivePreviewOpen(prev => !prev)}
+            className={`flex items-center gap-1.5 px-2 py-0.5 border rounded text-[11px] font-medium transition-all h-7 cursor-pointer ${
+              isLivePreviewOpen
+                ? 'bg-sky-950 border-sky-600 text-sky-200'
+                : 'bg-[#18181b] hover:bg-[#202024] border-[#27272a] hover:border-sky-700/60 text-slate-300'
+            }`}
+            title="Toggle Live Split-Screen Webview"
           >
-            <Cpu size={13} className="text-cyan-400" />
-            <span>WebGPU AI</span>
+            <Globe size={12} className={isLivePreviewOpen ? 'text-sky-400' : 'text-slate-400'} />
+            <span className="hidden sm:inline">Webview</span>
           </button>
 
           {/* Local Voice-to-Code Whisper Dictation */}
@@ -3542,50 +3604,26 @@ export default function ExtractedVisionUI() {
               setIsVoiceOverlayOpen(true);
               localWhisperEngine.toggleRecording();
             }}
-            className={`flex items-center gap-1.5 px-2 py-1 border rounded-md text-[11px] font-medium transition-all h-7 cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2 py-0.5 border rounded text-[11px] font-medium transition-all h-7 cursor-pointer ${
               isVoiceRecording
                 ? 'bg-rose-950 border-rose-600 text-rose-200 animate-pulse'
                 : 'bg-[#18181b] hover:bg-[#202024] border-[#27272a] hover:border-rose-700/60 text-slate-300'
             }`}
-            title="Local Voice-to-Code (F8): 100% Air-Gapped Speech-to-Text directly to Cursor / Composer"
+            title="Local Voice-to-Code (F8): 100% Air-Gapped Speech-to-Text"
           >
-            <Mic size={13} className={isVoiceRecording ? 'text-rose-400' : 'text-slate-400'} />
-            <span>Voice</span>
-            <kbd className="text-[9px] bg-zinc-800 text-zinc-400 px-1 rounded font-mono">F8</kbd>
-          </button>
-
-          {/* Built-in Database Studio */}
-          <button
-            onClick={() => setIsDatabaseStudioOpen(true)}
-            className="flex items-center gap-1.5 px-2 py-1 bg-[#18181b] hover:bg-[#202024] border border-[#27272a] hover:border-teal-700/60 rounded-md text-[11px] text-teal-300 font-medium transition-all h-7 cursor-pointer"
-            title="Database Studio: Visual SQLite & PostgreSQL client, ER diagrams, AI SQL"
-          >
-            <Database size={13} className="text-teal-400" />
-            <span>DB Studio</span>
-          </button>
-
-          {/* Live Split-Screen Webview Toggle */}
-          <button
-            onClick={() => setIsLivePreviewOpen(prev => !prev)}
-            className={`flex items-center gap-1.5 px-2 py-1 border rounded-md text-[11px] font-medium transition-all h-7 cursor-pointer ${
-              isLivePreviewOpen
-                ? 'bg-sky-950 border-sky-600 text-sky-200'
-                : 'bg-[#18181b] hover:bg-[#202024] border-[#27272a] hover:border-sky-700/60 text-slate-300'
-            }`}
-            title="Toggle Live Split-Screen Webview with device emulation & DOM inspector"
-          >
-            <Globe size={13} className={isLivePreviewOpen ? 'text-sky-400' : 'text-slate-400'} />
-            <span>Webview</span>
+            <Mic size={12} className={isVoiceRecording ? 'text-rose-400' : 'text-slate-400'} />
+            <span className="hidden sm:inline">Voice</span>
+            <kbd className="text-[9px] bg-zinc-800 text-zinc-400 px-1 rounded font-mono hidden sm:inline">F8</kbd>
           </button>
 
           {/* Global Response Language Dropdown */}
-          <div id="language-dropdown-container" title="Global AI Response Language" className="hidden sm:flex items-center gap-1.5 bg-[#18181b] hover:bg-[#202024] px-2 py-0.5 rounded-md border border-[#27272a] hover:border-zinc-700 transition-all h-7">
+          <div id="language-dropdown-container" title="Global AI Response Language" className="hidden xl:flex items-center gap-1.5 bg-[#18181b] hover:bg-[#202024] px-2 py-0.5 rounded border border-[#27272a] hover:border-zinc-700 transition-all h-7">
             <span className="text-xs select-none" role="img" aria-label="Flag">{currentLangConfig.flag}</span>
             <select 
               value={activeLanguage} 
               onChange={(e) => handleSetLanguage(e.target.value)} 
               aria-label="Select AI Response Language"
-              className="border-none bg-transparent text-[10px] font-medium text-zinc-200 focus:outline-none cursor-pointer p-0 pr-1 select-none font-sans max-w-[90px] truncate"
+              className="border-none bg-transparent text-[10px] font-medium text-zinc-200 focus:outline-none cursor-pointer p-0 pr-1 select-none font-sans max-w-[80px] truncate"
             >
               {SUPPORTED_LANGUAGES.map(l => (
                 <option key={l.code} value={l.code} className="bg-[#18181b] text-zinc-200">
@@ -3595,21 +3633,8 @@ export default function ExtractedVisionUI() {
             </select>
           </div>
 
-          {/* Active User Identity & Role Switcher */}
-          <div id="role-switcher-container" className="hidden md:flex items-center gap-1 bg-[#18181b] px-2 py-0.5 rounded-md border border-[#27272a] h-7">
-            <select
-              value={userRole}
-              onChange={(e) => setUserRole(e.target.value as UserRole)}
-              className="border-none bg-transparent text-[10px] font-medium text-zinc-300 focus:outline-none cursor-pointer p-0 select-none font-sans"
-            >
-              <option value="admin" className="bg-[#18181b] text-zinc-300">👑 Admin</option>
-              <option value="developer" className="bg-[#18181b] text-zinc-300">💻 Dev</option>
-              <option value="guest" className="bg-[#18181b] text-zinc-300">👤 Guest</option>
-            </select>
-          </div>
-
           {/* VS Code Sliding Panel Layout Controllers */}
-          <div className="flex items-center bg-[#18181b] p-0.5 rounded-md border border-[#27272a] gap-0.5 h-7">
+          <div className="flex items-center bg-[#18181b] p-0.5 rounded border border-[#27272a] gap-0.5 h-7">
             <button
               onClick={() => setIsLeftPanelOpen(prev => !prev)}
               title="Toggle Primary Sidebar (Ctrl+B)"
@@ -3653,7 +3678,7 @@ export default function ExtractedVisionUI() {
             id="header-theme-toggle"
             onClick={toggleTheme}
             title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-            className="p-1 h-7 w-7 border border-[#27272a] rounded-md bg-[#18181b] hover:bg-zinc-800 text-zinc-300 transition-colors cursor-pointer flex items-center justify-center shrink-0"
+            className="p-1 h-7 w-7 border border-[#27272a] rounded bg-[#18181b] hover:bg-zinc-800 text-zinc-300 transition-colors cursor-pointer flex items-center justify-center shrink-0"
           >
             {theme === 'light' ? <Moon size={12} /> : <Sun size={12} />}
           </button>
@@ -3662,8 +3687,8 @@ export default function ExtractedVisionUI() {
           <button 
             id="header-settings-button"
             onClick={() => setIsSettingsOpen(true)} 
-            title="Open Settings"
-            className="p-1 h-7 w-7 border border-[#27272a] rounded-md bg-[#18181b] hover:bg-zinc-800 text-zinc-300 transition-colors cursor-pointer flex items-center justify-center shrink-0"
+            title="Open Settings (Ctrl+,)"
+            className="p-1 h-7 w-7 border border-[#27272a] rounded bg-[#18181b] hover:bg-zinc-800 text-zinc-300 transition-colors cursor-pointer flex items-center justify-center shrink-0"
           >
             <Settings size={12} />
           </button>
@@ -3678,18 +3703,14 @@ export default function ExtractedVisionUI() {
           className="w-12 min-w-[48px] max-w-[48px] bg-[#09090b] border-r border-[#27272a] flex flex-col justify-between items-center py-2 z-40 select-none shrink-0"
         >
           {/* Top Activity Icons */}
-          <div className="flex flex-col items-center gap-1.5 w-full">
+          <div className="flex flex-col items-center gap-1 w-full">
+            {/* 1. Core VS Code Essentials */}
             {[
               { id: 'explorer' as const, label: 'Explorer & Files (Ctrl+Shift+E)', icon: <Folder size={18} /> },
-              { id: 'search' as const, label: 'Search & RAG (Ctrl+Shift+F)', icon: <Search size={18} /> },
-              { id: 'git' as const, label: 'Source Control & DAG (Ctrl+Shift+G)', icon: <GitBranch size={18} /> },
+              { id: 'search' as const, label: 'Search & Replace (Ctrl+Shift+F)', icon: <Search size={18} /> },
+              { id: 'git' as const, label: 'Source Control (Ctrl+Shift+G)', icon: <GitBranch size={18} /> },
               { id: 'debug' as const, label: 'Run & Debug (Ctrl+Shift+D)', icon: <Bug size={18} /> },
-              { id: 'swarm' as const, label: 'Swarm Agents & Personas', icon: <Bot size={18} /> },
-              { id: 'training' as const, label: 'LoRA AI Training Lab', icon: <Brain size={18} /> },
-              { id: 'wasi' as const, label: 'WASI WebContainer Sandbox', icon: <Zap size={18} /> },
-              { id: 'composer' as const, label: 'Multi-File Spec Composer', icon: <Layers size={18} /> },
-              { id: 'plugins' as const, label: 'Extensions & Keymaps', icon: <Package size={18} /> },
-              { id: 'hitl' as const, label: 'HITL Security Approval Queue', icon: <ShieldAlert size={18} /> },
+              { id: 'extensions' as const, label: 'Extensions & Marketplace (Ctrl+Shift+X)', icon: <Package size={18} /> },
             ].map(tab => {
               const isActive = activeActivityTab === tab.id && isLeftPanelOpen;
               return (
@@ -3710,7 +3731,43 @@ export default function ExtractedVisionUI() {
                 >
                   {/* Left Active Glow Indicator */}
                   {isActive && (
-                    <div className="absolute left-0 top-1 bottom-1 w-0.5 bg-indigo-500 rounded-r shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-indigo-500 rounded-r shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
+                  )}
+                  <span className="group-hover:scale-105 transition-transform">{tab.icon}</span>
+                </button>
+              );
+            })}
+
+            {/* Subtle Divider */}
+            <div className="w-6 h-px bg-zinc-800/80 my-1 shrink-0" />
+
+            {/* 2. Advanced Studios & AI Section */}
+            {[
+              { id: 'chat' as const, label: 'AI Assistant & Copilot (Ctrl+Alt+A)', icon: <Bot size={18} /> },
+              { id: 'mcp' as const, label: 'MCP Protocol Studio & Hub', icon: <Radio size={18} /> },
+              { id: 'swarm' as const, label: 'Multi-Agent Swarm Orchestrator', icon: <Users size={18} /> },
+              { id: 'database' as const, label: 'Database Studio (SQLite & PG)', icon: <Database size={18} /> },
+              { id: 'wasi' as const, label: 'WASI WebContainer Dev Sandbox', icon: <Zap size={18} /> },
+            ].map(tab => {
+              const isActive = activeActivityTab === tab.id && isLeftPanelOpen;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (activeActivityTab === tab.id && isLeftPanelOpen) {
+                      setIsLeftPanelOpen(false);
+                    } else {
+                      setActiveActivityTab(tab.id);
+                      setIsLeftPanelOpen(true);
+                    }
+                  }}
+                  title={tab.label}
+                  className={`relative w-full flex items-center justify-center h-10 transition-colors cursor-pointer group ${
+                    isActive ? 'text-white' : 'text-zinc-500 hover:text-zinc-200'
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-purple-500 rounded-r shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
                   )}
                   <span className="group-hover:scale-105 transition-transform">{tab.icon}</span>
                 </button>
@@ -3718,22 +3775,152 @@ export default function ExtractedVisionUI() {
             })}
           </div>
 
-          {/* Bottom Activity Icons */}
-          <div className="flex flex-col items-center gap-2 w-full pt-2 border-t border-zinc-800/80">
-            <button
-              onClick={() => handleSelectFile('__COMPLIANCE_SHIELD__')}
-              title="Security & Compliance Shield"
-              className="w-full flex items-center justify-center h-9 text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
-            >
-              <ShieldCheck size={18} />
-            </button>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              title="IDE Settings"
-              className="w-full flex items-center justify-center h-9 text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
-            >
-              <Settings size={18} />
-            </button>
+          {/* Bottom Activity Icons: Account & Settings */}
+          <div className="flex flex-col items-center gap-1.5 w-full pt-2 border-t border-zinc-800/80 relative">
+            {/* Account / User Role Switcher */}
+            <div className="relative w-full flex justify-center">
+              <button
+                id="activity-account-btn"
+                onClick={() => setIsAccountMenuOpen(prev => !prev)}
+                title={`User Role: ${userRole.toUpperCase()} (Click to switch)`}
+                className="w-full flex items-center justify-center h-9 text-zinc-400 hover:text-white transition-colors cursor-pointer relative"
+              >
+                <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-xs text-zinc-300 hover:border-indigo-500">
+                  <User size={13} />
+                </div>
+                {/* Role indicator badge */}
+                <span className={`absolute bottom-1 right-2.5 w-2 h-2 rounded-full border border-[#09090b] ${
+                  userRole === 'admin' ? 'bg-amber-400' : userRole === 'developer' ? 'bg-emerald-400' : 'bg-zinc-400'
+                }`} />
+              </button>
+
+              {/* Account Dropdown Menu */}
+              {isAccountMenuOpen && (
+                <div 
+                  id="activity-account-menu"
+                  className="absolute left-12 bottom-0 w-60 bg-[#18181b] border border-zinc-700/80 rounded-lg shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs"
+                >
+                  <div className="px-2 py-1 border-b border-zinc-800 mb-1 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Account & Role</span>
+                    <span className="text-[9px] px-1.5 py-0.2 bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 rounded font-mono font-bold">100% Offline</span>
+                  </div>
+                  <div className="space-y-1">
+                    {[
+                      { role: 'admin' as const, label: '👑 Admin', desc: 'Full root AST & system execution' },
+                      { role: 'developer' as const, label: '💻 Developer', desc: 'Standard coding & terminal access' },
+                      { role: 'guest' as const, label: '👤 Guest', desc: 'Read-only sandboxed review' }
+                    ].map(r => (
+                      <button
+                        key={r.role}
+                        onClick={() => {
+                          setUserRole(r.role);
+                          setIsAccountMenuOpen(false);
+                        }}
+                        className={`w-full text-left p-1.5 rounded transition-colors flex flex-col cursor-pointer ${
+                          userRole === r.role ? 'bg-indigo-600 text-white' : 'hover:bg-zinc-800 text-zinc-300'
+                        }`}
+                      >
+                        <span className="font-semibold text-xs">{r.label}</span>
+                        <span className={`text-[10px] ${userRole === r.role ? 'text-indigo-200' : 'text-zinc-500'}`}>{r.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="h-px bg-zinc-800 my-1.5" />
+                  <button
+                    onClick={() => {
+                      handleSelectFile('__COMPLIANCE_SHIELD__');
+                      setIsAccountMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2 py-1 rounded hover:bg-zinc-800 text-zinc-300 flex items-center gap-1.5 cursor-pointer text-[11px]"
+                  >
+                    <ShieldCheck size={12} className="text-emerald-400" />
+                    <span>Compliance & Security Shield</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Settings Cog Dropdown */}
+            <div className="relative w-full flex justify-center">
+              <button
+                id="activity-settings-btn"
+                onClick={() => setIsSettingsMenuOpen(prev => !prev)}
+                title="Settings & Preferences"
+                className="w-full flex items-center justify-center h-9 text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
+              >
+                <Settings size={18} />
+              </button>
+
+              {/* Settings Dropdown Menu */}
+              {isSettingsMenuOpen && (
+                <div 
+                  id="activity-settings-menu"
+                  className="absolute left-12 bottom-0 w-56 bg-[#18181b] border border-zinc-700/80 rounded-lg shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs"
+                >
+                  <button
+                    onClick={() => {
+                      setIsCommandPaletteOpen(true);
+                      setIsSettingsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-indigo-600 hover:text-white rounded flex items-center justify-between text-zinc-200 cursor-pointer"
+                  >
+                    <span>Command Palette...</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+P</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(true);
+                      setIsSettingsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-indigo-600 hover:text-white rounded flex items-center justify-between text-zinc-200 cursor-pointer"
+                  >
+                    <span>Settings</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">Ctrl+,</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      taskRunnerEngine.runBuildTask();
+                      setIsTasksLauncherOpen(true);
+                      setIsSettingsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-indigo-600 hover:text-white rounded flex items-center justify-between text-zinc-200 cursor-pointer"
+                  >
+                    <span>Run Task...</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+B</span>
+                  </button>
+                  <div className="h-px bg-zinc-800 my-1" />
+                  <button
+                    onClick={() => {
+                      setIsThemePickerOpen(true);
+                      setIsSettingsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-indigo-600 hover:text-white rounded flex items-center justify-between text-zinc-200 cursor-pointer"
+                  >
+                    <span>Color Theme</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">Ctrl+K Ctrl+T</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSettingsInitialTab('keybindings');
+                      setIsSettingsOpen(true);
+                      setIsSettingsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-indigo-600 hover:text-white rounded flex items-center justify-between text-zinc-200 cursor-pointer"
+                  >
+                    <span>Keyboard Shortcuts</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleSelectFile('__DIAGNOSTICS__');
+                      setIsSettingsMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 hover:bg-indigo-600 hover:text-white rounded flex items-center justify-between text-zinc-200 cursor-pointer"
+                  >
+                    <span>Diagnostics & Help</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </aside>
 
@@ -3752,12 +3939,16 @@ export default function ExtractedVisionUI() {
             <div className="flex items-center justify-between px-3 py-2 border-b border-[#27272a] shrink-0 bg-[#121214]">
               <h3 className="font-semibold flex items-center gap-1.5 text-xs text-white uppercase tracking-wider font-mono">
                 {activeActivityTab === 'explorer' && <><Folder size={13} className="text-zinc-400" /> Explorer</>}
-                {activeActivityTab === 'search' && <><Search size={13} className="text-indigo-400" /> Search & RAG</>}
+                {activeActivityTab === 'search' && <><Search size={13} className="text-indigo-400" /> Search & Replace</>}
                 {activeActivityTab === 'git' && <><GitBranch size={13} className="text-emerald-400" /> Source Control</>}
                 {activeActivityTab === 'debug' && <><Bug size={13} className="text-rose-400" /> Run & Debug</>}
-                {activeActivityTab === 'swarm' && <><Bot size={13} className="text-indigo-400" /> Swarm Agents</>}
-                {activeActivityTab === 'training' && <><Brain size={13} className="text-indigo-400" /> AI Training</>}
+                {activeActivityTab === 'extensions' && <><Package size={13} className="text-purple-400" /> Extensions</>}
+                {activeActivityTab === 'chat' && <><Bot size={13} className="text-indigo-400" /> AI Assistant</>}
+                {activeActivityTab === 'mcp' && <><Radio size={13} className="text-purple-400" /> MCP Hub</>}
+                {activeActivityTab === 'swarm' && <><Users size={13} className="text-indigo-400" /> Swarm Agents</>}
+                {activeActivityTab === 'database' && <><Database size={13} className="text-teal-400" /> Database Studio</>}
                 {activeActivityTab === 'wasi' && <><Zap size={13} className="text-amber-400" /> WebContainer</>}
+                {activeActivityTab === 'training' && <><Brain size={13} className="text-indigo-400" /> AI Training</>}
                 {activeActivityTab === 'composer' && <><Layers size={13} className="text-purple-400" /> Composer</>}
                 {activeActivityTab === 'plugins' && <><Package size={13} className="text-purple-400" /> Extensions</>}
                 {activeActivityTab === 'hitl' && <><ShieldAlert size={13} className="text-rose-400" /> HITL Review</>}
@@ -3795,123 +3986,65 @@ export default function ExtractedVisionUI() {
               {/* Explorer Tab View */}
               {activeActivityTab === 'explorer' && (
                 <>
-                  {/* File Search Filter */}
-                  <div className="relative mb-2">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-500" size={11} />
-                    <input
-                      type="text"
-                      placeholder="Filter files..."
-                      value={sidebarSearchQuery}
-                      onChange={(e) => setSidebarSearchQuery(e.target.value)}
-                      className="w-full h-6.5 bg-[#121214] border border-zinc-800 hover:border-zinc-700 focus:border-indigo-600 focus:outline-none rounded pl-6 pr-2 text-[10.5px] text-zinc-200 placeholder-zinc-500 font-sans transition-all"
-                    />
-                  </div>
-
-                  {/* OPEN EDITORS Section */}
-                  <div className="border border-zinc-800/80 rounded-xl bg-zinc-900/30 p-2 space-y-1 mb-4 shadow-inner">
-                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-1 flex items-center justify-between">
-                      <span>Open Editors</span>
-                      <span className="bg-zinc-800 text-zinc-400 px-1.5 rounded-full text-[8px]">{openTabs.length}</span>
-                    </div>
-                    {openTabs.map(tabPath => {
-                      const label = getTabLabel(tabPath);
-                      const isDirty = dirtyFiles.includes(tabPath);
-                      return (
-                        <div
-                          key={tabPath}
-                          onClick={() => handleSelectFile(tabPath)}
-                          className={`flex items-center justify-between px-2 py-1 rounded text-[10.5px] font-medium transition-colors cursor-pointer group ${
-                            selectedFile === tabPath ? 'bg-indigo-950/60 text-indigo-200 border border-indigo-800/50' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 truncate">
-                            <FileText size={11} className="text-zinc-500 shrink-0" />
-                            <span className="truncate">{label}</span>
-                            {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />}
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCloseTab(tabPath);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-opacity"
-                          >
-                            <X size={10} />
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* WORKSPACE DASHBOARDS & HUBS Accordion */}
-                  <div className="space-y-1 pt-2">
-                    <div className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">AI & Dev Hubs</div>
-                    <div className="space-y-0.5">
-                    {[
-                      { id: '__HITL_HUB__', label: '👥 HITL Review', icon: <ShieldAlert size={12} className="text-rose-400 shrink-0" /> },
-                      { id: '__RAG_ANALYZER__', label: '🔍 RAG Analyzer', icon: <Search size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__PROMPT_LAB__', label: '🧪 Prompt Lab', icon: <Beaker size={12} className="text-purple-400 shrink-0" /> },
-                      { id: '__FINE_TUNING_LAB__', label: '🧠 AI Training Lab', icon: <Brain size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__FINOPS_DASHBOARD__', label: '📊 FinOps & Quota', icon: <DollarSign size={12} className="text-emerald-400 shrink-0" /> },
-                      { id: '__RELEASE_HUB__', label: '📦 Release & VSIX', icon: <Package size={12} className="text-purple-400 shrink-0" /> },
-                      { id: '__GRAPH_RAG__', label: '🧠 Graph-RAG Explorer', icon: <Brain size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__SWARM_TRACKER__', label: '🤖 Swarm Tracker', icon: <Bot size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__INTERACTIVE_DIFF__', label: '🔀 Selective Diff Merge', icon: <GitMerge size={12} className="text-emerald-400 shrink-0" /> },
-                      { id: '__VRAM_OPTIMIZER__', label: '⚡ VRAM Optimizer', icon: <Gauge size={12} className="text-amber-400 shrink-0" /> },
-                      { id: '__SUBJECT_CREATOR__', label: '⚡ Standalone Subject', icon: <Sparkles size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__MCP_STUDIO__', label: '📡 MCP Protocol Studio', icon: <Radio size={12} className="text-purple-400 shrink-0" /> },
-                      { id: '__PLUGINS__', label: `🔌 Plugins (${activePluginsCount})`, icon: <Package size={12} className="text-purple-400 shrink-0" /> },
-                      { id: '__GRID_STUDIO__', label: '📐 Dockable Panes', icon: <Layers size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__OPFS_STUDIO__', label: '💾 OPFS Storage (50k+)', icon: <HardDrive size={12} className="text-emerald-400 shrink-0" /> },
-                      { id: '__GIT_STUDIO__', label: '🌿 Git Visual DAG', icon: <GitBranch size={12} className="text-cyan-400 shrink-0" /> },
-                      { id: '__MERGE_RESOLVER__', label: '🔀 3-Way Conflict Resolver', icon: <GitMerge size={12} className="text-purple-400 shrink-0" /> },
-                      { id: '__WASI_STUDIO__', label: '⚡ WASI WebContainer', icon: <Zap size={12} className="text-amber-400 shrink-0" /> },
-                      { id: '__DAP_DEBUGGER__', label: '🐛 DAP Debugger', icon: <Bug size={12} className="text-rose-400 shrink-0" /> },
-                      { id: '__COMPOSER__', label: '⚡ Multi-File Composer', icon: <Layers size={12} className="text-purple-400 shrink-0" /> },
-                      { id: '__VECTOR_DB__', label: '🗄️ Vector DB & PageRank', icon: <Database size={12} className="text-blue-400 shrink-0" /> },
-                      { id: '__PERFORMANCE_PROFILE__', label: '📊 Perf Profile', icon: <Activity size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__COMPLIANCE_SHIELD__', label: '🛡️ Security Shield', icon: <ShieldCheck size={12} className="text-emerald-400 shrink-0" /> },
-                      { id: '__SCAFFOLDER_HUB__', label: '🚀 Project Scaffolder', icon: <Rocket size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__VISION_STUDIO__', label: '📸 Vision Studio', icon: <Camera size={12} className="text-purple-400 shrink-0" /> },
-                      { id: '__TDD_STUDIO__', label: '🧪 TDD Studio', icon: <Beaker size={12} className="text-indigo-400 shrink-0" /> },
-                      { id: '__DIAGNOSTICS__', label: '🎓 Onboarding Help', icon: <Activity size={12} className="text-emerald-400 shrink-0" /> },
-                    ].map(hub => {
-                      const isActive = selectedFile === hub.id;
-                      return (
-                        <div
-                          key={hub.id}
-                          onClick={() => handleSelectFile(hub.id)}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10.5px] font-medium transition-all cursor-pointer group ${
-                            isActive 
-                              ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 shadow-[inset_0_0_8px_rgba(99,102,241,0.05)]' 
-                              : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200 border border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 truncate">
-                            <span className={isActive ? 'text-indigo-400' : 'text-zinc-500 group-hover:text-zinc-300 transition-colors'}>
-                              {hub.icon}
-                            </span>
-                            <span className="truncate">{hub.label}</span>
-                          </div>
-                          {renderSecurityBadge(getFileClassification(hub.id))}
-                        </div>
-                      );
-                    })}
-                    </div>
-                  </div>
-
-                  {/* WORKSPACE PROJECT FILES */}
-                  <div className="space-y-0.5 pt-2 border-t border-zinc-800/80">
-                    <div className="flex items-center justify-between text-[9.5px] font-bold text-zinc-500 uppercase tracking-wider px-1 mb-1">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span>Project Files</span>
-                        {mountedLocalFolder && (
-                          <span className="px-1.5 py-0.5 bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 rounded font-mono text-[9px] font-bold truncate">
-                            📂 {mountedLocalFolder} (Disk 🟢)
-                          </span>
-                        )}
+                  {/* 1. OPEN EDITORS ACCORDION */}
+                  <div className="border border-zinc-800/80 rounded-lg bg-zinc-900/30 p-1.5 space-y-1">
+                    <div 
+                      onClick={() => setIsOpenEditorsOpen(prev => !prev)}
+                      className="text-[9.5px] font-bold text-zinc-400 uppercase tracking-wider px-1 py-0.5 flex items-center justify-between cursor-pointer hover:text-zinc-200 select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        {isOpenEditorsOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                        <span>Open Editors</span>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <span className="bg-zinc-800 text-zinc-400 px-1.5 rounded-full text-[8px] font-mono">{openTabs.length}</span>
+                    </div>
+
+                    {isOpenEditorsOpen && (
+                      <div className="space-y-0.5 pt-0.5">
+                        {openTabs.map(tabPath => {
+                          const label = getTabLabel(tabPath);
+                          const isDirty = dirtyFiles.includes(tabPath);
+                          const isSelected = selectedFile === tabPath;
+                          return (
+                            <div
+                              key={tabPath}
+                              onClick={() => handleSelectFile(tabPath)}
+                              className={`flex items-center justify-between px-2 py-1 rounded text-[10.5px] font-medium transition-colors cursor-pointer group ${
+                                isSelected ? 'bg-indigo-950/70 text-indigo-200 border-l-2 border-indigo-500 pl-1.5' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                <FileText size={11} className={isSelected ? "text-indigo-400" : "text-zinc-500"} />
+                                <span className="truncate">{label}</span>
+                                {isDirty && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />}
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCloseTab(tabPath);
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-700 rounded text-zinc-400 hover:text-white transition-opacity"
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. WORKSPACE PROJECT FILES ACCORDION */}
+                  <div className="border border-zinc-800/80 rounded-lg bg-zinc-900/20 p-1.5 space-y-1.5">
+                    <div 
+                      onClick={() => setIsWorkspaceFilesOpen(prev => !prev)}
+                      className="text-[9.5px] font-bold text-zinc-400 uppercase tracking-wider px-1 py-0.5 flex items-center justify-between cursor-pointer hover:text-zinc-200 select-none"
+                    >
+                      <div className="flex items-center gap-1.5 truncate">
+                        {isWorkspaceFilesOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                        <span className="truncate">{mountedLocalFolder ? `📂 ${mountedLocalFolder}` : 'WORKSPACE: OFFLINE-STUDIO'}</span>
+                      </div>
+                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                         {mountedLocalFolder ? (
                           <button
                             onClick={handleUnmountLocalFolder}
@@ -3924,46 +4057,188 @@ export default function ExtractedVisionUI() {
                           <button
                             onClick={handleOpenLocalFolder}
                             title="Open Local Folder from Disk (Ctrl+O)"
-                            className="text-amber-400 hover:text-amber-300 flex items-center gap-0.5 font-sans lowercase text-[10px] font-semibold hover:underline cursor-pointer"
+                            className="text-amber-400 hover:text-amber-300 flex items-center gap-0.5 text-[9.5px] font-semibold hover:underline cursor-pointer"
                           >
-                            <FolderOpen size={11} /> open
+                            <FolderOpen size={11} />
                           </button>
                         )}
+                        <button
+                          onClick={() => {
+                            setNewFilePathInput('');
+                            setIsNewFileModalOpen(true);
+                          }}
+                          title="New File (Ctrl+N)"
+                          className="text-zinc-400 hover:text-white p-0.5 rounded cursor-pointer"
+                        >
+                          <FilePlus size={11} />
+                        </button>
                       </div>
                     </div>
-                    {Object.keys(parsedFiles)
-                      .filter(path => !sidebarSearchQuery || path.toLowerCase().includes(sidebarSearchQuery.toLowerCase()))
-                      .map(path => {
-                        const classification = getFileClassification(path);
-                        const isExe = path.endsWith('.exe');
-                        return (
-                          <button 
-                            key={path}
-                            onClick={() => handleSelectFile(path)}
-                            className={`w-full text-left px-2 py-1 rounded flex items-center justify-between text-[10.5px] font-medium transition-colors cursor-pointer ${
-                              selectedFile === path 
-                                ? (isExe ? 'bg-emerald-950/70 text-emerald-200 font-semibold border border-emerald-700/60' : 'bg-indigo-950/60 text-indigo-100 font-semibold border border-indigo-800/60')
-                                : (isExe ? 'text-emerald-300 hover:bg-emerald-950/30 font-medium' : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200')
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5 truncate">
-                              {isExe ? (
-                                <Package size={12} className="text-emerald-400 shrink-0" />
-                              ) : (
-                                <FileText size={11} className="text-zinc-500 shrink-0" />
-                              )}
-                              <span className="truncate">{path.split('/').pop()}</span>
+
+                    {isWorkspaceFilesOpen && (
+                      <>
+                        {/* File Search Filter */}
+                        <div className="relative mb-1">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-500" size={11} />
+                          <input
+                            type="text"
+                            placeholder="Filter files..."
+                            value={sidebarSearchQuery}
+                            onChange={(e) => setSidebarSearchQuery(e.target.value)}
+                            className="w-full h-6 bg-[#121214] border border-zinc-800 hover:border-zinc-700 focus:border-indigo-600 focus:outline-none rounded pl-6 pr-2 text-[10.5px] text-zinc-200 placeholder-zinc-500 font-sans transition-all"
+                          />
+                        </div>
+
+                        {/* File Tree */}
+                        <div className="space-y-0.5">
+                          {Object.keys(parsedFiles)
+                            .filter(path => !sidebarSearchQuery || path.toLowerCase().includes(sidebarSearchQuery.toLowerCase()))
+                            .map(path => {
+                              const classification = getFileClassification(path);
+                              const isExe = path.endsWith('.exe');
+                              const isTs = path.endsWith('.ts') || path.endsWith('.tsx');
+                              const isJson = path.endsWith('.json');
+                              const isCss = path.endsWith('.css');
+                              const isMd = path.endsWith('.md');
+                              const isSelected = selectedFile === path;
+                              return (
+                                <button 
+                                  key={path}
+                                  onClick={() => handleSelectFile(path)}
+                                  className={`w-full text-left px-2 py-1 rounded flex items-center justify-between text-[10.5px] font-medium transition-colors cursor-pointer group ${
+                                    isSelected 
+                                      ? (isExe ? 'bg-emerald-950/70 text-emerald-200 font-semibold border-l-2 border-emerald-500 pl-1.5' : 'bg-indigo-950/70 text-indigo-100 font-semibold border-l-2 border-indigo-500 pl-1.5')
+                                      : (isExe ? 'text-emerald-300 hover:bg-emerald-950/30 font-medium' : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200')
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-1.5 truncate">
+                                    {isExe ? (
+                                      <Package size={12} className="text-emerald-400 shrink-0" />
+                                    ) : isTs ? (
+                                      <Code2 size={12} className="text-sky-400 shrink-0" />
+                                    ) : isJson ? (
+                                      <FileText size={12} className="text-amber-400 shrink-0" />
+                                    ) : isCss ? (
+                                      <FileText size={12} className="text-cyan-400 shrink-0" />
+                                    ) : isMd ? (
+                                      <FileText size={12} className="text-purple-400 shrink-0" />
+                                    ) : (
+                                      <FileText size={11} className="text-zinc-500 shrink-0" />
+                                    )}
+                                    <span className="truncate">{path.split('/').pop()}</span>
+                                  </div>
+                                  {isExe ? (
+                                    <span className="text-[9px] px-1 bg-emerald-900/60 text-emerald-300 rounded font-mono font-bold border border-emerald-700/40">
+                                      218M
+                                    </span>
+                                  ) : (
+                                    renderSecurityBadge(classification)
+                                  )}
+                                </button>
+                              );
+                            })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* 3. OUTLINE SYMBOLS ACCORDION */}
+                  <div className="border border-zinc-800/80 rounded-lg bg-zinc-900/20 p-1.5 space-y-1">
+                    <div 
+                      onClick={() => setIsOutlineOpen(prev => !prev)}
+                      className="text-[9.5px] font-bold text-zinc-400 uppercase tracking-wider px-1 py-0.5 flex items-center justify-between cursor-pointer hover:text-zinc-200 select-none"
+                    >
+                      <div className="flex items-center gap-1 truncate">
+                        {isOutlineOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                        <span>Outline</span>
+                      </div>
+                      <span className="text-[9px] text-zinc-500 font-mono truncate max-w-[120px]">
+                        {selectedFile?.split('/').pop() || ''}
+                      </span>
+                    </div>
+
+                    {isOutlineOpen && (
+                      <div className="pt-1">
+                        <LspSymbolExplorer
+                          currentFile={selectedFile}
+                          workspaceFiles={parsedFiles}
+                          onJumpToLocation={(file, line) => handleJumpToLocation(file, line)}
+                          onApplyRename={(updated) => handleBatchApplyFiles(updated)}
+                          inlayHintsEnabled={inlayHintsEnabled}
+                          onToggleInlayHints={() => setInlayHintsEnabled(p => !p)}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. AI & DEV HUBS (COLLAPSIBLE ACCORDION AT BOTTOM) */}
+                  <div className="border border-zinc-800/80 rounded-lg bg-zinc-900/20 p-1.5 space-y-1">
+                    <div 
+                      onClick={() => setIsDevHubsOpen(prev => !prev)}
+                      className="text-[9.5px] font-bold text-zinc-400 uppercase tracking-wider px-1 py-0.5 flex items-center justify-between cursor-pointer hover:text-zinc-200 select-none"
+                    >
+                      <div className="flex items-center gap-1">
+                        {isDevHubsOpen ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                        <span>AI &amp; Dev Studios</span>
+                      </div>
+                      <span className="bg-zinc-800 text-zinc-400 px-1.5 rounded-full text-[8px] font-mono">27</span>
+                    </div>
+
+                    {isDevHubsOpen && (
+                      <div className="space-y-0.5 pt-1">
+                        {[
+                          { id: '__HITL_HUB__', label: '👥 HITL Review', icon: <ShieldAlert size={12} className="text-rose-400 shrink-0" /> },
+                          { id: '__RAG_ANALYZER__', label: '🔍 RAG Analyzer', icon: <Search size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__PROMPT_LAB__', label: '🧪 Prompt Lab', icon: <Beaker size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__FINE_TUNING_LAB__', label: '🧠 AI Training Lab', icon: <Brain size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__FINOPS_DASHBOARD__', label: '📊 FinOps & Quota', icon: <DollarSign size={12} className="text-emerald-400 shrink-0" /> },
+                          { id: '__RELEASE_HUB__', label: '📦 Release & VSIX', icon: <Package size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__GRAPH_RAG__', label: '🧠 Graph-RAG Explorer', icon: <Brain size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__SWARM_TRACKER__', label: '🤖 Swarm Tracker', icon: <Bot size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__INTERACTIVE_DIFF__', label: '🔀 Selective Diff Merge', icon: <GitMerge size={12} className="text-emerald-400 shrink-0" /> },
+                          { id: '__VRAM_OPTIMIZER__', label: '⚡ VRAM Optimizer', icon: <Gauge size={12} className="text-amber-400 shrink-0" /> },
+                          { id: '__SUBJECT_CREATOR__', label: '⚡ Standalone Subject', icon: <Sparkles size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__MCP_STUDIO__', label: '📡 MCP Protocol Studio', icon: <Radio size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__EXTENSIONS_STUDIO__', label: '🏪 VS Code Extensions', icon: <Package size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__PLUGINS__', label: `🔌 Plugins (${activePluginsCount})`, icon: <Package size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__GRID_STUDIO__', label: '📐 Dockable Panes', icon: <Layers size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__OPFS_STUDIO__', label: '💾 OPFS Storage (50k+)', icon: <HardDrive size={12} className="text-emerald-400 shrink-0" /> },
+                          { id: '__GIT_STUDIO__', label: '🌿 Git Visual DAG', icon: <GitBranch size={12} className="text-cyan-400 shrink-0" /> },
+                          { id: '__MERGE_RESOLVER__', label: '🔀 3-Way Conflict Resolver', icon: <GitMerge size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__WASI_STUDIO__', label: '⚡ WASI WebContainer', icon: <Zap size={12} className="text-amber-400 shrink-0" /> },
+                          { id: '__DAP_DEBUGGER__', label: '🐛 DAP Debugger', icon: <Bug size={12} className="text-rose-400 shrink-0" /> },
+                          { id: '__COMPOSER__', label: '⚡ Multi-File Composer', icon: <Layers size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__VECTOR_DB__', label: '🗄️ Vector DB & PageRank', icon: <Database size={12} className="text-blue-400 shrink-0" /> },
+                          { id: '__PERFORMANCE_PROFILE__', label: '📊 Perf Profile', icon: <Activity size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__COMPLIANCE_SHIELD__', label: '🛡️ Security Shield', icon: <ShieldCheck size={12} className="text-emerald-400 shrink-0" /> },
+                          { id: '__SCAFFOLDER_HUB__', label: '🚀 Project Scaffolder', icon: <Rocket size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__VISION_STUDIO__', label: '📸 Vision Studio', icon: <Camera size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__TDD_STUDIO__', label: '🧪 TDD Studio', icon: <Beaker size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__DIAGNOSTICS__', label: '🎓 Onboarding Help', icon: <Activity size={12} className="text-emerald-400 shrink-0" /> },
+                        ].map(hub => {
+                          const isActive = selectedFile === hub.id;
+                          return (
+                            <div
+                              key={hub.id}
+                              onClick={() => handleSelectFile(hub.id)}
+                              className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[10.5px] font-medium transition-all cursor-pointer group ${
+                                isActive 
+                                  ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 shadow-[inset_0_0_8px_rgba(99,102,241,0.05)]' 
+                                  : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200 border border-transparent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 truncate">
+                                <span className={isActive ? 'text-indigo-400' : 'text-zinc-500 group-hover:text-zinc-300 transition-colors'}>
+                                  {hub.icon}
+                                </span>
+                                <span className="truncate">{hub.label}</span>
+                              </div>
+                              {renderSecurityBadge(getFileClassification(hub.id))}
                             </div>
-                            {isExe ? (
-                              <span className="text-[9px] px-1 bg-emerald-900/60 text-emerald-300 rounded font-mono font-bold border border-emerald-700/40">
-                                218M
-                              </span>
-                            ) : (
-                              renderSecurityBadge(classification)
-                            )}
-                          </button>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -3980,7 +4255,7 @@ export default function ExtractedVisionUI() {
                 </div>
               )}
 
-              {/* Source Control Tab View */}
+              {/* Source Control Tab View (Ctrl+Shift+G) */}
               {activeActivityTab === 'git' && (
                 <div className="space-y-3">
                   <div className="bg-[#121214] p-2 rounded-md border border-zinc-800 space-y-2">
@@ -4027,6 +4302,44 @@ export default function ExtractedVisionUI() {
                 </div>
               )}
 
+              {/* Extensions & Plugins Marketplace Tab View (Ctrl+Shift+X) */}
+              {(activeActivityTab === 'extensions' || activeActivityTab === 'plugins') && (
+                <div className="flex-1 h-full overflow-hidden">
+                  <ExtensionsManagerStudio onExecuteCommand={handleExecuteCommand} />
+                </div>
+              )}
+
+              {/* AI Assistant & Chat Tab View */}
+              {activeActivityTab === 'chat' && (
+                <div className="space-y-3 p-1">
+                  <div className="p-3 bg-[#121214] border border-indigo-900/40 rounded-lg space-y-2 text-xs">
+                    <div className="flex items-center gap-2 text-indigo-300 font-semibold">
+                      <Bot size={16} className="text-indigo-400" />
+                      <span>Local AI Assistant</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Fully air-gapped coding assistant powered by Ollama (<code className="text-indigo-300 font-mono">{activeOllamaModel}</code>).
+                    </p>
+                    <button
+                      onClick={() => setIsSidebarOpen(true)}
+                      className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer"
+                    >
+                      Open Secondary AI Chat Panel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* MCP Hub Tab View */}
+              {activeActivityTab === 'mcp' && (
+                <div className="flex-1 h-full overflow-hidden">
+                  <McpStudioPanel
+                    workspaceFiles={parsedFiles}
+                    onUpdateFile={handleUpdateFile}
+                  />
+                </div>
+              )}
+
               {/* Swarm Agents Tab View */}
               {activeActivityTab === 'swarm' && (
                 <div className="space-y-2">
@@ -4045,6 +4358,27 @@ export default function ExtractedVisionUI() {
                   >
                     Open Swarm Tracker Dashboard
                   </button>
+                </div>
+              )}
+
+              {/* Database Studio Tab View */}
+              {activeActivityTab === 'database' && (
+                <div className="space-y-3 p-1">
+                  <div className="p-3 bg-[#121214] border border-teal-900/40 rounded-lg space-y-2 text-xs">
+                    <div className="flex items-center gap-2 text-teal-300 font-semibold">
+                      <Database size={16} className="text-teal-400" />
+                      <span>Embedded Database Studio</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Visual SQLite & PostgreSQL client with ER diagrams and AI query generation.
+                    </p>
+                    <button
+                      onClick={() => setIsDatabaseStudioOpen(true)}
+                      className="w-full py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer"
+                    >
+                      Launch Database Studio
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -4083,31 +4417,6 @@ export default function ExtractedVisionUI() {
                     className="w-full py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer"
                   >
                     Open Composer Studio
-                  </button>
-                </div>
-              )}
-
-              {/* Plugins Tab View */}
-              {activeActivityTab === 'plugins' && (
-                <div className="space-y-2">
-                  <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Marketplace &amp; Protocols</div>
-                  <button
-                    onClick={() => handleSelectFile('__EXTENSIONS_STUDIO__')}
-                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Package size={13} /> 🏪 VS Code Extensions
-                  </button>
-                  <button
-                    onClick={() => handleSelectFile('__MCP_STUDIO__')}
-                    className="w-full py-2 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-lg text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Radio size={13} /> 📻 MCP Studio &amp; Tools
-                  </button>
-                  <button
-                    onClick={() => handleSelectFile('__PLUGINS__')}
-                    className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-medium border border-zinc-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    ⌨️ Keymaps &amp; Vim ({activePluginsCount})
                   </button>
                 </div>
               )}
