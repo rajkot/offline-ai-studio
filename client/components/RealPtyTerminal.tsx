@@ -11,21 +11,36 @@ import {
   Layers,
   CheckCircle2,
   AlertTriangle,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from 'lucide-react';
+import { TerminalErrorContext, terminalAutoPatcher } from '@/lib/ai/terminalAutoPatcher';
+import { problemMatcherEngine } from '@/lib/tasks/problemMatcherEngine';
+import TerminalAiFixModal from './TerminalAiFixModal';
 
 interface RealPtyTerminalProps {
   className?: string;
   onTitleChange?: (title: string) => void;
+  workspaceFiles?: Record<string, string>;
+  onBatchApplyFiles?: (files: Record<string, string>) => void;
 }
 
-export default function RealPtyTerminal({ className = '', onTitleChange }: RealPtyTerminalProps) {
+export default function RealPtyTerminal({
+  className = '',
+  onTitleChange,
+  workspaceFiles,
+  onBatchApplyFiles
+}: RealPtyTerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [selectedShell, setSelectedShell] = useState<string>('powershell.exe');
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const [detectedError, setDetectedError] = useState<TerminalErrorContext | null>(null);
+  const [isFixModalOpen, setIsFixModalOpen] = useState<boolean>(false);
+  const currentCommandLineRef = useRef<string>('');
+  const outputBufferRef = useRef<string>('');
   const [availableShells, setAvailableShells] = useState<Array<{ id: string; name: string; command: string }>>([
     { id: 'powershell', name: 'Windows PowerShell', command: 'powershell.exe' },
     { id: 'cmd', name: 'Command Prompt', command: 'cmd.exe' },
@@ -119,6 +134,25 @@ export default function RealPtyTerminal({ className = '', onTitleChange }: RealP
           const msg = JSON.parse(event.data);
           if (msg.type === 'output') {
             term.write(msg.data);
+            outputBufferRef.current += msg.data;
+            if (outputBufferRef.current.length > 50000) {
+              outputBufferRef.current = outputBufferRef.current.slice(-30000);
+            }
+
+            // Real-time compiler problem matcher
+            problemMatcherEngine.processAndSyncTerminalOutput(msg.data, true);
+
+            // Check for failures and extract error context
+            if (terminalAutoPatcher.hasFailure(outputBufferRef.current)) {
+              const ctx = terminalAutoPatcher.extractErrorContext(
+                outputBufferRef.current,
+                workspaceFiles || {},
+                currentCommandLineRef.current
+              );
+              if (ctx) {
+                setDetectedError(ctx);
+              }
+            }
           } else if (msg.type === 'ready') {
             if (onTitleChange) onTitleChange(msg.shell || shellCmd);
           }
@@ -136,6 +170,17 @@ export default function RealPtyTerminal({ className = '', onTitleChange }: RealP
       };
 
       term.onData((data) => {
+        if (data === '\r' || data.includes('\r')) {
+          if (currentCommandLineRef.current.trim().length > 1) {
+            setDetectedError(null);
+          }
+          currentCommandLineRef.current = '';
+        } else if (data === '\u007F' || data === '\b') {
+          currentCommandLineRef.current = currentCommandLineRef.current.slice(0, -1);
+        } else if (data.length === 1 && data >= ' ') {
+          currentCommandLineRef.current += data;
+        }
+
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'input', data }));
         }
@@ -245,6 +290,21 @@ export default function RealPtyTerminal({ className = '', onTitleChange }: RealP
 
         {/* Right Actions */}
         <div className="flex items-center gap-2">
+          {/* Glowing Fix with AI Button (Cursor & Windsurf innovation) */}
+          {detectedError && (
+            <button
+              onClick={() => setIsFixModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-indigo-500 text-white font-mono font-bold text-[11px] rounded-full shadow-lg shadow-purple-900/50 border border-purple-300/60 animate-pulse transition-all cursor-pointer"
+              title={`Fix ${detectedError.targetFile}:${detectedError.line} with AI`}
+            >
+              <Sparkles size={12} className="text-amber-300 animate-spin" />
+              <span>Fix with AI</span>
+              <span className="text-[9px] px-1.5 py-0.2 bg-black/40 rounded-full font-normal border border-white/20">
+                {detectedError.targetFile.split('/').pop()}:{detectedError.line}
+              </span>
+            </button>
+          )}
+
           <button
             onClick={handleClear}
             className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -264,6 +324,25 @@ export default function RealPtyTerminal({ className = '', onTitleChange }: RealP
 
       {/* Terminal Viewport */}
       <div ref={terminalRef} className="flex-1 w-full h-full p-2 overflow-hidden" />
+
+      {/* Terminal AI Auto-Patcher Modal */}
+      <TerminalAiFixModal
+        isOpen={isFixModalOpen}
+        errorContext={detectedError}
+        workspaceFiles={workspaceFiles || {}}
+        onClose={() => setIsFixModalOpen(false)}
+        onApplyFix={(filePath, updatedContent) => {
+          if (onBatchApplyFiles) {
+            onBatchApplyFiles({ [filePath]: updatedContent });
+          }
+          setDetectedError(null);
+        }}
+        onRerunCommand={(cmd) => {
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'input', data: `${cmd}\r` }));
+          }
+        }}
+      />
     </div>
   );
 }

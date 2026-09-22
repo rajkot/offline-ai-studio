@@ -68,6 +68,8 @@ import GlobalSearchSidebar from '@/client/components/GlobalSearchSidebar';
 import InteractiveDebugSidebar from '@/client/components/InteractiveDebugSidebar';
 import FloatingDebugToolbar from '@/client/components/FloatingDebugToolbar';
 import BreakpointEditModal from '@/client/components/BreakpointEditModal';
+import TasksLauncherModal from '@/client/components/TasksLauncherModal';
+import { taskRunnerEngine } from '@/lib/tasks/taskRunnerEngine';
 import MultiFileComposerModal from './MultiFileComposerModal';
 import DockerSandboxPanel from './DockerSandboxPanel';
 import LanCollabPanel from './LanCollabPanel';
@@ -485,6 +487,9 @@ export default function Playground({
 
   // Interactive DAP Breakpoint & Logpoint Configuration State
   const [activeBreakpointToEdit, setActiveBreakpointToEdit] = useState<DapBreakpoint | null>(null);
+
+  // VS Code Tasks System (.vscode/tasks.json & Ctrl+Shift+B)
+  const [isTasksLauncherOpen, setIsTasksLauncherOpen] = useState<boolean>(false);
 
   // Real-Time Inline Ghost Text & Native LSP Engine States
   const [inlayHintsEnabled, setInlayHintsEnabled] = useState<boolean>(true);
@@ -1097,6 +1102,10 @@ export default function Playground({
     });
     editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F11, () => {
       dapDebugger.stepOut();
+    });
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyB, () => {
+      taskRunnerEngine.runBuildTask();
+      setIsTasksLauncherOpen(true);
     });
 
     const updateSelectionCoords = () => {
@@ -1837,6 +1846,14 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'mcp-studio':
         setSelectedFile('__MCP_STUDIO__');
         break;
+      case 'tasks-build':
+        taskRunnerEngine.runBuildTask();
+        setIsTasksLauncherOpen(true);
+        break;
+      case 'tasks-run':
+      case 'tasks-launcher':
+        setIsTasksLauncherOpen(true);
+        break;
       case 'format-document':
         if (editorRef.current) {
           editorRef.current.getAction('editor.action.formatDocument')?.run();
@@ -1993,6 +2010,14 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         e.preventDefault();
         setActiveActivityTab('search');
         setIsLeftPanelOpen(true);
+        return;
+      }
+
+      // Ctrl+Shift+B: Run Default Build Task
+      if ((e.key === 'B' || e.key === 'b') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        taskRunnerEngine.runBuildTask();
+        setIsTasksLauncherOpen(true);
         return;
       }
 
@@ -6081,6 +6106,7 @@ export default function ExtractedVisionUI() {
         currentFile={selectedFile || 'components/Playground.tsx'}
         onOpenFile={handleJumpToLocation}
         onJumpToLine={handleJumpToLine}
+        onBatchApplyFiles={handleBatchApplyFiles}
         sandboxConsole={
           <SandboxConsole
             onRunTask={() => {
@@ -6448,6 +6474,17 @@ export default function ExtractedVisionUI() {
           if (activeBreakpointToEdit) {
             dapDebugger.removeBreakpoint(activeBreakpointToEdit.id);
           }
+        }}
+      />
+
+      {/* VS Code Tasks Runner Modal (.vscode/tasks.json & Ctrl+Shift+B) */}
+      <TasksLauncherModal
+        isOpen={isTasksLauncherOpen}
+        onClose={() => setIsTasksLauncherOpen(false)}
+        workspaceFiles={parsedFiles}
+        onOpenFile={handleJumpToLocation}
+        onOpenProblemsTab={() => {
+          setIsBottomPanelOpen(true);
         }}
       />
 

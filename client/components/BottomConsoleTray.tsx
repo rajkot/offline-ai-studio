@@ -54,6 +54,7 @@ interface BottomConsoleTrayProps {
   currentFile?: string;
   onOpenFile?: (path: string, line?: number) => void;
   onJumpToLine?: (line: number) => void;
+  onBatchApplyFiles?: (files: Record<string, string>) => void;
   isOpen?: boolean;
   onToggleOpen?: () => void;
   onClose?: () => void;
@@ -72,6 +73,7 @@ export default function BottomConsoleTray({
   currentFile,
   onOpenFile,
   onJumpToLine,
+  onBatchApplyFiles,
   isOpen = true,
   onToggleOpen,
   onClose
@@ -653,7 +655,11 @@ export default function BottomConsoleTray({
                   {sandboxConsole}
                 </div>
               ) : (
-                <RealPtyTerminal className="flex-1 min-h-0 rounded-xl border border-slate-800" />
+                <RealPtyTerminal
+                  className="flex-1 min-h-0 rounded-xl border border-slate-800"
+                  workspaceFiles={workspaceFiles}
+                  onBatchApplyFiles={onBatchApplyFiles}
+                />
               )}
             </div>
           )}

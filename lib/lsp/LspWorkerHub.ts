@@ -15,7 +15,7 @@ export interface LspProblemItem {
   endColumn: number;
   message: string;
   severity: 'error' | 'warning' | 'info' | 'hint';
-  source: 'ts-lsp' | 'py-lsp' | 'json-lsp' | 'linter';
+  source: 'ts-lsp' | 'py-lsp' | 'json-lsp' | 'linter' | 'compiler';
   code?: string;
 }
 
@@ -138,6 +138,38 @@ export class LspWorkerHub {
     this.currentProblems = [...otherProblems, ...fileDiagnostics];
 
     this.syncMonacoModelMarkers(filePath, fileDiagnostics);
+    this.notifyProblemsListeners(this.currentProblems);
+  }
+
+  /**
+   * Adds parsed compiler problems from Tasks Runner or Terminal and updates Monaco markers
+   */
+  public addCompilerProblems(newProblems: LspProblemItem[], clearExisting: boolean = true) {
+    const nonCompiler = clearExisting
+      ? this.currentProblems.filter(p => p.source !== 'compiler')
+      : this.currentProblems;
+    this.currentProblems = [...nonCompiler, ...newProblems];
+
+    // Group by file and update Monaco markers
+    const files = new Set(newProblems.map(p => p.filePath));
+    files.forEach(file => {
+      const fileProblems = this.currentProblems.filter(p => p.filePath === file);
+      this.syncMonacoModelMarkers(file, fileProblems);
+    });
+
+    this.notifyProblemsListeners(this.currentProblems);
+  }
+
+  /**
+   * Clears all compiler problems
+   */
+  public clearCompilerProblems() {
+    const compilerFiles = new Set(this.currentProblems.filter(p => p.source === 'compiler').map(p => p.filePath));
+    this.currentProblems = this.currentProblems.filter(p => p.source !== 'compiler');
+    compilerFiles.forEach(file => {
+      const fileProblems = this.currentProblems.filter(p => p.filePath === file);
+      this.syncMonacoModelMarkers(file, fileProblems);
+    });
     this.notifyProblemsListeners(this.currentProblems);
   }
 

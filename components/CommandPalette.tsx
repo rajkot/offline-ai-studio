@@ -36,7 +36,8 @@ export const COMMAND_METADATA = [
   { command: 'docker-sandbox', name: 'Docker Sandbox Studio', description: 'Spawn isolated containers, run builds, copy workspace files into Docker (Ctrl+Shift+K)', category: 'DevOps' },
   { command: 'lan-collab', name: 'LAN Pair Programming (P2P)', description: 'Zero-cloud collaborative editing on same Wi-Fi — shared cursors, live chat (Ctrl+Shift+Y)', category: 'Collaboration' },
   { command: 'semantic-search', name: 'Semantic Codebase Search', description: 'Natural language search across all files using local vector embeddings (Ctrl+Shift+F)', category: 'Search' },
-  { command: 'gguf-quantizer', name: 'GGUF Quantization Studio', description: 'Visual llama.cpp quantizer — 1-click Q4/Q5/Q8 with VRAM calculator (Ctrl+Shift+Q)', category: 'Models' },
+  { command: 'tasks-build', name: 'Tasks: Run Build Task', description: 'Execute default build task from .vscode/tasks.json or package.json (Ctrl+Shift+B)', category: 'Tasks' },
+  { command: 'tasks-run', name: 'Tasks: Run Task...', description: 'Open VS Code Tasks Runner to launch or inspect workspace tasks', category: 'Tasks' },
 ];
 
 export const DEFAULT_KEYBINDINGS: Record<string, string> = {
@@ -68,6 +69,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'layout-toggle-right': 'Ctrl+Alt+B',
   'layout-toggle-bottom': 'Ctrl+J',
   'layout-toggle-zen': 'Ctrl+K Z',
+  'tasks-build': 'Ctrl+Shift+B',
 };
 
 export const getActiveKeybindings = () => {
