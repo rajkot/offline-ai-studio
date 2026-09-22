@@ -109,12 +109,70 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                     })(netProps[ni]);
                   }
 
-                  // Fallback global error handler to prevent unhandled TypeError from halting scripts
+                  // 4. Neutralize browser extension DOM tampering (e.g. bis_skin_checked from Bitdefender/coupon extensions)
+                  try {
+                    if (typeof Element !== 'undefined' && Element.prototype && Element.prototype.setAttribute) {
+                      var originalSetAttribute = Element.prototype.setAttribute;
+                      Element.prototype.setAttribute = function(name, value) {
+                        if (name === 'bis_skin_checked' || (typeof name === 'string' && name.indexOf('bis_') === 0)) {
+                          return;
+                        }
+                        return originalSetAttribute.apply(this, arguments);
+                      };
+                    }
+                    if (typeof document !== 'undefined') {
+                      var stripExtensionAttrs = function() {
+                        try {
+                          var elements = document.querySelectorAll('[bis_skin_checked]');
+                          for (var i = 0; i < elements.length; i++) {
+                            elements[i].removeAttribute('bis_skin_checked');
+                          }
+                        } catch (e) {}
+                      };
+                      if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', stripExtensionAttrs);
+                      } else {
+                        stripExtensionAttrs();
+                      }
+                    }
+                  } catch (bisErr) {}
+
+                  // 5. Shield against third-party Chrome/Edge extension runtime exceptions (e.g. reading 'M_ID')
                   window.addEventListener('error', function(errEvt) {
-                    if (errEvt && errEvt.message && errEvt.message.indexOf('fetch') !== -1 && errEvt.message.indexOf('getter') !== -1) {
+                    if (!errEvt) return;
+                    var msg = (errEvt.message || '').toString();
+                    var file = (errEvt.filename || '').toString();
+                    var stack = (errEvt.error && errEvt.error.stack ? errEvt.error.stack : '').toString();
+
+                    var isExtensionError = 
+                      file.indexOf('chrome-extension://') !== -1 ||
+                      file.indexOf('moz-extension://') !== -1 ||
+                      stack.indexOf('chrome-extension://') !== -1 ||
+                      stack.indexOf('moz-extension://') !== -1 ||
+                      msg.indexOf('M_ID') !== -1 ||
+                      msg.indexOf('bis_skin_checked') !== -1 ||
+                      (msg.indexOf('fetch') !== -1 && msg.indexOf('getter') !== -1);
+
+                    if (isExtensionError) {
                       if (errEvt.preventDefault) errEvt.preventDefault();
                       if (errEvt.stopImmediatePropagation) errEvt.stopImmediatePropagation();
                       return true;
+                    }
+                  }, true);
+
+                  window.addEventListener('unhandledrejection', function(rejEvt) {
+                    if (!rejEvt) return;
+                    var reason = rejEvt.reason;
+                    var stack = (reason && reason.stack ? reason.stack : '').toString();
+                    var msg = (reason && reason.message ? reason.message : String(reason)).toString();
+
+                    if (
+                      stack.indexOf('chrome-extension://') !== -1 ||
+                      stack.indexOf('moz-extension://') !== -1 ||
+                      msg.indexOf('M_ID') !== -1
+                    ) {
+                      if (rejEvt.preventDefault) rejEvt.preventDefault();
+                      if (rejEvt.stopImmediatePropagation) rejEvt.stopImmediatePropagation();
                     }
                   }, true);
                 } catch (netShieldErr) {}

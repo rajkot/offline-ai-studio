@@ -108,16 +108,16 @@ export default function BottomConsoleTray({
 
   // Live Telemetry states with dynamic history streams (30 data points)
   const [cpuHistory, setCpuHistory] = useState<number[]>(() =>
-    Array.from({ length: 30 }, () => 18 + Math.floor(Math.random() * 10))
+    Array.from({ length: 30 }, (_, i) => 20 + (i % 5))
   );
   const [ramHistory, setRamHistory] = useState<number[]>(() => 
-    Array.from({ length: 30 }, () => 38 + Math.floor(Math.random() * 8))
+    Array.from({ length: 30 }, (_, i) => 40 + (i % 4))
   );
   const [vramHistory, setVramHistory] = useState<number[]>(() => 
-    Array.from({ length: 30 }, () => 28 + Math.floor(Math.random() * 8))
+    Array.from({ length: 30 }, (_, i) => 30 + (i % 5))
   );
   const [tokenHistory, setTokenHistory] = useState<number[]>(() => 
-    Array.from({ length: 30 }, () => 35 + Math.floor(Math.random() * 10))
+    Array.from({ length: 30 }, (_, i) => 36 + (i % 6))
   );
 
   const [memoryOverload, setMemoryOverload] = useState(false);

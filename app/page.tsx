@@ -34,7 +34,7 @@ export default function HomePage() {
 
   return (
     <ThemeProvider>
-      <main className="h-screen w-screen bg-[#09090b] text-[#f4f4f5] flex flex-col overflow-hidden">
+      <main className="h-screen w-screen bg-[#09090b] text-[#f4f4f5] flex flex-col overflow-hidden" suppressHydrationWarning>
         <ErrorBoundary fallbackTitle="Workspace Initialization Notice">
           <Playground 
             userRole={userRole} 
