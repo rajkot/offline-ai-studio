@@ -61,6 +61,7 @@ import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
 import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
 import GitHunkPopover from '@/client/components/GitHunkPopover';
 import InlineAiDiffTransformer from '@/client/components/InlineAiDiffTransformer';
+import ContextChipsBar, { ContextChipItem } from '@/client/components/ContextChipsBar';
 import GitCommitModal from '@/client/components/GitCommitModal';
 import BreadcrumbsBar from '@/client/components/BreadcrumbsBar';
 import ReferencesPeekModal from '@/client/components/ReferencesPeekModal';
@@ -480,6 +481,11 @@ export default function Playground({
   const [isInlineAiOpen, setIsInlineAiOpen] = useState<boolean>(false);
   const [inlineAiSelectedCode, setInlineAiSelectedCode] = useState<string>('');
   const [inlineAiSelectionRange, setInlineAiSelectionRange] = useState<{ startLine: number; startColumn: number; endLine: number; endColumn: number } | null>(null);
+
+  // Dynamic Context Chips (@file, @folder, @symbol, @git, @terminal, @problems, @docs)
+  const [chatContextChips, setChatContextChips] = useState<ContextChipItem[]>([]);
+  const [isChatMentionOpen, setIsChatMentionOpen] = useState<boolean>(false);
+  const [chatMentionQuery, setChatMentionQuery] = useState<string>('');
 
   // Cross-File LSP Intelligence & Breadcrumbs Navigation States
   const [activeReferencesPeek, setActiveReferencesPeek] = useState<ReferencesPeekData | null>(null);
@@ -2170,6 +2176,38 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         return;
       }
 
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !e.shiftKey && !e.altKey && !isInlineAiOpen) {
+        e.preventDefault();
+        if (editorRef.current) {
+          const editor = editorRef.current;
+          const model = editor.getModel();
+          if (model) {
+            const sel = editor.getSelection();
+            let text = sel ? model.getValueInRange(sel) : '';
+            let startLine = sel ? sel.startLineNumber : 1;
+            let startColumn = sel ? sel.startColumn : 1;
+            let endLine = sel ? sel.endLineNumber : 1;
+            let endColumn = sel ? sel.endColumn : 1;
+
+            if (!text || !text.trim()) {
+              const pos = editor.getPosition();
+              if (pos) {
+                text = model.getLineContent(pos.lineNumber);
+                startLine = pos.lineNumber;
+                startColumn = 1;
+                endLine = pos.lineNumber;
+                endColumn = text.length + 1;
+              }
+            }
+
+            setInlineAiSelectedCode(text || '// Enter prompt to generate code here');
+            setInlineAiSelectionRange({ startLine, startColumn, endLine, endColumn });
+            setIsInlineAiOpen(true);
+            return;
+          }
+        }
+      }
+
       if (e.key === 'F8') {
         e.preventDefault();
         setIsVoiceOverlayOpen(true);
@@ -2208,11 +2246,14 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
     if (lastAtIndex !== -1 && (lastAtIndex === 0 || val[lastAtIndex - 1] === ' ')) {
       const q = val.slice(lastAtIndex + 1);
       if (!q.includes(' ')) {
+        setIsChatMentionOpen(true);
+        setChatMentionQuery(q);
         setShowMentionMenu(true);
         setMentionQuery(q);
         return;
       }
     }
+    setIsChatMentionOpen(false);
     setShowMentionMenu(false);
   };
 
@@ -2699,17 +2740,47 @@ export default function ExtractedVisionUI() {
   };
 
   const getContext = useCallback((prompt: string) => {
-    let context = "Context files:\n";
+    let context = "Attached Project Context:\n";
+
+    // 1. Resolve explicitly attached Context Chips (@file, @folder, @symbol, @git, @terminal, @problems, @docs)
+    if (chatContextChips.length > 0) {
+      chatContextChips.forEach(chip => {
+        if (chip.type === 'file' && chip.data.filePath) {
+          const content = parsedFiles[chip.data.filePath] || chip.data.content || '';
+          context += `--- ATTACHED FILE: ${chip.data.filePath} ---\n${content.substring(0, 3000)}\n\n`;
+        } else if (chip.type === 'folder' && chip.data.folderPath) {
+          const folderFiles = Object.keys(parsedFiles).filter(k => k.startsWith(chip.data.folderPath!));
+          context += `--- ATTACHED FOLDER: ${chip.data.folderPath} (${folderFiles.length} files) ---\n${folderFiles.slice(0, 20).join('\n')}\n\n`;
+        } else if (chip.type === 'symbol') {
+          context += `--- ATTACHED SYMBOL: ${chip.data.symbolName} (${chip.data.symbolKind}) in ${chip.data.filePath} ---\n\n`;
+        } else if (chip.type === 'git') {
+          context += `--- GIT STATUS & RECENT CHANGES ---\nBranch: ${gitBranch}\n${chip.data.content || ('Modified files: ' + modifiedFiles.join(', '))}\n\n`;
+        } else if (chip.type === 'terminal') {
+          context += `--- RECENT TERMINAL OUTPUT ---\n${(chip.data.content || errorLogs).slice(-1500)}\n\n`;
+        } else if (chip.type === 'problems') {
+          const problems = lspWorkerHub.getAllProblems();
+          context += `--- ACTIVE PROBLEMS & DIAGNOSTICS (${problems.length}) ---\n${problems.slice(0, 10).map(p => `${p.filePath}:${p.line} - ${p.message}`).join('\n')}\n\n`;
+        } else if (chip.type === 'docs') {
+          context += `--- FRAMEWORK DOCS ---\nNext.js 14/15 App Router, React 19, Tailwind CSS 3.4\n\n`;
+        }
+      });
+    }
+
+    // 2. Active file context
+    if (selectedFile && parsedFiles[selectedFile]) {
+      context += `--- CURRENT ACTIVE FILE: ${selectedFile} ---\n${parsedFiles[selectedFile].substring(0, 2000)}\n\n`;
+    }
+
+    // 3. Keyword-matched context files
     const keywords = prompt.toLowerCase().split(' ').filter(word => word.length > 3);
-    
     Object.entries(parsedFiles).forEach(([name, content]) => {
-      if (keywords.some(k => name.toLowerCase().includes(k) || content.toLowerCase().includes(k))) {
-        context += `--- FILE: ${name} ---\n${content.substring(0, 500)}\n---\n`;
+      if (name !== selectedFile && keywords.some(k => name.toLowerCase().includes(k) || content.toLowerCase().includes(k))) {
+        context += `--- REFERENCED FILE: ${name} ---\n${content.substring(0, 500)}\n---\n`;
       }
     });
     context += "\nInstruction: When referencing context files, provide inline source citations using the exact format: [Source: filename, Line X] or [Source: filename, Page Y].";
     return context;
-  }, [parsedFiles]);
+  }, [chatContextChips, parsedFiles, selectedFile, gitBranch, modifiedFiles, errorLogs]);
 
   const runPipeline = useCallback(async (userPrompt: string, isChat = false) => {
     if (isStreaming || typeof window === 'undefined') return;
@@ -5998,24 +6069,29 @@ export default function ExtractedVisionUI() {
                               <div ref={chatBottomRef} />
                           </div>
 
-                          {showMentionMenu && mentionOptions.length > 0 && (
-                            <div className="absolute bottom-16 left-4 right-4 bg-slate-900 border border-slate-700 rounded-lg shadow-xl overflow-hidden z-20 max-h-48 overflow-y-auto font-mono text-xs text-slate-200">
-                              <div className="px-3 py-1.5 bg-slate-800 text-slate-400 text-[10px] uppercase font-bold tracking-wider border-b border-slate-700">
-                                Insert Context Mention (@)
-                              </div>
-                              {mentionOptions.map((opt, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => insertMention(opt)}
-                                  className="w-full text-left px-3 py-2 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2 border-b border-slate-800/50 last:border-b-0"
-                                >
-                                  <span className="text-indigo-400 font-bold">#</span> {opt}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
                           <div className="p-3 border-t border-[#27272a] bg-[#111113] flex flex-col gap-2 relative">
+                              {/* Cursor-Style Dynamic Context Chips Bar & Quick-Pick Popup */}
+                              <ContextChipsBar
+                                chips={chatContextChips}
+                                onAddChip={(c) => setChatContextChips(prev => [...prev, c])}
+                                onRemoveChip={(id) => setChatContextChips(prev => prev.filter(c => c.id !== id))}
+                                onClearAllChips={() => setChatContextChips([])}
+                                isOpen={isChatMentionOpen}
+                                onClose={() => setIsChatMentionOpen(false)}
+                                searchQuery={chatMentionQuery}
+                                onSelectOption={() => {
+                                  const lastAt = prompt.lastIndexOf('@');
+                                  if (lastAt !== -1) {
+                                    setPrompt(prompt.slice(0, lastAt));
+                                  }
+                                  const input = document.getElementById('ai-chat-prompt-input');
+                                  input?.focus();
+                                }}
+                                workspaceFiles={parsedFiles}
+                                recentTerminalLogs={errorLogs}
+                                gitStatusSummary={`Branch: ${gitBranch} • Ahead: ${gitSyncCount.ahead} • Behind: ${gitSyncCount.behind}`}
+                                problemsCount={lspWorkerHub.getAllProblems().length}
+                              />
                               {/* Quick Multi-File Project Template Chips */}
                               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] custom-scrollbar select-none">
                                 <span className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 shrink-0 flex items-center gap-1">
@@ -6126,6 +6202,24 @@ export default function ExtractedVisionUI() {
                                     <Camera size={16} />
                                   </button>
 
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsChatMentionOpen(prev => !prev)}
+                                    className={`p-2.5 rounded-xl border transition-all shrink-0 cursor-pointer mb-0.5 flex items-center gap-1 text-xs font-mono ${
+                                      chatContextChips.length > 0
+                                        ? 'bg-indigo-950/90 border-indigo-500 text-indigo-300 shadow-md shadow-indigo-950/60'
+                                        : 'bg-[#18181b] border-[#27272a] text-zinc-400 hover:text-indigo-300 hover:border-indigo-500'
+                                    }`}
+                                    title="Attach Project Context (@file, @folder, @symbol, @git, @terminal, @problems)"
+                                  >
+                                    <span className="font-bold text-sm">@</span>
+                                    {chatContextChips.length > 0 && (
+                                      <span className="bg-indigo-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-sans font-bold">
+                                        {chatContextChips.length}
+                                      </span>
+                                    )}
+                                  </button>
+
                                   <textarea 
                                     id="ai-chat-prompt-input"
                                     value={prompt} 
@@ -6157,7 +6251,7 @@ export default function ExtractedVisionUI() {
                                       // If text/code is pasted, allow standard paste so characters render with high-contrast text color
                                     }}
                                     onKeyDown={e => {
-                                      if (e.key === 'Enter' && !e.shiftKey && !isStreaming && (prompt.trim() || attachedChatImage) && !showMentionMenu) {
+                                      if (e.key === 'Enter' && !e.shiftKey && !isStreaming && (prompt.trim() || attachedChatImage) && !showMentionMenu && !isChatMentionOpen) {
                                         e.preventDefault();
                                         if (attachedChatImage) {
                                           handleSendVisionChatMessage(prompt, attachedChatImage);
@@ -6734,6 +6828,9 @@ export default function ExtractedVisionUI() {
         selectedCode={inlineAiSelectedCode}
         selectionRange={inlineAiSelectionRange}
         filePath={selectedFile || ''}
+        workspaceFiles={parsedFiles}
+        recentTerminalLogs={errorLogs}
+        gitStatusSummary={`Branch: ${gitBranch} • Ahead: ${gitSyncCount.ahead} • Behind: ${gitSyncCount.behind}`}
         onAccept={(transformedCode) => {
           if (editorRef.current && inlineAiSelectionRange) {
             editorRef.current.pushUndoStop();
