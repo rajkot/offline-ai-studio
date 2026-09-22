@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "cd .. && next dev -p 3000",
     "start": "cd .. && next start -p 3000",
-    "build:exe": "electron-builder --win"
+    "build:exe": "electron-builder --win",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "build:all": "electron-builder -mwl"
   },
   "author": "Offline AI Studio Team",
   "license": "MIT",
@@ -19,18 +23,58 @@
       "output": "../public/release"
     },
     "win": {
-      "target": "nsis",
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.ico",
       "signExecutable": false,
       "signAndEditExecutable": false
     },
     "nsis": {
-      "oneClick": true,
+      "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Offline AI Studio",
       "packElevateHelper": false,
       "differentialPackage": false
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "icon.png",
+      "category": "public.app-category.developer-tools",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "tar.gz"
+      ],
+      "icon": "icon.png",
+      "category": "Development",
+      "synopsis": "The 100% Local, Air-Gapped, and Hybrid AI Engineering Workbench",
+      "description": "Offline AI Studio is a complete standalone offline AI engineering studio with subject virtualization, WASI POSIX execution, offline RAG, and WebLLM."
     }
   }
 }
+

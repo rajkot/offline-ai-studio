@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build && node scripts/patch-next.js",
+    "build:standalone": "node scripts/build-standalone-exe.js --all",
+    "build:win": "node scripts/build-standalone-exe.js --win",
+    "build:linux": "node scripts/build-standalone-exe.js --linux",
+    "build:mac": "node scripts/build-standalone-exe.js --mac",
     "start": "next start -p 3000",
     "postinstall": "node scripts/patch-next.js",
     "lint": "eslint ."

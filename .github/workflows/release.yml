@@ -1,23 +1,47 @@
-name: Release Standalone Binaries
+name: Release Standalone Binaries (All OS)
 
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
 
 permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: Build & Release Standalone Packages
-    runs-on: windows-latest
+  build-binaries:
+    name: Build (${{ matrix.os }} - ${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            artifact_name: release-windows
+            target_flag: --win
+          - os: macos-latest
+            platform: macos
+            artifact_name: release-macos
+            target_flag: --mac
+          - os: ubuntu-latest
+            platform: linux
+            artifact_name: release-linux
+            target_flag: --linux
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 20 LTS
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -25,16 +49,64 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Compile Full Standalone Executables (200+ MB)
-        run: node scripts/build-standalone-exe.js
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Compile Standalone Packages (${{ matrix.platform }})
+        run: node scripts/build-standalone-exe.js ${{ matrix.target_flag }}
+
+      - name: Save Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: public/release/*
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish Multi-OS GitHub Release
+    needs: [build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-windows
+          path: ./dist-release
+
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: ./dist-release
+
+      - name: Download Linux Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-linux
+          path: ./dist-release
+
+      - name: List Release Files
+        run: |
+          echo "=== Release Files Ready for Publishing ==="
+          ls -lah ./dist-release
 
       - name: Publish Artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: "Offline AI Studio ${{ github.event.inputs.tag_name || github.ref_name }} - Standalone Multi-OS Release"
+          draft: false
+          prerelease: false
           files: |
-            public/release/OfflineAIStudio-Setup-1.0.0.exe
-            public/release/OfflineAIStudio-Portable-1.0.0.exe
-            public/release/OfflineAIStudio-v1.0.0-Source-Bundle.zip
+            ./dist-release/*.exe
+            ./dist-release/*.dmg
+            ./dist-release/*.AppImage
+            ./dist-release/*.deb
+            ./dist-release/*.tar.gz
+            ./dist-release/*.zip
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

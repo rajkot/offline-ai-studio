@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Offline AI Studio
+Comment=The 100% Local, Air-Gapped, and Hybrid AI Engineering Workbench
+Exec=offline-ai-studio %U
+Icon=offline-ai-studio
+Terminal=false
+Type=Application
+Categories=Development;IDE;TextEditor;
+StartupWMClass=OfflineAIStudio
+MimeType=x-scheme-handler/offline-ai;
+Keywords=AI;IDE;Offline;Coding;Studio;

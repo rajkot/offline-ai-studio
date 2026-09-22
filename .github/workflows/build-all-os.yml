@@ -1,4 +1,4 @@
-name: Build Executables (All OS)
+name: Build Standalone Installables (Windows, macOS, Linux)
 
 on:
   push:
@@ -7,20 +7,35 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-matrix:
-    name: Build on ${{ matrix.os }}
+    name: Build Standalone (${{ matrix.os }} - ${{ matrix.platform }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            platform: windows
+            artifact_name: OfflineAIStudio-Windows-x64
+            target_flag: --win
+          - os: macos-latest
+            platform: macos
+            artifact_name: OfflineAIStudio-macOS-Universal
+            target_flag: --mac
+          - os: ubuntu-latest
+            platform: linux
+            artifact_name: OfflineAIStudio-Linux-x64
+            target_flag: --linux
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 20 LTS
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -29,35 +44,42 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build Standalone Executables & Packages
-        run: node scripts/build-standalone-exe.js
+      - name: Verify Web & Engine Build
+        run: npm run build
 
-      - name: Upload Windows Executables
-        if: matrix.os == 'windows-latest'
+      - name: Build Full Standalone Installables (${{ matrix.platform }})
+        run: node scripts/build-standalone-exe.js ${{ matrix.target_flag }}
+
+      - name: Upload Windows Standalone Installables (.exe, .zip)
+        if: matrix.platform == 'windows'
         uses: actions/upload-artifact@v4
         with:
-          name: offline-ai-studio-windows-x64
+          name: ${{ matrix.artifact_name }}
           path: |
             public/release/*.exe
-            public/release/*.zip
-          if-no-files-found: warn
+            public/release/*Windows*.zip
+            public/release/*Source*.zip
+          if-no-files-found: error
 
-      - name: Upload Linux Bundle
-        if: matrix.os == 'ubuntu-latest'
+      - name: Upload macOS Standalone Installables (.dmg, .zip)
+        if: matrix.platform == 'macos'
         uses: actions/upload-artifact@v4
         with:
-          name: offline-ai-studio-linux
+          name: ${{ matrix.artifact_name }}
           path: |
-            public/release/*.zip
-            public/release/*.exe
-          if-no-files-found: warn
+            public/release/*.dmg
+            public/release/*macOS*.zip
+            public/release/*Source*.zip
+          if-no-files-found: error
 
-      - name: Upload macOS Bundle
-        if: matrix.os == 'macos-latest'
+      - name: Upload Linux Standalone Installables (.AppImage, .deb, .tar.gz)
+        if: matrix.platform == 'linux'
         uses: actions/upload-artifact@v4
         with:
-          name: offline-ai-studio-macos
+          name: ${{ matrix.artifact_name }}
           path: |
-            public/release/*.zip
-            public/release/*.exe
-          if-no-files-found: warn
+            public/release/*.AppImage
+            public/release/*.deb
+            public/release/*Linux*.tar.gz
+            public/release/*Source*.zip
+          if-no-files-found: error
