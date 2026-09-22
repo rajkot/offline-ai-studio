@@ -1609,8 +1609,12 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'grid-open':
         setSelectedFile('__GRID_STUDIO__');
         break;
+      case 'extensions-marketplace':
       case 'extensions-studio-open':
         setSelectedFile('__EXTENSIONS_STUDIO__');
+        break;
+      case 'mcp-studio':
+        setSelectedFile('__MCP_STUDIO__');
         break;
       case 'format-document':
         if (editorRef.current) {
@@ -3886,24 +3890,24 @@ export default function ExtractedVisionUI() {
               {/* Plugins Tab View */}
               {activeActivityTab === 'plugins' && (
                 <div className="space-y-2">
-                  <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Extensions &amp; MCP Studio</div>
+                  <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Marketplace &amp; Protocols</div>
                   <button
                     onClick={() => handleSelectFile('__EXTENSIONS_STUDIO__')}
-                    className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <Package size={13} /> Open Extensions &amp; MCP Studio
-                  </button>
-                  <button
-                    onClick={() => handleSelectFile('__PLUGINS__')}
-                    className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded text-xs font-semibold border border-zinc-700 shadow transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    Legacy Plugin Marketplace ({activePluginsCount})
+                    <Package size={13} /> 🏪 VS Code Extensions
                   </button>
                   <button
                     onClick={() => handleSelectFile('__MCP_STUDIO__')}
-                    className="w-full py-1.5 bg-purple-950/60 hover:bg-purple-900/60 text-purple-300 rounded text-xs font-semibold border border-purple-800/60 shadow transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2 bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 rounded-lg text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <Radio size={13} /> MCP Server Inspector
+                    <Radio size={13} /> 📻 MCP Studio &amp; Tools
+                  </button>
+                  <button
+                    onClick={() => handleSelectFile('__PLUGINS__')}
+                    className="w-full py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-medium border border-zinc-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    ⌨️ Keymaps &amp; Vim ({activePluginsCount})
                   </button>
                 </div>
               )}
