@@ -10,8 +10,10 @@ import {
   GitBranch,
   ArrowUp,
   Layers,
-  FileCheck
+  FileCheck,
+  ShieldCheck
 } from 'lucide-react';
+import PreCommitReviewModal from './PreCommitReviewModal';
 
 interface GitCommitModalProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ export default function GitCommitModal({ isOpen, onClose, onCommitSuccess }: Git
   const [commitMsg, setCommitMsg] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCommitting, setIsCommitting] = useState(false);
+  const [isPreCommitReviewOpen, setIsPreCommitReviewOpen] = useState(false);
   const [stageAll, setStageAll] = useState(true);
   const [branch, setBranch] = useState('main');
   const [stagedFiles, setStagedFiles] = useState<string[]>([]);
@@ -135,14 +138,23 @@ export default function GitCommitModal({ isOpen, onClose, onCommitSuccess }: Git
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Commit Message</label>
-              <button
-                onClick={handleGenerateAiMessage}
-                disabled={isGenerating}
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer font-medium"
-              >
-                <Sparkles size={12} className={isGenerating ? 'animate-spin' : ''} />
-                {isGenerating ? 'Synthesizing...' : 'Regenerate with AI'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsPreCommitReviewOpen(true)}
+                  className="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer font-medium bg-emerald-950/40 hover:bg-emerald-950/70 border border-emerald-700/40 px-2 py-0.5 rounded"
+                >
+                  <ShieldCheck size={12} />
+                  ✨ Review Staged Diff
+                </button>
+                <button
+                  onClick={handleGenerateAiMessage}
+                  disabled={isGenerating}
+                  className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer font-medium"
+                >
+                  <Sparkles size={12} className={isGenerating ? 'animate-spin' : ''} />
+                  {isGenerating ? 'Synthesizing...' : 'Regenerate with AI'}
+                </button>
+              </div>
             </div>
             <textarea
               value={commitMsg}
@@ -199,6 +211,16 @@ export default function GitCommitModal({ isOpen, onClose, onCommitSuccess }: Git
           </div>
         </div>
       </div>
+
+      <PreCommitReviewModal
+        isOpen={isPreCommitReviewOpen}
+        onClose={() => setIsPreCommitReviewOpen(false)}
+        onCommitApplied={(msg) => {
+          setCommitMsg(msg);
+          if (onCommitSuccess) onCommitSuccess();
+          onClose();
+        }}
+      />
     </div>
   );
 }

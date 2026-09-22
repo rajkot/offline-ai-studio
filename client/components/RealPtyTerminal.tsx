@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { TerminalErrorContext, terminalAutoPatcher } from '@/lib/ai/terminalAutoPatcher';
 import { problemMatcherEngine } from '@/lib/tasks/problemMatcherEngine';
+import { terminalMultiSessionEngine } from '@/lib/terminal/terminalMultiSessionEngine';
 import TerminalAiFixModal from './TerminalAiFixModal';
 
 interface RealPtyTerminalProps {
@@ -23,19 +24,27 @@ interface RealPtyTerminalProps {
   onTitleChange?: (title: string) => void;
   workspaceFiles?: Record<string, string>;
   onBatchApplyFiles?: (files: Record<string, string>) => void;
+  onOpenFile?: (path: string, line?: number, column?: number) => void;
+  shellType?: string;
+  sessionId?: string;
+  hideHeaderBar?: boolean;
 }
 
 export default function RealPtyTerminal({
   className = '',
   onTitleChange,
   workspaceFiles,
-  onBatchApplyFiles
+  onBatchApplyFiles,
+  onOpenFile,
+  shellType,
+  sessionId,
+  hideHeaderBar = false
 }: RealPtyTerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const [selectedShell, setSelectedShell] = useState<string>('powershell.exe');
+  const [selectedShell, setSelectedShell] = useState<string>(shellType || 'powershell.exe');
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [detectedError, setDetectedError] = useState<TerminalErrorContext | null>(null);
   const [isFixModalOpen, setIsFixModalOpen] = useState<boolean>(false);
@@ -47,6 +56,12 @@ export default function RealPtyTerminal({
     { id: 'wsl', name: 'WSL2 (Linux)', command: 'wsl.exe' },
     { id: 'bash', name: 'Git Bash', command: 'bash.exe' }
   ]);
+
+  useEffect(() => {
+    if (shellType && shellType !== selectedShell) {
+      handleSwitchShell(shellType);
+    }
+  }, [shellType]);
 
   const initTerminal = useCallback(() => {
     if (!terminalRef.current) return;
@@ -86,6 +101,46 @@ export default function RealPtyTerminal({
       scrollback: 5000
     });
 
+    // Feature 10: Clickable Terminal Links & Compiler Navigation
+    try {
+      term.registerLinkProvider({
+        provideLinks(bufferLineNumber: number, callback: (links: any[] | undefined) => void) {
+          const line = term.buffer.active.getLine(bufferLineNumber - 1);
+          if (!line) {
+            callback(undefined);
+            return;
+          }
+          const text = line.translateToString(true);
+          const detectedLinks = terminalMultiSessionEngine.extractFilePathLinks(text);
+          if (!detectedLinks || detectedLinks.length === 0) {
+            callback(undefined);
+            return;
+          }
+
+          const xtermLinks = detectedLinks.map(lnk => ({
+            range: {
+              start: { x: lnk.startIndex + 1, y: bufferLineNumber },
+              end: { x: lnk.endIndex, y: bufferLineNumber }
+            },
+            text: lnk.text,
+            decorations: {
+              underline: true,
+              pointerCursor: true
+            },
+            activate: (_event: MouseEvent, _text: string) => {
+              if (onOpenFile) {
+                onOpenFile(lnk.filePath, lnk.line, lnk.column);
+              }
+            }
+          }));
+
+          callback(xtermLinks);
+        }
+      });
+    } catch (linkErr) {
+      console.warn('[RealPtyTerminal] Link provider register notice:', linkErr);
+    }
+
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
     term.open(terminalRef.current);
@@ -95,7 +150,7 @@ export default function RealPtyTerminal({
     fitAddonRef.current = fitAddon;
 
     connectPtyWebSocket(term, fitAddon, selectedShell);
-  }, [selectedShell]);
+  }, [selectedShell, onOpenFile]);
 
   const connectPtyWebSocket = async (term: XTerm, fitAddon: FitAddon, shellCmd: string) => {
     setConnectionStatus('connecting');
@@ -208,8 +263,18 @@ export default function RealPtyTerminal({
     };
 
     window.addEventListener('resize', handleResize);
+
+    const resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+
+    if (terminalRef.current) {
+      resizeObserver.observe(terminalRef.current);
+    }
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
       if (wsRef.current) {
         wsRef.current.close();
       }
@@ -243,84 +308,103 @@ export default function RealPtyTerminal({
   };
 
   return (
-    <div className={`flex flex-col h-full bg-[#030712] overflow-hidden ${className}`}>
+    <div className={`flex flex-col h-full bg-[#030712] overflow-hidden relative ${className}`}>
       {/* Terminal Control Bar */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#0b0f19] border-b border-slate-800 text-xs">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 font-mono text-slate-300">
-            <TerminalIcon size={13} className="text-indigo-400" />
-            <span className="font-bold">Real PTY Shell</span>
-          </div>
+      {!hideHeaderBar && (
+        <div className="flex items-center justify-between px-3 py-1.5 bg-[#0b0f19] border-b border-slate-800 text-xs shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 font-mono text-slate-300">
+              <TerminalIcon size={13} className="text-indigo-400" />
+              <span className="font-bold">Real PTY Shell</span>
+            </div>
 
-          {/* Shell Switcher Dropdown */}
-          <div className="flex items-center bg-slate-900 border border-slate-700/60 rounded-md px-2 py-0.5">
-            <select
-              value={selectedShell}
-              onChange={(e) => handleSwitchShell(e.target.value)}
-              className="bg-transparent text-[11px] font-mono text-slate-200 focus:outline-none cursor-pointer"
-            >
-              {availableShells.map((sh) => (
-                <option key={sh.id} value={sh.command} className="bg-slate-900 text-white">
-                  {sh.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Shell Switcher Dropdown */}
+            <div className="flex items-center bg-slate-900 border border-slate-700/60 rounded-md px-2 py-0.5">
+              <select
+                value={selectedShell}
+                onChange={(e) => handleSwitchShell(e.target.value)}
+                className="bg-transparent text-[11px] font-mono text-slate-200 focus:outline-none cursor-pointer"
+              >
+                {availableShells.map((sh) => (
+                  <option key={sh.id} value={sh.command} className="bg-slate-900 text-white">
+                    {sh.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Connection Status Badge */}
-          <div className="flex items-center gap-1.5 text-[10px] font-mono">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                connectionStatus === 'connected'
-                  ? 'bg-emerald-400 animate-pulse'
+            {/* Connection Status Badge */}
+            <div className="flex items-center gap-1.5 text-[10px] font-mono">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  connectionStatus === 'connected'
+                    ? 'bg-emerald-400 animate-pulse'
+                    : connectionStatus === 'connecting'
+                    ? 'bg-amber-400'
+                    : 'bg-rose-500'
+                }`}
+              />
+              <span className="text-slate-400">
+                {connectionStatus === 'connected'
+                  ? 'PTY Online (WebSocket)'
                   : connectionStatus === 'connecting'
-                  ? 'bg-amber-400'
-                  : 'bg-rose-500'
-              }`}
-            />
-            <span className="text-slate-400">
-              {connectionStatus === 'connected'
-                ? 'PTY Online (WebSocket)'
-                : connectionStatus === 'connecting'
-                ? 'Connecting...'
-                : 'Disconnected'}
-            </span>
+                  ? 'Connecting...'
+                  : 'Disconnected'}
+              </span>
+            </div>
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
+            {/* Glowing Fix with AI Button (Cursor & Windsurf innovation) */}
+            {detectedError && (
+              <button
+                onClick={() => setIsFixModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-indigo-500 text-white font-mono font-bold text-[11px] rounded-full shadow-lg shadow-purple-900/50 border border-purple-300/60 animate-pulse transition-all cursor-pointer"
+                title={`Fix ${detectedError.targetFile}:${detectedError.line} with AI`}
+              >
+                <Sparkles size={12} className="text-amber-300 animate-spin" />
+                <span>Fix with AI</span>
+                <span className="text-[9px] px-1.5 py-0.2 bg-black/40 rounded-full font-normal border border-white/20">
+                  {detectedError.targetFile.split('/').pop()}:{detectedError.line}
+                </span>
+              </button>
+            )}
+
+            <button
+              onClick={handleClear}
+              className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Clear Terminal (Ctrl+L)"
+            >
+              <Trash2 size={12} />
+            </button>
+            <button
+              onClick={handleRestart}
+              className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Restart PTY Shell"
+            >
+              <RefreshCw size={12} />
+            </button>
           </div>
         </div>
+      )}
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-2">
-          {/* Glowing Fix with AI Button (Cursor & Windsurf innovation) */}
-          {detectedError && (
-            <button
-              onClick={() => setIsFixModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-indigo-500 text-white font-mono font-bold text-[11px] rounded-full shadow-lg shadow-purple-900/50 border border-purple-300/60 animate-pulse transition-all cursor-pointer"
-              title={`Fix ${detectedError.targetFile}:${detectedError.line} with AI`}
-            >
-              <Sparkles size={12} className="text-amber-300 animate-spin" />
-              <span>Fix with AI</span>
-              <span className="text-[9px] px-1.5 py-0.2 bg-black/40 rounded-full font-normal border border-white/20">
-                {detectedError.targetFile.split('/').pop()}:{detectedError.line}
-              </span>
-            </button>
-          )}
-
+      {/* Floating Fix With AI Chip if Header Bar is Hidden */}
+      {hideHeaderBar && detectedError && (
+        <div className="absolute top-2 right-4 z-20">
           <button
-            onClick={handleClear}
-            className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
-            title="Clear Terminal (Ctrl+L)"
+            onClick={() => setIsFixModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-indigo-500 text-white font-mono font-bold text-[11px] rounded-full shadow-lg shadow-purple-900/50 border border-purple-300/60 animate-pulse transition-all cursor-pointer"
+            title={`Fix ${detectedError.targetFile}:${detectedError.line} with AI`}
           >
-            <Trash2 size={12} />
-          </button>
-          <button
-            onClick={handleRestart}
-            className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
-            title="Restart PTY Shell"
-          >
-            <RefreshCw size={12} />
+            <Sparkles size={12} className="text-amber-300 animate-spin" />
+            <span>Fix with AI</span>
+            <span className="text-[9px] px-1.5 py-0.2 bg-black/40 rounded-full font-normal border border-white/20">
+              {detectedError.targetFile.split('/').pop()}:{detectedError.line}
+            </span>
           </button>
         </div>
-      </div>
+      )}
 
       {/* Terminal Viewport */}
       <div ref={terminalRef} className="flex-1 w-full h-full p-2 overflow-hidden" />

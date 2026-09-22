@@ -72,11 +72,19 @@ import BreakpointEditModal from '@/client/components/BreakpointEditModal';
 import TasksLauncherModal from '@/client/components/TasksLauncherModal';
 import { taskRunnerEngine } from '@/lib/tasks/taskRunnerEngine';
 import MultiFileComposerModal from './MultiFileComposerModal';
+import AgenticComposerModal from '@/client/components/AgenticComposerModal';
+import PreCommitReviewModal from '@/client/components/PreCommitReviewModal';
 import DockerSandboxPanel from './DockerSandboxPanel';
 import LanCollabPanel from './LanCollabPanel';
 import SemanticSearchPalette from './SemanticSearchPalette';
 import GgufQuantizerStudio from './GgufQuantizerStudio';
 import { gitGutterEngine, GutterClickEvent } from '@/lib/git/gitGutterEngine';
+import { fileTimelineEngine } from '@/lib/fileTimelineEngine';
+import FileTimelineAccordion from '@/client/components/FileTimelineAccordion';
+import ApiStudioPanel from '@/client/components/ApiStudioPanel';
+import TestExplorerSidebar from '@/client/components/TestExplorerSidebar';
+import { testExplorerEngine } from '@/lib/testing/testExplorerEngine';
+import { terminalMultiSessionEngine } from '@/lib/terminal/terminalMultiSessionEngine';
 import { crossFileLspManager, ReferencesPeekData } from '@/lib/lsp/crossFileLspManager';
 import { localWhisperEngine } from '@/lib/ai/localWhisperEngine';
 import { webGpuEngine } from '@/lib/ai/webGpuEngine';
@@ -508,6 +516,8 @@ export default function Playground({
   const ghostTextEnabledRef = useRef(ghostTextEnabled);
   const dapDecorationsRef = useRef<string[]>([]);
   const dapUnsubRef = useRef<(() => void) | null>(null);
+  const testDecorationsRef = useRef<string[]>([]);
+  const testUnsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     selectedFileRef.current = selectedFile;
@@ -518,6 +528,7 @@ export default function Playground({
     lspWorkspace.updateWorkspace(parsedFiles);
     wasiRuntime.syncWorkspace(parsedFiles);
     opfsEngine.syncWorkspaceToOpfs(parsedFiles);
+    testExplorerEngine.discoverTests(parsedFiles);
   }, [parsedFiles]);
 
   useEffect(() => {
@@ -550,6 +561,8 @@ export default function Playground({
 
   // Docking Layout, Multi-Pane Grid & Detached Floating Windows States
   const [workbenchLayout, setWorkbenchLayout] = useState<WorkbenchLayoutState>(dockingEngine.getState());
+  const [isAgenticComposerOpen, setIsAgenticComposerOpen] = useState<boolean>(false);
+  const [isPreCommitReviewModalOpen, setIsPreCommitReviewModalOpen] = useState<boolean>(false);
   const [keymapProfile, setKeymapProfile] = useState<KeymapProfile>(keymapEngine.getProfile());
   const [vimState, setVimState] = useState<VimState>(keymapEngine.getVimState());
   const [isVimExPromptOpen, setIsVimExPromptOpen] = useState<boolean>(false);
@@ -558,6 +571,11 @@ export default function Playground({
   const [isExeBuilding, setIsExeBuilding] = useState<boolean>(false);
   const [activePluginsCount, setActivePluginsCount] = useState<number>(() => pluginSystem.getEnabledPlugins().length);
   const [statusBarPlugins, setStatusBarPlugins] = useState(() => pluginSystem.getActiveStatusBarItems());
+
+  // Subscribe to live docking workbench layout updates (Multi-Pane Grid, Split View)
+  useEffect(() => {
+    return dockingEngine.subscribe(setWorkbenchLayout);
+  }, []);
 
   // Setup ExtensionHost hooks & IDE context integration
   useEffect(() => {
@@ -908,7 +926,7 @@ export default function Playground({
       }
     }, 250);
 
-    // 6. Interactive DAP Gutter Breakpoints (Click gutter to toggle breakpoint, Right-click to edit)
+    // 6. Interactive DAP Gutter Breakpoints & Test Runner (Click gutter to run test or toggle breakpoint)
     editor.onMouseDown((e: any) => {
       if (
         e.target?.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN ||
@@ -917,6 +935,15 @@ export default function Playground({
         const line = e.target.position?.lineNumber;
         if (line && selectedFileRef.current && !selectedFileRef.current.startsWith('__')) {
           const file = selectedFileRef.current;
+
+          // 1-Click "Run Test at Cursor" if clicked on a test gutter icon
+          const testsInFile = testExplorerEngine.getTestsForFile(file);
+          const clickedTest = testsInFile.find(t => t.line === line || (line >= t.line && line <= t.line + 1));
+          if (clickedTest && !e.event?.rightButton) {
+            testExplorerEngine.runTestAtLine(file, line);
+            return;
+          }
+
           if (e.event?.rightButton) {
             e.event.preventDefault?.();
             e.event.stopPropagation?.();
@@ -1043,6 +1070,44 @@ export default function Playground({
       updateDapDecorations();
     });
 
+    // 7.5 Interactive Test Explorer Gutter Decorations Synchronizer
+    const updateTestDecorations = () => {
+      if (!editorRef.current || !monacoRef.current) return;
+      const currentPath = selectedFileRef.current || '';
+      if (!currentPath || currentPath.startsWith('__')) {
+        testDecorationsRef.current = editorRef.current.deltaDecorations(testDecorationsRef.current, []);
+        return;
+      }
+      const tests = testExplorerEngine.getTestsForFile(currentPath);
+      const newDecorations: any[] = tests.map(t => {
+        let glyphClass = 'test-glyph-idle';
+        if (t.status === 'passed') glyphClass = 'test-glyph-passed';
+        else if (t.status === 'failed') glyphClass = 'test-glyph-failed';
+        else if (t.status === 'running') glyphClass = 'test-glyph-running';
+
+        return {
+          range: new monacoRef.current.Range(t.line, 1, t.line, 1),
+          options: {
+            isWholeLine: false,
+            glyphMarginClassName: `${glyphClass} w-3.5 h-3.5 my-auto ml-0.5`,
+            glyphMarginHoverMessage: {
+              value: `**Test: ${t.name}**\n\nStatus: ${t.status.toUpperCase()}${t.durationMs ? ` (${t.durationMs}ms)` : ''}\n\n*Click gutter icon to run test at cursor*`
+            }
+          }
+        };
+      });
+
+      testDecorationsRef.current = editorRef.current.deltaDecorations(testDecorationsRef.current, newDecorations);
+    };
+
+    updateTestDecorations();
+    if (testUnsubRef.current) {
+      testUnsubRef.current();
+    }
+    testUnsubRef.current = testExplorerEngine.subscribe(() => {
+      updateTestDecorations();
+    });
+
     // 8. Real-Time Git Gutters Engine Attachment
     gitGutterEngine.attachEditor(editor, monaco, selectedFileRef.current || 'components/Playground.tsx');
 
@@ -1074,6 +1139,16 @@ export default function Playground({
           setIsInlineAiOpen(true);
         }
       }
+    });
+
+    // 9b. Cursor Composer: Agentic Multi-File Composer Loop (Ctrl+I / Cmd+I)
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI, () => {
+      setIsAgenticComposerOpen(prev => !prev);
+    });
+
+    // 9c. Multi-Pane Split Editor Grid (Ctrl+\ / Cmd+\)
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Backslash, () => {
+      dockingEngine.splitActivePane('vertical', selectedFileRef.current || 'components/Playground.tsx');
     });
 
     // 10. Cross-File LSP Intelligence Manager (F12 Go To Definition, Shift+F12 References, F2 Rename, Ctrl+. Quick Fix)
@@ -1181,9 +1256,21 @@ export default function Playground({
   }, []);
 
   const handleJumpToLocation = useCallback((filePath: string, lineNum?: number, column?: number) => {
-    if (filePath && !filePath.startsWith('__')) {
-      setOpenTabs(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
-      setSelectedFile(filePath);
+    if (!filePath) return;
+
+    // Normalize path: convert backslashes to forward slashes, strip leading ./ or /
+    const cleanPath = filePath.replace(/\\/g, '/').replace(/^(\.\/|\/)/, '');
+
+    // Match against workspace file keys (e.g. components/Playground.tsx)
+    const matchedKey = Object.keys(parsedFiles).find(k =>
+      k === cleanPath ||
+      k.endsWith(cleanPath) ||
+      cleanPath.endsWith(k)
+    ) || (parsedFiles[cleanPath] ? cleanPath : cleanPath);
+
+    if (matchedKey && !matchedKey.startsWith('__')) {
+      setOpenTabs(prev => prev.includes(matchedKey) ? prev : [...prev, matchedKey]);
+      setSelectedFile(matchedKey);
       if (lineNum !== undefined && lineNum > 0) {
         setTimeout(() => {
           if (editorRef.current) {
@@ -1194,7 +1281,7 @@ export default function Playground({
         }, 80);
       }
     }
-  }, []);
+  }, [parsedFiles]);
 
   // Synchronize Monaco multi-models for cross-file LSP navigation
   useEffect(() => {
@@ -1311,11 +1398,14 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
 }`
   });
 
-  const handleUpdateFile = useCallback((filePath: string, newContent: string) => {
+  const handleUpdateFile = useCallback((filePath: string, newContent: string, snapshotLabel?: string) => {
     // If local directory is mounted, write through directly to disk in background
     if (localFileSystemEngine.getActiveDirectory()) {
       localFileSystemEngine.writeFile(filePath, newContent).catch(console.error);
     }
+
+    // Auto-snapshot for local timeline history (VS Code Timeline)
+    fileTimelineEngine.snapshot(filePath, newContent, snapshotLabel || 'Auto Save');
 
     setRawOutput(prev => {
       const fileHeader = `--- FILE: ${filePath} ---`;
@@ -1367,19 +1457,28 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
     setTimeout(() => setDiskToastMessage(null), 3000);
   }, []);
 
+  const [externalConflictFile, setExternalConflictFile] = useState<{ path: string; diskContent: string } | null>(null);
+  const [isDragOverExplorer, setIsDragOverExplorer] = useState<boolean>(false);
+
   // Listen for external file modifications from local disk watcher
   useEffect(() => {
     return localFileSystemEngine.subscribe((event) => {
       if (event.type === 'file-externally-modified' && event.path && event.details?.newContent) {
-        handleUpdateFile(event.path, event.details.newContent);
-        setDiskToastMessage(`External edit: reloaded ${event.path} from disk`);
-        setTimeout(() => setDiskToastMessage(null), 3000);
+        if (dirtyFiles.includes(event.path)) {
+          // File has unsaved edits in IDE: prompt user to avoid silent data loss
+          setExternalConflictFile({ path: event.path, diskContent: event.details.newContent });
+        } else {
+          // Clean buffer: silently reload from disk
+          handleUpdateFile(event.path, event.details.newContent);
+          setDiskToastMessage(`⚡ Reloaded ${event.path} from disk`);
+          setTimeout(() => setDiskToastMessage(null), 3000);
+        }
       }
       if (event.type === 'directory-unmounted') {
         setMountedLocalFolder(null);
       }
     });
-  }, [handleUpdateFile]);
+  }, [handleUpdateFile, dirtyFiles]);
 
   // Subscribe to local Whisper audio state
   useEffect(() => {
@@ -1434,6 +1533,10 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
   }, [selectedFile, parsedFiles]);
 
   const handleBatchApplyFiles = useCallback((updatedFiles: Record<string, string>) => {
+    // Snapshot each modified file for timeline history (AI Edit label)
+    Object.entries(updatedFiles).forEach(([filePath, newContent]) => {
+      fileTimelineEngine.snapshot(filePath, newContent, 'AI Edit');
+    });
     setRawOutput(prev => {
       let result = prev;
       for (const [filePath, newContent] of Object.entries(updatedFiles)) {
@@ -1450,6 +1553,83 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       return result;
     });
   }, []);
+
+  // Drag-and-Drop File and Folder Importer
+  const handleDropFiles = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOverExplorer(false);
+
+    const items = e.dataTransfer.items;
+    const files = e.dataTransfer.files;
+    if (!items && !files) return;
+
+    const readFileContent = (file: File): Promise<string> => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+        reader.onerror = () => resolve('');
+        reader.readAsText(file);
+      });
+    };
+
+    const traverseEntry = async (entry: any, basePath = ''): Promise<{ path: string; content: string }[]> => {
+      const results: { path: string; content: string }[] = [];
+      if (entry.isFile) {
+        try {
+          const file: File = await new Promise((res, rej) => entry.file(res, rej));
+          const content = await readFileContent(file);
+          const fullPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+          results.push({ path: fullPath, content });
+        } catch {
+          // ignore unreadable
+        }
+      } else if (entry.isDirectory) {
+        const dirReader = entry.createReader();
+        const readEntries = (): Promise<any[]> =>
+          new Promise((res, rej) => dirReader.readEntries(res, rej));
+        let entries = await readEntries();
+        while (entries.length > 0) {
+          for (const child of entries) {
+            const childResults = await traverseEntry(child, basePath ? `${basePath}/${entry.name}` : entry.name);
+            results.push(...childResults);
+          }
+          entries = await readEntries();
+        }
+      }
+      return results;
+    };
+
+    const importedEntries: { path: string; content: string }[] = [];
+
+    if (items && items.length > 0 && typeof (items[0] as any).webkitGetAsEntry === 'function') {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const entry = (item as any).webkitGetAsEntry?.();
+        if (entry) {
+          const files = await traverseEntry(entry);
+          importedEntries.push(...files);
+        }
+      }
+    } else if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const content = await readFileContent(file);
+        const path = file.webkitRelativePath || file.name;
+        importedEntries.push({ path, content });
+      }
+    }
+
+    if (importedEntries.length > 0) {
+      const updates: Record<string, string> = {};
+      importedEntries.forEach(item => {
+        updates[item.path] = item.content;
+      });
+      handleBatchApplyFiles(updates);
+      setDiskToastMessage(`📥 Imported ${importedEntries.length} file(s) into workspace`);
+      setTimeout(() => setDiskToastMessage(null), 3500);
+    }
+  }, [handleBatchApplyFiles]);
 
   const [commitMessage, setCommitMessage] = useState('');
   const [auditResults, setAuditResults] = useState('');
@@ -1601,7 +1781,7 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
   };
 
   const [editorMenuDropdown, setEditorMenuDropdown] = useState<'ai' | 'tools' | null>(null);
-  const [activeActivityTab, setActiveActivityTab] = useState<'explorer' | 'search' | 'git' | 'debug' | 'extensions' | 'chat' | 'mcp' | 'swarm' | 'database' | 'training' | 'wasi' | 'composer' | 'plugins' | 'hitl'>('explorer');
+  const [activeActivityTab, setActiveActivityTab] = useState<'explorer' | 'search' | 'git' | 'debug' | 'extensions' | 'chat' | 'mcp' | 'swarm' | 'database' | 'training' | 'wasi' | 'composer' | 'plugins' | 'hitl' | 'api' | 'testing'>('explorer');
   const [activeMenuDropdown, setActiveMenuDropdown] = useState<string | null>(null);
   const [isZenMode, setIsZenMode] = useState(false);
   
@@ -2035,6 +2215,29 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       if (e.key === 'F1') {
         e.preventDefault();
         setIsCommandPaletteOpen(prev => !prev);
+        return;
+      }
+
+      // Ctrl+I or Cmd+I: Agentic Multi-File Composer Modal
+      if ((e.key === 'I' || e.key === 'i') && (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        setIsAgenticComposerOpen(prev => !prev);
+        return;
+      }
+
+      // Ctrl+\ or Cmd+\: Split Editor Grid Vertically
+      if (e.key === '\\' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        dockingEngine.splitActivePane('vertical', selectedFileRef.current || 'components/Playground.tsx');
+        return;
+      }
+
+      // Ctrl+Shift+5: Split Terminal in Bottom Tray
+      if ((e.key === '5' || e.code === 'Digit5') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+        e.preventDefault();
+        setIsBottomPanelOpen(true);
+        setActiveTab('terminal');
+        terminalMultiSessionEngine.splitTerminal('split-vertical');
         return;
       }
 
@@ -3793,6 +3996,7 @@ export default function ExtractedVisionUI() {
               { id: 'search' as const, label: 'Search & Replace (Ctrl+Shift+F)', icon: <Search size={18} /> },
               { id: 'git' as const, label: 'Source Control (Ctrl+Shift+G)', icon: <GitBranch size={18} /> },
               { id: 'debug' as const, label: 'Run & Debug (Ctrl+Shift+D)', icon: <Bug size={18} /> },
+              { id: 'testing' as const, label: 'Testing & Test Explorer (Vitest/Jest/Pytest)', icon: <Beaker size={18} className="text-emerald-400" /> },
               { id: 'extensions' as const, label: 'Extensions & Marketplace (Ctrl+Shift+X)', icon: <Package size={18} /> },
             ].map(tab => {
               const isActive = activeActivityTab === tab.id && isLeftPanelOpen;
@@ -3827,10 +4031,11 @@ export default function ExtractedVisionUI() {
             {/* 2. Advanced Studios & AI Section */}
             {[
               { id: 'chat' as const, label: 'AI Assistant & Copilot (Ctrl+Alt+A)', icon: <Bot size={18} /> },
+              { id: 'api' as const, label: 'API Studio - REST & GraphQL (Thunder Client)', icon: <Zap size={18} className="text-amber-400" /> },
               { id: 'mcp' as const, label: 'MCP Protocol Studio & Hub', icon: <Radio size={18} /> },
               { id: 'swarm' as const, label: 'Multi-Agent Swarm Orchestrator', icon: <Users size={18} /> },
               { id: 'database' as const, label: 'Database Studio (SQLite & PG)', icon: <Database size={18} /> },
-              { id: 'wasi' as const, label: 'WASI WebContainer Dev Sandbox', icon: <Zap size={18} /> },
+              { id: 'wasi' as const, label: 'WASI WebContainer Dev Sandbox', icon: <Cpu size={18} /> },
             ].map(tab => {
               const isActive = activeActivityTab === tab.id && isLeftPanelOpen;
               return (
@@ -4025,8 +4230,10 @@ export default function ExtractedVisionUI() {
                 {activeActivityTab === 'search' && <><Search size={13} className="text-indigo-400" /> Search & Replace</>}
                 {activeActivityTab === 'git' && <><GitBranch size={13} className="text-emerald-400" /> Source Control</>}
                 {activeActivityTab === 'debug' && <><Bug size={13} className="text-rose-400" /> Run & Debug</>}
+                {activeActivityTab === 'testing' && <><Beaker size={13} className="text-emerald-400" /> Test Explorer</>}
                 {activeActivityTab === 'extensions' && <><Package size={13} className="text-purple-400" /> Extensions</>}
                 {activeActivityTab === 'chat' && <><Bot size={13} className="text-indigo-400" /> AI Assistant</>}
+                {activeActivityTab === 'api' && <><Zap size={13} className="text-amber-400" /> API Studio (REST & GraphQL)</>}
                 {activeActivityTab === 'mcp' && <><Radio size={13} className="text-purple-400" /> MCP Hub</>}
                 {activeActivityTab === 'swarm' && <><Users size={13} className="text-indigo-400" /> Swarm Agents</>}
                 {activeActivityTab === 'database' && <><Database size={13} className="text-teal-400" /> Database Studio</>}
@@ -4118,7 +4325,29 @@ export default function ExtractedVisionUI() {
                   </div>
 
                   {/* 2. WORKSPACE PROJECT FILES ACCORDION */}
-                  <div className="border border-zinc-800/80 rounded-lg bg-zinc-900/20 p-1.5 space-y-1.5">
+                  <div 
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragOverExplorer(true);
+                    }}
+                    onDragLeave={(e) => {
+                      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                        setIsDragOverExplorer(false);
+                      }
+                    }}
+                    onDrop={handleDropFiles}
+                    className={`border border-zinc-800/80 rounded-lg bg-zinc-900/20 p-1.5 space-y-1.5 relative transition-all ${
+                      isDragOverExplorer ? 'ring-2 ring-emerald-500 bg-emerald-950/30' : ''
+                    }`}
+                  >
+                    {isDragOverExplorer && (
+                      <div className="absolute inset-0 z-50 bg-emerald-950/90 border-2 border-dashed border-emerald-400 rounded-lg flex flex-col items-center justify-center gap-1.5 backdrop-blur-xs pointer-events-none p-3 text-center">
+                        <Upload size={20} className="text-emerald-400 animate-bounce" />
+                        <span className="text-xs font-semibold text-emerald-200">Drop files or folders to import</span>
+                        <span className="text-[10px] text-emerald-400/80">Folders and nested files will be mounted directly</span>
+                      </div>
+                    )}
+
                     <div 
                       onClick={() => setIsWorkspaceFilesOpen(prev => !prev)}
                       className="text-[9.5px] font-bold text-zinc-400 uppercase tracking-wider px-1 py-0.5 flex items-center justify-between cursor-pointer hover:text-zinc-200 select-none"
@@ -4128,6 +4357,14 @@ export default function ExtractedVisionUI() {
                         <span className="truncate">{mountedLocalFolder ? `📂 ${mountedLocalFolder}` : 'WORKSPACE: OFFLINE-STUDIO'}</span>
                       </div>
                       <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={handleExportZip}
+                          title="Export Workspace as ZIP (Full Project Archive)"
+                          className="text-zinc-400 hover:text-emerald-400 p-0.5 rounded cursor-pointer transition-colors flex items-center gap-0.5 text-[9px] font-mono hover:bg-zinc-800 px-1 py-0.5"
+                        >
+                          <Download size={10} />
+                          <span>ZIP</span>
+                        </button>
                         {mountedLocalFolder ? (
                           <button
                             onClick={handleUnmountLocalFolder}
@@ -4160,6 +4397,22 @@ export default function ExtractedVisionUI() {
 
                     {isWorkspaceFilesOpen && (
                       <>
+                        {/* Quick Drag & Drop / Export Bar */}
+                        <div className="flex items-center justify-between text-[9px] text-zinc-500 font-mono px-1.5 py-0.5 border border-zinc-800/60 rounded bg-zinc-900/40">
+                          <span className="flex items-center gap-1">
+                            <Upload size={9} className="text-zinc-400" />
+                            Drag & drop folders here
+                          </span>
+                          <button
+                            onClick={handleExportZip}
+                            className="text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer flex items-center gap-0.5 font-semibold"
+                            title="Export Workspace as ZIP"
+                          >
+                            <Download size={9} />
+                            Export ZIP
+                          </button>
+                        </div>
+
                         {/* File Search Filter */}
                         <div className="relative mb-1">
                           <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-zinc-500" size={11} />
@@ -4254,6 +4507,14 @@ export default function ExtractedVisionUI() {
                     )}
                   </div>
 
+                  {/* 3b. LOCAL FILE TIMELINE ACCORDION (VS Code Timeline) */}
+                  <FileTimelineAccordion
+                    selectedFile={selectedFile}
+                    onRevertToSnapshot={(filePath, content) => {
+                      handleUpdateFile(filePath, content, 'Reverted');
+                    }}
+                  />
+
                   {/* 4. AI & DEV HUBS (COLLAPSIBLE ACCORDION AT BOTTOM) */}
                   <div className="border border-zinc-800/80 rounded-lg bg-zinc-900/20 p-1.5 space-y-1">
                     <div 
@@ -4346,6 +4607,17 @@ export default function ExtractedVisionUI() {
                       <span className="flex items-center gap-1 font-mono font-semibold"><GitBranch size={13} className="text-emerald-400" /> main*</span>
                       <span className="text-[10px] text-zinc-500">{dirtyFiles.length} changes</span>
                     </div>
+
+                    {/* AI Pre-Commit Code Reviewer Action */}
+                    <button
+                      onClick={() => setIsPreCommitReviewModalOpen(true)}
+                      title="AI Pre-Commit Code Reviewer: Audit staged diff for security, bugs, and performance"
+                      className="w-full py-1 px-2 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 hover:text-emerald-200 border border-emerald-600/40 rounded text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Sparkles size={12} className="text-emerald-400" />
+                      ✨ Review Staged Diff
+                    </button>
+
                     <textarea
                       placeholder="Message (Ctrl+Enter to commit)"
                       value={sidebarGitCommitMsg}
@@ -4385,6 +4657,19 @@ export default function ExtractedVisionUI() {
                 </div>
               )}
 
+              {/* Interactive Test Explorer (Vitest / Jest / Pytest GUI) */}
+              {activeActivityTab === 'testing' && (
+                <div className="flex-1 h-full overflow-hidden flex flex-col">
+                  <TestExplorerSidebar
+                    workspaceFiles={parsedFiles}
+                    onOpenFile={handleJumpToLocation}
+                    onFixWithAi={(errorMsg, filePath, line) => {
+                      setIsAgenticComposerOpen(true);
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Extensions & Plugins Marketplace Tab View (Ctrl+Shift+X) */}
               {(activeActivityTab === 'extensions' || activeActivityTab === 'plugins') && (
                 <div className="flex-1 h-full overflow-hidden">
@@ -4409,6 +4694,64 @@ export default function ExtractedVisionUI() {
                     >
                       Open Secondary AI Chat Panel
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* API Studio (REST & GraphQL / Thunder Client Alternative) */}
+              {activeActivityTab === 'api' && (
+                <div className="space-y-3 p-1">
+                  <div className="p-3 bg-[#121214] border border-amber-900/40 rounded-lg space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-amber-300 font-semibold font-mono">
+                        <Zap size={15} className="text-amber-400" />
+                        <span>API Studio</span>
+                      </div>
+                      <span className="text-[9px] bg-amber-950 text-amber-300 border border-amber-700/60 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                        REST & GraphQL
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      Integrated Postman &amp; Thunder Client alternative. Test local Next.js routes, query parameters, auth, and GraphQL without leaving the IDE.
+                    </p>
+                    <button
+                      onClick={() => handleSelectFile('__API_STUDIO__')}
+                      className="w-full py-1.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Zap size={13} />
+                      <span>Open Full API Studio</span>
+                    </button>
+                  </div>
+
+                  {/* Quick Endpoints Launcher */}
+                  <div className="border border-zinc-800 rounded-lg p-2.5 bg-zinc-900/40 space-y-2">
+                    <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider font-mono">
+                      ⚡ Quick Local Endpoints
+                    </div>
+                    <div className="space-y-1.5">
+                      {[
+                        { method: 'GET', url: '/api/git?action=status', label: 'Git Status Check' },
+                        { method: 'POST', url: '/api/terminal/pty', label: 'Terminal PTY Daemon' },
+                        { method: 'GET', url: '/api/ollama/status', label: 'Ollama AI Engine' },
+                        { method: 'POST', url: 'https://countries.trevorblades.com/', label: 'GraphQL Demo' }
+                      ].map(ep => (
+                        <button
+                          key={ep.url}
+                          onClick={() => handleSelectFile('__API_STUDIO__')}
+                          className="w-full text-left p-1.5 rounded hover:bg-zinc-800 flex items-center justify-between text-[11px] font-mono text-zinc-300 group transition-colors cursor-pointer border border-transparent hover:border-zinc-700"
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className={`text-[9px] font-bold px-1 py-0.2 rounded ${
+                              ep.method === 'GET' ? 'bg-emerald-950 text-emerald-300' : 'bg-indigo-950 text-indigo-300'
+                            }`}>
+                              {ep.method}
+                            </span>
+                            <span className="truncate group-hover:text-white">{ep.label}</span>
+                          </div>
+                          <span className="text-[10px] text-zinc-500">↗</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
@@ -5083,6 +5426,10 @@ export default function ExtractedVisionUI() {
                   onOpenFile={handleJumpToLocation}
                 />
               </div>
+            ) : selectedFile === '__API_STUDIO__' ? (
+              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-[#090d16]">
+                <ApiStudioPanel onClose={() => handleSelectFile('components/Playground.tsx')} />
+              </div>
             ) : selectedFile === '__PLUGINS__' ? (
               <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <PluginMarketplaceStudio />
@@ -5305,6 +5652,18 @@ export default function ExtractedVisionUI() {
                 <div className="text-[10px] text-zinc-500 text-center font-mono pt-4 border-t border-zinc-900 mt-6">
                   Workspace binary path: <span className="text-zinc-300 font-semibold">./OfflineAIStudio-Setup-1.0.0.exe</span>
                 </div>
+              </div>
+            ) : workbenchLayout.panes.length > 1 ? (
+              <div className="flex-1 w-full rounded-xl overflow-hidden border border-[#27272a] bg-slate-950 flex flex-col min-h-[380px] relative">
+                <MultiPaneEditorGrid
+                  parsedFiles={parsedFiles}
+                  onFileChange={(filePath, content) => {
+                    handleUpdateFile(filePath, content);
+                    setDirtyFiles(prev => prev.includes(filePath) ? prev : [...prev, filePath]);
+                  }}
+                  onSelectFile={handleSelectFile}
+                  onDetachTab={(filePath) => dockingEngine.detachTabToWindow(filePath)}
+                />
               </div>
             ) : (
               <div className="flex-1 flex flex-col gap-2 min-h-0">
@@ -6906,6 +7265,27 @@ export default function ExtractedVisionUI() {
         }}
       />
 
+      {/* Agentic Multi-File Composer Modal (Ctrl+I / Cmd+I) */}
+      <AgenticComposerModal
+        isOpen={isAgenticComposerOpen}
+        onClose={() => setIsAgenticComposerOpen(false)}
+        workspaceFiles={parsedFiles}
+        onApplyFiles={(files) => handleBatchApplyFiles(Object.fromEntries(files.map(f => [f.filePath, f.content])))}
+        activeFilePath={selectedFile ?? undefined}
+      />
+
+      {/* AI Pre-Commit Code Reviewer Modal */}
+      <PreCommitReviewModal
+        isOpen={isPreCommitReviewModalOpen}
+        onClose={() => setIsPreCommitReviewModalOpen(false)}
+        onCommitApplied={(msg) => {
+          setSidebarGitCommitMsg(msg);
+          setDirtyFiles([]);
+          setShowWorkspaceToast(true);
+          setTimeout(() => setShowWorkspaceToast(false), 3000);
+        }}
+      />
+
       {/* Detachable Multi-Window Floating Popout Windows (Multi-Monitor Workflow) */}
       {workbenchLayout.floatingWindows.map(popout => (
         <FloatingPopoutWindow
@@ -6948,6 +7328,69 @@ export default function ExtractedVisionUI() {
           </div>
         </FloatingPopoutWindow>
       ))}
+
+      {/* External Disk File Conflict Modal (Hot-Reloading from Disk) */}
+      {externalConflictFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-[#121214] border border-amber-500/40 rounded-xl shadow-2xl max-w-md w-full p-5 space-y-4 text-zinc-100">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-white">External File Modification</h3>
+                <p className="text-xs text-zinc-400 font-mono mt-0.5 truncate max-w-[280px]">
+                  {externalConflictFile.path}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              This file was modified on disk by an external process or git command, but you have unsaved edits in your IDE buffer.
+            </p>
+
+            <div className="p-3 bg-zinc-950/80 rounded-lg border border-zinc-800 text-[11px] font-mono text-zinc-400 space-y-1">
+              <div className="flex items-center justify-between">
+                <span>Buffer status:</span>
+                <span className="text-amber-400 font-semibold">Unsaved edits in IDE</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Disk status:</span>
+                <span className="text-emerald-400 font-semibold">Modified externally</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                onClick={() => {
+                  const p = externalConflictFile.path;
+                  setExternalConflictFile(null);
+                  setDiskToastMessage(`Retained IDE buffer for ${p}`);
+                  setTimeout(() => setDiskToastMessage(null), 3000);
+                }}
+                className="px-3 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Keep IDE Buffer
+              </button>
+              <button
+                onClick={() => {
+                  const p = externalConflictFile.path;
+                  const c = externalConflictFile.diskContent;
+                  handleUpdateFile(p, c);
+                  setDirtyFiles(prev => prev.filter(f => f !== p));
+                  setExternalConflictFile(null);
+                  setDiskToastMessage(`⚡ Reloaded ${p} from disk`);
+                  setTimeout(() => setDiskToastMessage(null), 3000);
+                }}
+                className="px-3.5 py-1.5 rounded-md bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-lg shadow-amber-900/30 transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <RefreshCw size={12} />
+                Reload from Disk
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Global drag overlay during panel resizing to prevent losing pointer focus */}
       {(isResizingLeft || isResizingRight) && (

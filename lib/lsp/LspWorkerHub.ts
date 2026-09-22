@@ -557,6 +557,10 @@ export class LspWorkerHub {
     return [...this.currentProblems];
   }
 
+  public validateFile(filePath: string, content: string): LspProblemItem[] {
+    return this.analyzeFileContent(filePath, content);
+  }
+
   public disposeAdapters() {
     this.activeDisposables.forEach(d => {
       try { d.dispose(); } catch (e) { console.error(e); }

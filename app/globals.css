@@ -46,4 +46,34 @@
     user-select: text !important;
     -webkit-user-select: text !important;
   }
+
+  /* Monaco Test Gutter Icons */
+  .test-glyph-idle {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='5 3 19 12 5 21 5 3'%3E%3C/polygon%3E%3C/svg%3E");
+    background-size: 11px 11px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+  .test-glyph-passed {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: 12px 12px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+  .test-glyph-failed {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E");
+    background-size: 12px 12px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+  .test-glyph-running {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67'%3E%3C/path%3E%3C/svg%3E");
+    background-size: 11px 11px;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
 }

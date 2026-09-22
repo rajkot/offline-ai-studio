@@ -39,6 +39,7 @@ import GitVisualizerStudio from './GitVisualizerStudio';
 import PluginMarketplaceStudio from './PluginMarketplaceStudio';
 import McpStudioPanel from './McpStudioPanel';
 import RealPtyTerminal from './RealPtyTerminal';
+import MultiTerminalGrid from './MultiTerminalGrid';
 import { lspWorkerHub, LspProblemItem } from '@/lib/lsp/LspWorkerHub';
 
 interface BottomConsoleTrayProps {
@@ -642,20 +643,16 @@ export default function BottomConsoleTray({
             </div>
           )}
 
-          {/* REAL PTY SHELL TERMINAL TAB */}
+          {/* REAL MULTI-TAB & SPLIT PTY TERMINAL TAB */}
           {activeTab === 'terminal' && (
-            <div className="h-full flex flex-col overflow-hidden">
-              {sandboxConsole ? (
-                <div className="flex-1 min-h-0">
-                  {sandboxConsole}
-                </div>
-              ) : (
-                <RealPtyTerminal
-                  className="flex-1 min-h-0 rounded-xl border border-slate-800"
-                  workspaceFiles={workspaceFiles}
-                  onBatchApplyFiles={onBatchApplyFiles}
-                />
-              )}
+            <div className="h-full flex flex-col overflow-hidden rounded-xl border border-slate-800">
+              <MultiTerminalGrid
+                className="flex-1 min-h-0"
+                workspaceFiles={workspaceFiles}
+                onOpenFile={onOpenFile}
+                onBatchApplyFiles={onBatchApplyFiles}
+                sandboxConsoleNode={sandboxConsole}
+              />
             </div>
           )}
 

@@ -210,6 +210,27 @@ export class DockingEngine {
     }
   }
 
+  public moveTab(fromPaneId: string, toPaneId: string, filePath: string) {
+    if (fromPaneId === toPaneId) return;
+    const fromPane = this.state.panes.find(p => p.id === fromPaneId);
+    const toPane = this.state.panes.find(p => p.id === toPaneId);
+    if (!fromPane || !toPane) return;
+
+    // Remove from source pane
+    fromPane.openTabs = fromPane.openTabs.filter(t => t !== filePath);
+    if (fromPane.activeFilePath === filePath) {
+      fromPane.activeFilePath = fromPane.openTabs[fromPane.openTabs.length - 1] || '';
+    }
+
+    // Add to target pane
+    if (!toPane.openTabs.includes(filePath)) {
+      toPane.openTabs.push(filePath);
+    }
+    toPane.activeFilePath = filePath;
+    this.state.activePaneId = toPaneId;
+    this.saveState();
+  }
+
   public splitActivePane(direction: 'vertical' | 'horizontal', filePath?: string) {
     const targetFile = filePath || (this.state.panes.find(p => p.id === this.state.activePaneId)?.activeFilePath || 'components/Playground.tsx');
     if (this.state.panes.length === 1) {
