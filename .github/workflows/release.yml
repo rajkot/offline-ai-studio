@@ -37,6 +37,9 @@ jobs:
             artifact_name: release-linux
             target_flag: --linux
 
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
+
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4

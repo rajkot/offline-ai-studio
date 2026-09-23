@@ -23,6 +23,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", ".next/types/**/*.ts", "app/**/*.ts", "app/**/*.tsx", "components/**/*.ts", "components/**/*.tsx", "client/**/*.ts", "client/**/*.tsx", "lib/**/*.ts", "lib/**/*.tsx"],
+  "exclude": ["node_modules", "integrations", "desktop-app", "dist", ".next", "public"]
 }

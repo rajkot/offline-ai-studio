@@ -508,7 +508,7 @@ ${repoMapSnippet ? `\n${repoMapSnippet}\n` : ''}`;
         config: {
           systemInstruction,
           temperature,
-          tools: [{ functionDeclarations }]
+          tools: [{ functionDeclarations: functionDeclarations as any }]
         }
       });
 

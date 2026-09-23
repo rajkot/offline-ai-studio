@@ -148,7 +148,7 @@ class LocalFileSystemEngine {
 
     return {
       directoryName: data.directoryName || 'Host Project',
-      directoryPath: this.activeHostDirectoryPath,
+      directoryPath: this.activeHostDirectoryPath || '',
       files: loadedFiles
     };
   }
