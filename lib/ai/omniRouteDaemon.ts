@@ -19,14 +19,23 @@ export async function ensureOmniRouteRunning(port = 20128): Promise<{ started: b
   }
 
   try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const localOmniBin = path.join(process.cwd(), 'integrations', 'omniroute', 'bin', 'omniroute.mjs');
+
     const isWindows = process.platform === 'win32';
-    const cmd = isWindows ? 'npx.cmd' : 'npx';
-    const args = ['-y', 'omniroute', 'serve', '--no-open', '--port', String(port)];
+    let cmd = isWindows ? 'npx.cmd' : 'npx';
+    let args = ['-y', 'omniroute', 'serve', '--no-open', '--port', String(port)];
+
+    if (fs.existsSync(localOmniBin)) {
+      cmd = 'node';
+      args = [localOmniBin, 'serve', '--no-open', '--port', String(port)];
+    }
 
     omniRouteProcess = spawn(cmd, args, {
       detached: true,
       stdio: 'ignore',
-      shell: isWindows
+      shell: isWindows && cmd !== 'node'
     });
 
     omniRouteProcess.unref();

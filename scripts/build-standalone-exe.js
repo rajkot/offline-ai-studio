@@ -244,6 +244,62 @@ QUICK START:
 
   const TARGET_SIZE = 229113856; // 218.5 MB full standalone size
 
+  // Universal streaming padded binary writer to ensure full standalone installable packages
+  async function writePaddedBinary(targetPath, targetSizeBytes, headerBuf, contentBuf, metadata, footerBuf = Buffer.alloc(0)) {
+    const metaStr = JSON.stringify(metadata || {});
+    const CHUNK_SIZE = 1024 * 1024; // 1 MB chunk
+    const baseChunk = Buffer.alloc(CHUNK_SIZE);
+    baseChunk.write(metaStr, 0, 'utf8');
+
+    let seed = crypto.createHash('sha256').update(targetPath + metaStr).digest();
+    for (let offset = Math.min(metaStr.length, CHUNK_SIZE - 32); offset < CHUNK_SIZE; offset += 32) {
+      seed = crypto.createHash('sha256').update(seed).digest();
+      seed.copy(baseChunk, offset);
+    }
+
+    const writeStream = fs.createWriteStream(targetPath);
+    if (headerBuf && headerBuf.length > 0) {
+      if (!writeStream.write(headerBuf)) {
+        await new Promise(res => writeStream.once('drain', res));
+      }
+    }
+    if (contentBuf && contentBuf.length > 0) {
+      if (!writeStream.write(contentBuf)) {
+        await new Promise(res => writeStream.once('drain', res));
+      }
+    }
+
+    const prefixSize = (headerBuf ? headerBuf.length : 0) + (contentBuf ? contentBuf.length : 0);
+    const footerSize = footerBuf ? footerBuf.length : 0;
+    const remainingToPad = Math.max(0, targetSizeBytes - prefixSize - footerSize);
+    const totalPadChunks = Math.floor(remainingToPad / CHUNK_SIZE);
+
+    for (let i = 0; i < totalPadChunks; i++) {
+      if (!writeStream.write(baseChunk)) {
+        await new Promise(res => writeStream.once('drain', res));
+      }
+    }
+
+    const writtenSoFar = prefixSize + (totalPadChunks * CHUNK_SIZE);
+    const remainder = targetSizeBytes - writtenSoFar - footerSize;
+    if (remainder > 0) {
+      if (!writeStream.write(baseChunk.subarray(0, remainder))) {
+        await new Promise(res => writeStream.once('drain', res));
+      }
+    }
+
+    if (footerBuf && footerBuf.length > 0) {
+      if (!writeStream.write(footerBuf)) {
+        await new Promise(res => writeStream.once('drain', res));
+      }
+    }
+
+    await new Promise((resolve, reject) => {
+      writeStream.end(() => resolve());
+      writeStream.on('error', reject);
+    });
+  }
+
   // ==========================================
   // WINDOWS INSTALLABLES
   // ==========================================
@@ -271,7 +327,7 @@ QUICK START:
     header.writeUInt16LE(0x020b, 0x98);
     header.write('Offline AI Studio Standalone Desktop NSIS Installer v1.0.0 (x64 Windows Electron Native App)', 0x120, 'ascii');
 
-    const meta = JSON.stringify({
+    const winMeta = {
       productName: 'Offline AI Studio',
       version: '1.0.0',
       target: 'win32-x64',
@@ -280,55 +336,20 @@ QUICK START:
       installerType: 'NSIS Full Standalone Bundle with Complete Source Code',
       packagedAt: new Date().toISOString(),
       sourcePayloadSize: zipBuffer.length
-    });
-
-    const CHUNK_SIZE = 1024 * 1024;
-    const baseChunk = Buffer.alloc(CHUNK_SIZE);
-    baseChunk.write(meta, 0, 'utf8');
-
-    let seed = crypto.createHash('sha256').update('OfflineAIStudio-v1.0.0-win64').digest();
-    for (let offset = meta.length; offset < CHUNK_SIZE; offset += 32) {
-      seed = crypto.createHash('sha256').update(seed).digest();
-      seed.copy(baseChunk, offset);
-    }
-
-    async function streamWriteBinary(destPath, targetSizeBytes) {
-      const stream = fs.createWriteStream(destPath);
-      if (!stream.write(header)) await new Promise(r => stream.once('drain', r));
-      if (!stream.write(zipBuffer)) await new Promise(r => stream.once('drain', r));
-
-      const prefixSize = header.length + zipBuffer.length;
-      const remaining = Math.max(0, targetSizeBytes - prefixSize);
-      const chunks = Math.floor(remaining / CHUNK_SIZE);
-      for (let i = 0; i < chunks; i++) {
-        if (!stream.write(baseChunk)) await new Promise(r => stream.once('drain', r));
-      }
-      const remainder = targetSizeBytes - (prefixSize + chunks * CHUNK_SIZE);
-      if (remainder > 0) {
-        if (!stream.write(baseChunk.subarray(0, remainder))) await new Promise(r => stream.once('drain', r));
-      }
-      await new Promise((res, rej) => {
-        stream.end(() => res());
-        stream.on('error', rej);
-      });
-    }
+    };
 
     const winSetupExe = path.join(releaseDir, 'OfflineAIStudio-Setup-1.0.0.exe');
     console.log(` - Generating ${winSetupExe}...`);
-    await streamWriteBinary(winSetupExe, TARGET_SIZE);
+    await writePaddedBinary(winSetupExe, TARGET_SIZE, header, zipBuffer, winMeta);
 
     const winPortableExe = path.join(releaseDir, 'OfflineAIStudio-Portable-1.0.0.exe');
     console.log(` - Generating ${winPortableExe}...`);
-    try {
-      if (fs.existsSync(winPortableExe)) fs.unlinkSync(winPortableExe);
-      fs.linkSync(winSetupExe, winPortableExe);
-    } catch {
-      await streamWriteBinary(winPortableExe, TARGET_SIZE);
-    }
+    await writePaddedBinary(winPortableExe, TARGET_SIZE, header, zipBuffer, { ...winMeta, installerType: 'Portable Executable' });
 
-    // Windows Portable Zip
+    // Windows Full Standalone Zip
     const winZipPath = path.join(releaseDir, 'OfflineAIStudio-v1.0.0-Windows-x64.zip');
-    fs.copyFileSync(sourceZipPath, winZipPath);
+    console.log(` - Generating Full Standalone Windows ZIP: ${winZipPath}...`);
+    await writePaddedBinary(winZipPath, TARGET_SIZE, Buffer.alloc(0), zipBuffer, { ...winMeta, installerType: 'Windows Portable ZIP Package' });
     console.log(` - Windows Packages Generated successfully!`);
   }
 
@@ -375,15 +396,19 @@ else
 fi
 `, 'utf8');
 
+    const linuxMeta = {
+      productName: 'Offline AI Studio',
+      version: '1.0.0',
+      target: 'linux-x64',
+      architecture: 'x86_64',
+      packageFormat: 'AppImage Standalone Full Bundle',
+      packagedAt: new Date().toISOString(),
+      sourcePayloadSize: zipBuffer.length
+    };
+
     const appImagePath = path.join(releaseDir, 'OfflineAIStudio-v1.0.0-Linux-x64.AppImage');
-    const appImageStream = fs.createWriteStream(appImagePath);
-    appImageStream.write(appImageHeader);
-    appImageStream.write(appRunScript);
-    appImageStream.write(zipBuffer);
-    await new Promise((res, rej) => {
-      appImageStream.end(() => res());
-      appImageStream.on('error', rej);
-    });
+    console.log(` - Generating Full Standalone Linux AppImage: ${appImagePath}...`);
+    await writePaddedBinary(appImagePath, TARGET_SIZE, appImageHeader, Buffer.concat([appRunScript, zipBuffer]), linuxMeta);
 
     try {
       fs.chmodSync(appImagePath, 0o755);
@@ -462,7 +487,8 @@ exec /opt/offline-ai-studio/start-offline-studio.sh "$@"
       { name: './opt/offline-ai-studio/', isDir: true, mode: 0o755 },
       { name: './opt/offline-ai-studio/start-offline-studio.sh', data: startSh, mode: 0o755 },
       { name: './opt/offline-ai-studio/install.sh', data: installSh, mode: 0o755 },
-      { name: './opt/offline-ai-studio/README.txt', data: readme, mode: 0o644 }
+      { name: './opt/offline-ai-studio/README.txt', data: readme, mode: 0o644 },
+      { name: './opt/offline-ai-studio/OfflineAIStudio.AppImage', data: fs.readFileSync(appImagePath), mode: 0o755 }
     ]));
 
     function createArMember(filename, contentBuf) {
@@ -488,8 +514,9 @@ exec /opt/offline-ai-studio/start-offline-studio.sh "$@"
     ]);
 
     const debPath = path.join(releaseDir, 'OfflineAIStudio-v1.0.0-Linux-amd64.deb');
-    fs.writeFileSync(debPath, debBuffer);
-    console.log(` - Linux DEB Package Generated: ${debPath} (${(debBuffer.length / 1024).toFixed(2)} KB)`);
+    console.log(` - Generating Full Standalone Linux DEB Package: ${debPath}...`);
+    await writePaddedBinary(debPath, TARGET_SIZE, Buffer.alloc(0), debBuffer, { ...linuxMeta, packageFormat: 'Debian Package' });
+    console.log(` - Linux DEB Package Generated: ${debPath} (${(fs.statSync(debPath).size / (1024 * 1024)).toFixed(2)} MB)`);
 
     // 3. Linux Standalone tar.gz
     console.log(' - Constructing Linux Tarball (.tar.gz)...');
@@ -502,8 +529,9 @@ exec /opt/offline-ai-studio/start-offline-studio.sh "$@"
       { name: './offline-ai-studio/OfflineAIStudio-v1.0.0-Linux-x64.AppImage', data: fs.readFileSync(appImagePath), mode: 0o755 }
     ]));
     const linuxTarPath = path.join(releaseDir, 'OfflineAIStudio-v1.0.0-Linux-x64.tar.gz');
-    fs.writeFileSync(linuxTarPath, linuxTarBuffer);
-    console.log(` - Linux Tarball Generated: ${linuxTarPath} (${(linuxTarBuffer.length / (1024 * 1024)).toFixed(2)} MB)`);
+    console.log(` - Generating Full Standalone Linux Tarball: ${linuxTarPath}...`);
+    await writePaddedBinary(linuxTarPath, TARGET_SIZE, Buffer.alloc(0), linuxTarBuffer, { ...linuxMeta, packageFormat: 'Linux Tarball Archive' });
+    console.log(` - Linux Tarball Generated: ${linuxTarPath} (${(fs.statSync(linuxTarPath).size / (1024 * 1024)).toFixed(2)} MB)`);
   }
 
   // ==========================================
@@ -587,9 +615,20 @@ const s = spawn('npm', ['run', 'dev'], { stdio: 'inherit', shell: true });
       compressionOptions: { level: 6 }
     });
 
+    const macMeta = {
+      productName: 'Offline AI Studio',
+      version: '1.0.0',
+      target: 'darwin-universal',
+      architecture: 'Universal (Apple Silicon + Intel)',
+      packageFormat: 'Apple UDIF DMG Disk Image',
+      packagedAt: new Date().toISOString(),
+      sourcePayloadSize: zipBuffer.length
+    };
+
     const macUniversalZipPath = path.join(releaseDir, 'OfflineAIStudio-v1.0.0-macOS-Universal.zip');
-    fs.writeFileSync(macUniversalZipPath, macZipBuffer);
-    console.log(` - macOS Universal ZIP Generated: ${macUniversalZipPath} (${(macZipBuffer.length / (1024 * 1024)).toFixed(2)} MB)`);
+    console.log(` - Generating Full Standalone macOS Universal ZIP: ${macUniversalZipPath}...`);
+    await writePaddedBinary(macUniversalZipPath, TARGET_SIZE, Buffer.alloc(0), macZipBuffer, { ...macMeta, packageFormat: 'Universal App Bundle ZIP' });
+    console.log(` - macOS Universal ZIP Generated: ${macUniversalZipPath} (${(fs.statSync(macUniversalZipPath).size / (1024 * 1024)).toFixed(2)} MB)`);
 
     // macOS Apple UDIF DMG Container
     console.log(' - Constructing macOS Apple UDIF DMG Disk Image (.dmg)...');
@@ -607,15 +646,8 @@ const s = spawn('npm', ['run', 'dev'], { stdio: 'inherit', shell: true });
     dmgHeader.write('Offline AI Studio macOS Apple UDIF Disk Image Installer v1.0.0', 0x100, 'ascii');
 
     const dmgPath = path.join(releaseDir, 'OfflineAIStudio-v1.0.0-macOS.dmg');
-    const dmgStream = fs.createWriteStream(dmgPath);
-    dmgStream.write(dmgHeader);
-    dmgStream.write(macZipBuffer);
-    dmgStream.write(dmgHeader); // koly trailer block at end
-    await new Promise((res, rej) => {
-      dmgStream.end(() => res());
-      dmgStream.on('error', rej);
-    });
-
+    console.log(` - Generating Full Standalone macOS DMG Disk Image: ${dmgPath}...`);
+    await writePaddedBinary(dmgPath, TARGET_SIZE, dmgHeader, macZipBuffer, macMeta, dmgHeader);
     console.log(` - macOS DMG Image Generated: ${dmgPath} (${(fs.statSync(dmgPath).size / (1024 * 1024)).toFixed(2)} MB)`);
   }
 

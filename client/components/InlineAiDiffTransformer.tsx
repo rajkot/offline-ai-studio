@@ -69,7 +69,7 @@ export default function InlineAiDiffTransformer({
     }
   }, [isOpen]);
 
-  // Handle keyboard shortcuts (Ctrl+Enter to Accept, Esc to Reject)
+  // Handle keyboard shortcuts (Tab / Ctrl+Enter to Accept, Esc to Reject)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -81,6 +81,9 @@ export default function InlineAiDiffTransformer({
         }
         e.preventDefault();
         onReject();
+      } else if (e.key === 'Tab' && transformedCode) {
+        e.preventDefault();
+        onAccept(transformedCode);
       } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         if (transformedCode) {

@@ -20,6 +20,9 @@ out/
 *.gz
 *.7z
 *.iso
+*.dmg
+*.AppImage
+*.deb
 
 # Build Artifacts & Desktop Release Bundles
 desktop-app/dist/
@@ -27,4 +30,6 @@ desktop-app/*.exe
 public/release/
 public/*.exe
 tsconfig.tsbuildinfo
+integrations/
+
 

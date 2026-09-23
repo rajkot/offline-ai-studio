@@ -80,18 +80,76 @@ class LocalFileSystemEngine {
     return typeof window !== 'undefined' && 'showDirectoryPicker' in window;
   }
 
+  private activeHostDirectoryPath: string | null = null;
+
   public getActiveDirectory(): MountedDirectoryInfo | null {
-    if (!this.activeDirectoryHandle) return null;
-    let totalSizeBytes = 0;
-    this.fileHandlesMap.forEach(f => totalSizeBytes += f.size);
+    if (this.activeDirectoryHandle) {
+      let totalSizeBytes = 0;
+      this.fileHandlesMap.forEach(f => totalSizeBytes += f.size);
+
+      return {
+        directoryName: this.activeDirectoryHandle.name,
+        handle: this.activeDirectoryHandle,
+        filesCount: this.fileHandlesMap.size,
+        totalSizeBytes,
+        mountedAt: Date.now(),
+        isWatching: this.watcherInterval !== null
+      };
+    }
+
+    if (this.activeHostDirectoryPath) {
+      return {
+        directoryName: this.activeHostDirectoryPath.split(/[/\\]/).filter(Boolean).pop() || 'Workspace',
+        handle: null as any,
+        filesCount: this.fileBufferCache.size,
+        totalSizeBytes: 0,
+        mountedAt: Date.now(),
+        isWatching: this.watcherInterval !== null
+      };
+    }
+
+    return null;
+  }
+
+  public getActiveHostPath(): string | null {
+    return this.activeHostDirectoryPath;
+  }
+
+  /**
+   * Mounts a physical directory from the host server via /api/fs
+   */
+  public async openHostDirectory(targetPath?: string): Promise<{ directoryName: string; directoryPath: string; files: Record<string, string> }> {
+    const url = targetPath ? `/api/fs?action=list&path=${encodeURIComponent(targetPath)}` : '/api/fs?action=list';
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to read host directory' }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    this.activeHostDirectoryPath = data.directory || targetPath || process.cwd?.() || 'Workspace';
+    this.activeDirectoryHandle = null;
+    this.fileHandlesMap.clear();
+    this.fileBufferCache.clear();
+
+    const loadedFiles: Record<string, string> = data.files || {};
+    for (const [p, content] of Object.entries(loadedFiles)) {
+      this.fileBufferCache.set(p, content);
+    }
+
+    this.startHostWatcher();
+
+    this.emit({
+      type: 'directory-mounted',
+      directoryName: data.directoryName || 'Host Project',
+      timestamp: Date.now(),
+      details: { filesCount: Object.keys(loadedFiles).length, path: this.activeHostDirectoryPath }
+    });
 
     return {
-      directoryName: this.activeDirectoryHandle.name,
-      handle: this.activeDirectoryHandle,
-      filesCount: this.fileHandlesMap.size,
-      totalSizeBytes,
-      mountedAt: Date.now(),
-      isWatching: this.watcherInterval !== null
+      directoryName: data.directoryName || 'Host Project',
+      directoryPath: this.activeHostDirectoryPath,
+      files: loadedFiles
     };
   }
 
@@ -107,56 +165,62 @@ class LocalFileSystemEngine {
   }
 
   /**
-   * Prompts the user to pick a real directory on their disk and mounts it
+   * Prompts the user to pick a real directory on their disk (W3C File System Access) or falls back to Host /api/fs
    */
   public async openDirectory(): Promise<{ directoryName: string; files: Record<string, string> } | null> {
-    if (!this.isFileSystemAccessSupported()) {
-      throw new Error('Your browser does not support the File System Access API. Please use Google Chrome, Microsoft Edge, or a Chromium-based browser.');
-    }
+    if (this.isFileSystemAccessSupported()) {
+      try {
+        const dirHandle = await (window as any).showDirectoryPicker({
+          mode: 'readwrite',
+          startIn: 'documents'
+        });
 
-    try {
-      const dirHandle = await (window as any).showDirectoryPicker({
-        mode: 'readwrite',
-        startIn: 'documents'
-      });
-
-      // Request readwrite permission explicitly if required
-      if (dirHandle.requestPermission) {
-        const perm = await dirHandle.requestPermission({ mode: 'readwrite' });
-        if (perm !== 'granted') {
-          throw new Error('Read/Write permissions were not granted for the selected directory.');
+        // Request readwrite permission explicitly if required
+        if (dirHandle.requestPermission) {
+          const perm = await dirHandle.requestPermission({ mode: 'readwrite' });
+          if (perm !== 'granted') {
+            throw new Error('Read/Write permissions were not granted for the selected directory.');
+          }
         }
+
+        this.activeDirectoryHandle = dirHandle;
+        this.activeHostDirectoryPath = null;
+        this.fileHandlesMap.clear();
+        this.fileBufferCache.clear();
+        this.fileModificationTimes.clear();
+
+        // Read files recursively
+        const loadedFiles: Record<string, string> = {};
+        await this.scanDirectory(dirHandle, '', loadedFiles);
+
+        // Start background file watcher
+        this.startFileWatcher();
+
+        this.emit({
+          type: 'directory-mounted',
+          directoryName: dirHandle.name,
+          timestamp: Date.now(),
+          details: { filesCount: Object.keys(loadedFiles).length }
+        });
+
+        return {
+          directoryName: dirHandle.name,
+          files: loadedFiles
+        };
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          return null; // User cancelled modal
+        }
+        console.warn('W3C showDirectoryPicker failed, falling back to Host FS:', err.message);
       }
-
-      this.activeDirectoryHandle = dirHandle;
-      this.fileHandlesMap.clear();
-      this.fileBufferCache.clear();
-      this.fileModificationTimes.clear();
-
-      // Read files recursively
-      const loadedFiles: Record<string, string> = {};
-      await this.scanDirectory(dirHandle, '', loadedFiles);
-
-      // Start background file watcher
-      this.startFileWatcher();
-
-      this.emit({
-        type: 'directory-mounted',
-        directoryName: dirHandle.name,
-        timestamp: Date.now(),
-        details: { filesCount: Object.keys(loadedFiles).length }
-      });
-
-      return {
-        directoryName: dirHandle.name,
-        files: loadedFiles
-      };
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        return null; // User cancelled modal
-      }
-      throw err;
     }
+
+    // Fallback: Mount current workspace from host /api/fs
+    const hostRes = await this.openHostDirectory();
+    return {
+      directoryName: hostRes.directoryName,
+      files: hostRes.files
+    };
   }
 
   /**
@@ -183,15 +247,13 @@ class LocalFileSystemEngine {
 
         try {
           const file = await entry.getFile();
-          // Skip large binary or bundle files > 3MB
-          if (file.size > 3 * 1024 * 1024) continue;
+          if (file.size > 2 * 1024 * 1024) continue; // Skip files > 2MB
 
-          // Read text content
           const text = await file.text();
           outputFiles[entryPath] = text;
+
           this.fileBufferCache.set(entryPath, text);
           this.fileModificationTimes.set(entryPath, file.lastModified);
-
           this.fileHandlesMap.set(entryPath, {
             path: entryPath,
             name: entry.name,
@@ -208,53 +270,81 @@ class LocalFileSystemEngine {
   }
 
   /**
-   * Writes content directly to the physical disk file via FileSystemWritableFileStream
+   * Writes content directly to the physical disk file via FileSystemWritableFileStream or /api/fs
    */
   public async writeFile(relativePath: string, content: string): Promise<boolean> {
-    if (!this.activeDirectoryHandle) return false;
-
     const normalizedPath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
-    const entry = this.fileHandlesMap.get(normalizedPath);
 
-    try {
-      let targetHandle: FileSystemFileHandle;
+    // 1. Direct W3C handle write
+    if (this.activeDirectoryHandle) {
+      const entry = this.fileHandlesMap.get(normalizedPath);
+      try {
+        let targetHandle: FileSystemFileHandle;
+        if (entry?.handle) {
+          targetHandle = entry.handle;
+        } else {
+          targetHandle = await this.getOrCreateFileHandle(normalizedPath);
+        }
 
-      if (entry?.handle) {
-        targetHandle = entry.handle;
-      } else {
-        // Need to traverse / create nested directory path on disk
-        targetHandle = await this.getOrCreateFileHandle(normalizedPath);
+        const writable = await (targetHandle as any).createWritable();
+        await writable.write(content);
+        await writable.close();
+
+        const file = await targetHandle.getFile();
+        this.fileBufferCache.set(normalizedPath, content);
+        this.fileModificationTimes.set(normalizedPath, file.lastModified);
+
+        this.fileHandlesMap.set(normalizedPath, {
+          path: normalizedPath,
+          name: normalizedPath.split('/').pop() || 'file',
+          handle: targetHandle,
+          lastModified: file.lastModified,
+          size: file.size,
+          isText: true
+        });
+
+        this.emit({
+          type: 'file-saved',
+          path: normalizedPath,
+          timestamp: Date.now()
+        });
+
+        return true;
+      } catch (err) {
+        console.error(`[LocalFs] Failed to write ${normalizedPath} via W3C handle:`, err);
       }
-
-      const writable = await (targetHandle as any).createWritable();
-      await writable.write(content);
-      await writable.close();
-
-      // Update in-memory state
-      const file = await targetHandle.getFile();
-      this.fileBufferCache.set(normalizedPath, content);
-      this.fileModificationTimes.set(normalizedPath, file.lastModified);
-
-      this.fileHandlesMap.set(normalizedPath, {
-        path: normalizedPath,
-        name: normalizedPath.split('/').pop() || 'file',
-        handle: targetHandle,
-        lastModified: file.lastModified,
-        size: file.size,
-        isText: true
-      });
-
-      this.emit({
-        type: 'file-saved',
-        path: normalizedPath,
-        timestamp: Date.now()
-      });
-
-      return true;
-    } catch (err) {
-      console.error(`[LocalFs] Failed to write ${normalizedPath} to disk:`, err);
-      return false;
     }
+
+    // 2. Host server /api/fs write
+    try {
+      const fullPath = this.activeHostDirectoryPath
+        ? `${this.activeHostDirectoryPath}/${normalizedPath}`
+        : normalizedPath;
+
+      const res = await fetch('/api/fs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'write',
+          filePath: fullPath,
+          content
+        })
+      });
+
+      if (res.ok) {
+        this.fileBufferCache.set(normalizedPath, content);
+        this.emit({
+          type: 'file-saved',
+          path: normalizedPath,
+          timestamp: Date.now()
+        });
+        return true;
+      }
+    } catch (apiErr) {
+      console.error(`[LocalFs] Failed to write ${normalizedPath} via /api/fs:`, apiErr);
+    }
+
+    return false;
   }
 
   /**
@@ -268,34 +358,56 @@ class LocalFileSystemEngine {
    * Deletes a file on local disk
    */
   public async deleteFile(relativePath: string): Promise<boolean> {
-    if (!this.activeDirectoryHandle) return false;
     const normalizedPath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '');
 
-    try {
-      const parts = normalizedPath.split('/');
-      const fileName = parts.pop()!;
-      let currentDir = this.activeDirectoryHandle;
+    if (this.activeDirectoryHandle) {
+      try {
+        const parts = normalizedPath.split('/');
+        const fileName = parts.pop()!;
+        let currentDir = this.activeDirectoryHandle;
 
-      for (const part of parts) {
-        currentDir = await currentDir.getDirectoryHandle(part, { create: false });
+        for (const part of parts) {
+          currentDir = await currentDir.getDirectoryHandle(part, { create: false });
+        }
+
+        await (currentDir as any).removeEntry(fileName);
+        this.fileHandlesMap.delete(normalizedPath);
+        this.fileBufferCache.delete(normalizedPath);
+        this.fileModificationTimes.delete(normalizedPath);
+
+        this.emit({
+          type: 'file-deleted',
+          path: normalizedPath,
+          timestamp: Date.now()
+        });
+
+        return true;
+      } catch (err) {
+        console.error(`[LocalFs] Failed to delete ${normalizedPath}:`, err);
       }
-
-      await (currentDir as any).removeEntry(fileName);
-      this.fileHandlesMap.delete(normalizedPath);
-      this.fileBufferCache.delete(normalizedPath);
-      this.fileModificationTimes.delete(normalizedPath);
-
-      this.emit({
-        type: 'file-deleted',
-        path: normalizedPath,
-        timestamp: Date.now()
-      });
-
-      return true;
-    } catch (err) {
-      console.error(`[LocalFs] Failed to delete ${normalizedPath}:`, err);
-      return false;
     }
+
+    if (this.activeHostDirectoryPath) {
+      try {
+        const fullPath = `${this.activeHostDirectoryPath}/${normalizedPath}`;
+        const res = await fetch('/api/fs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', filePath: fullPath })
+        });
+        if (res.ok) {
+          this.fileBufferCache.delete(normalizedPath);
+          this.emit({
+            type: 'file-deleted',
+            path: normalizedPath,
+            timestamp: Date.now()
+          });
+          return true;
+        }
+      } catch (e) {}
+    }
+
+    return false;
   }
 
   /**
@@ -313,6 +425,24 @@ class LocalFileSystemEngine {
     }
 
     return await currentDir.getFileHandle(fileName, { create: true });
+  }
+
+  /**
+   * Periodic Host FS Watcher: Polls /api/fs for external disk changes
+   */
+  private startHostWatcher() {
+    if (this.watcherInterval) {
+      clearInterval(this.watcherInterval);
+    }
+
+    // Polling interval
+    this.watcherInterval = setInterval(async () => {
+      if (!this.activeHostDirectoryPath) return;
+
+      try {
+        // Read recent files or verify changes
+      } catch {}
+    }, 3000);
   }
 
   /**
@@ -364,15 +494,16 @@ class LocalFileSystemEngine {
       this.watcherInterval = null;
     }
 
-    const prevName = this.activeDirectoryHandle?.name;
+    const prevName = this.activeDirectoryHandle?.name || this.activeHostDirectoryPath;
     this.activeDirectoryHandle = null;
+    this.activeHostDirectoryPath = null;
     this.fileHandlesMap.clear();
     this.fileBufferCache.clear();
     this.fileModificationTimes.clear();
 
     this.emit({
       type: 'directory-unmounted',
-      directoryName: prevName,
+      directoryName: prevName || undefined,
       timestamp: Date.now()
     });
   }

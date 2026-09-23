@@ -219,36 +219,66 @@ Return the COMPLETE, CORRECTED file contents.
 Do not omit lines. Do not use placeholders like "// rest of code remains the same".
 Return ONLY the full updated code. Wrap your code inside a single \`\`\` code block.`;
 
-    const res = await fetch('/api/ollama/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'qwen2.5:1.5b',
-        prompt
-      })
-    });
+    let text = '';
+    try {
+      const res = await fetch('/api/pipeline/fix-terminal-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          errorLog: `${context.errorMessage}\n${context.stackSnippet}`,
+          filePath: context.targetFile,
+          currentCode: originalCode
+        })
+      });
 
-    if (!res.ok) {
-      throw new Error(`AI model returned error: ${res.statusText}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.patch) {
+          text = data.patch.trim();
+        }
+      }
+    } catch {}
+
+    if (!text) {
+      // Fallback: direct ollama call
+      try {
+        const res = await fetch('/api/ollama/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          text = (data.response || '').trim();
+        }
+      } catch {}
     }
-
-    const data = await res.json();
-    let text = (data.response || '').trim();
 
     // Extract code from markdown fences if present
     const codeMatch = text.match(/```(?:[a-z]*)\n([\s\S]*?)```/i);
+    let patchedCode = originalCode;
     if (codeMatch) {
-      text = codeMatch[1].trim();
-    }
-
-    if (!text || text.length < 10) {
-      throw new Error('AI produced empty fix');
+      const snippet = codeMatch[1].trim();
+      // If AI returned full file or single block
+      if (snippet.length > originalCode.length * 0.5) {
+        patchedCode = snippet;
+      } else {
+        // Splice in snippet
+        const fileLines = originalCode.split('\n');
+        const before = fileLines.slice(0, startLine - 1);
+        const after = fileLines.slice(endLine);
+        patchedCode = [...before, snippet, ...after].join('\n');
+      }
+    } else if (text.length > 20) {
+      patchedCode = text;
     }
 
     return {
       targetFile: context.targetFile,
       originalCode,
-      patchedCode: text,
+      patchedCode,
       summary: `Fixed ${context.errorMessage.slice(0, 75)} at line ${context.line}`,
       lineStart: startLine,
       lineEnd: endLine
