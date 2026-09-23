@@ -264,7 +264,7 @@ export default function McpStudioPanel({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#0a0b0e] text-zinc-100 overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col h-full w-full min-h-0 bg-[#0a0b0e] text-zinc-100 overflow-hidden font-sans">
       {/* HEADER */}
       <div className="px-5 py-3.5 bg-[#121318] border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
@@ -352,10 +352,10 @@ export default function McpStudioPanel({
       )}
 
       {/* CONTENT BODY */}
-      <div className="flex-1 min-h-0 flex overflow-hidden">
+      <div className="flex-1 min-h-0 h-full flex overflow-hidden">
         {/* TAB 1: MCP MARKETPLACE */}
         {activeTab === 'marketplace' && (
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-4 gap-4">
+          <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden p-4 gap-4">
             {/* SEARCH AND FILTER BAR */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-[#121318] p-3 rounded-xl border border-zinc-800/80">
               <div className="flex items-center gap-2.5 bg-[#1b1c24] px-3.5 py-2 rounded-lg border border-zinc-700/60 flex-1 w-full max-w-md">
@@ -388,7 +388,7 @@ export default function McpStudioPanel({
             </div>
 
             {/* SERVER CARDS GRID */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="flex-1 min-h-0 h-full overflow-y-auto pr-1 custom-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 {marketplaceList.map(server => {
                   const isSpawning = spawningServerId === server.id;
@@ -493,12 +493,12 @@ export default function McpStudioPanel({
 
         {/* TAB 2: TOOLS & EXECUTION */}
         {activeTab === 'tools' && (
-          <div className="flex-1 flex min-h-0 overflow-hidden">
+          <div className="flex-1 flex min-h-0 h-full overflow-hidden">
             {/* SERVER & TOOLS SIDEBAR */}
-            <div className="w-80 bg-[#121318] border-r border-zinc-800 flex flex-col min-h-0 shrink-0">
+            <div className="w-80 bg-[#121318] border-r border-zinc-800 flex flex-col min-h-0 h-full shrink-0">
               <div className="p-3 border-b border-zinc-800">
                 <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">Connected MCP Servers</span>
-                <div className="space-y-1 max-h-44 overflow-y-auto">
+                <div className="space-y-1 max-h-44 overflow-y-auto custom-scrollbar">
                   {servers.map(s => (
                     <button
                       key={s.config.id}
@@ -519,7 +519,7 @@ export default function McpStudioPanel({
               </div>
 
               {/* TOOLS LIST */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-3">
+              <div className="flex-1 min-h-0 h-full overflow-y-auto p-3 custom-scrollbar">
                 <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">
                   Available Tools ({activeServer?.tools.length || 0})
                 </span>
@@ -543,7 +543,7 @@ export default function McpStudioPanel({
             </div>
 
             {/* TOOL RUNNER ARENA */}
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-5 gap-4 bg-[#0a0b0e]">
+            <div className="flex-1 flex flex-col min-h-0 h-full overflow-y-auto p-5 gap-4 bg-[#0a0b0e] custom-scrollbar">
               {selectedTool ? (
                 <>
                   <div className="bg-[#121318] p-4 rounded-xl border border-zinc-800/80">
@@ -584,7 +584,7 @@ export default function McpStudioPanel({
                       <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block mb-2">
                         Execution Output
                       </span>
-                      <pre className="p-3 bg-[#0b0c10] rounded-lg border border-zinc-800 text-xs font-mono text-zinc-200 overflow-x-auto max-h-64">
+                      <pre className="p-3 bg-[#0b0c10] rounded-lg border border-zinc-800 text-xs font-mono text-zinc-200 overflow-x-auto max-h-64 custom-scrollbar">
                         {JSON.stringify(toolResult, null, 2)}
                       </pre>
                     </div>
@@ -601,7 +601,7 @@ export default function McpStudioPanel({
 
         {/* TAB 3: RESOURCES */}
         {activeTab === 'resources' && (
-          <div className="flex-1 flex flex-col min-h-0 p-5 overflow-y-auto">
+          <div className="flex-1 flex flex-col min-h-0 h-full p-5 overflow-y-auto custom-scrollbar">
             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block mb-3">
               Server Resources ({activeServer?.resources?.length || 0})
             </span>
@@ -627,7 +627,7 @@ export default function McpStudioPanel({
 
         {/* TAB 4: MCP_CONFIG.JSON EDITOR */}
         {activeTab === 'config' && (
-          <div className="flex-1 flex flex-col min-h-0 p-5 gap-3 bg-[#0a0b0e]">
+          <div className="flex-1 flex flex-col min-h-0 h-full p-5 gap-3 bg-[#0a0b0e] overflow-y-auto custom-scrollbar">
             <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
               <div>
                 <h2 className="text-sm font-bold text-white">mcp_config.json Editor</h2>
@@ -660,7 +660,7 @@ export default function McpStudioPanel({
 
         {/* TAB 5: LOGS */}
         {activeTab === 'logs' && (
-          <div className="flex-1 flex flex-col min-h-0 p-5 overflow-y-auto">
+          <div className="flex-1 flex flex-col min-h-0 h-full p-5 overflow-y-auto custom-scrollbar">
             <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block mb-3">
               Real-time JSON-RPC Traffic Log ({callLogs.length})
             </span>

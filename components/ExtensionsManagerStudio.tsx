@@ -236,7 +236,7 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
   const installedList = Array.from(installedMap.values());
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#0d0e12] text-zinc-100 overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col h-full w-full min-h-0 bg-[#0d0e12] text-zinc-100 overflow-hidden font-sans">
       {/* TOP HEADER */}
       <div className="px-5 py-3.5 bg-[#14151b] border-b border-zinc-800/80 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
@@ -311,10 +311,10 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
       )}
 
       {/* MAIN CONTENT BODY */}
-      <div className="flex-1 min-h-0 flex overflow-hidden">
+      <div className="flex-1 min-h-0 h-full flex overflow-hidden">
         {/* TAB 1: MARKETPLACE BROWSER */}
         {activeTab === 'marketplace' && (
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-4 gap-4">
+          <div className="flex-1 flex flex-col min-h-0 h-full overflow-hidden p-4 gap-4">
             {/* SEARCH AND CATEGORY BAR */}
             <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-[#14151b] p-3 rounded-xl border border-zinc-800/80">
               <div className="flex items-center gap-2.5 bg-[#1c1d25] px-3.5 py-2 rounded-lg border border-zinc-700/60 flex-1 w-full max-w-lg">
@@ -348,7 +348,7 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
             </div>
 
             {/* EXTENSIONS GRID */}
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+            <div className="flex-1 min-h-0 h-full overflow-y-auto pr-1 custom-scrollbar">
               {extensionsList.length === 0 ? (
                 <div className="h-64 flex flex-col items-center justify-center text-center text-zinc-500 gap-2">
                   <Package size={36} className="text-zinc-600" />
@@ -463,7 +463,7 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
 
         {/* TAB 2: INSTALLED EXTENSIONS */}
         {activeTab === 'installed' && (
-          <div className="flex-1 flex flex-col min-h-0 overflow-y-auto p-4 gap-3">
+          <div className="flex-1 flex flex-col min-h-0 h-full overflow-y-auto p-4 gap-3 custom-scrollbar">
             <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
               <h2 className="text-sm font-bold text-white flex items-center gap-2">
                 Active & Installed Extensions ({installedList.length})
@@ -625,7 +625,7 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
 
         {/* DETAIL DRAWER / MODAL */}
         {selectedExtension && (
-          <div className="w-96 bg-[#111217] border-l border-zinc-800 p-5 flex flex-col justify-between overflow-y-auto shrink-0 animate-in slide-in-from-right duration-200">
+          <div className="w-96 h-full bg-[#111217] border-l border-zinc-800 p-5 flex flex-col justify-between overflow-y-auto shrink-0 animate-in slide-in-from-right duration-200 custom-scrollbar">
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-zinc-800 mb-4">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Extension Details</span>

@@ -471,7 +471,11 @@ export default function BottomConsoleTray({
 
       {/* Main Bottom Console Workspace Tray Panels */}
       {!isCollapsed && (
-        <div className="flex-1 min-h-0 overflow-y-auto bg-[#070709] text-zinc-300 font-mono text-xs p-3 relative">
+        <div className={`flex-1 min-h-0 bg-[#070709] text-zinc-300 font-mono text-xs relative flex flex-col overflow-hidden ${
+          (activeTab === 'mcp' || activeTab === 'plugins' || activeTab === 'terminal' || activeTab === 'wasi' || activeTab === 'dap' || activeTab === 'git' || activeTab === 'opfs' || activeTab === 'problems')
+            ? 'p-0'
+            : 'p-3 overflow-y-auto custom-scrollbar'
+        }`}>
           
           {/* LSP PROBLEMS & DIAGNOSTICS TAB */}
           {activeTab === 'problems' && (
@@ -571,7 +575,7 @@ export default function BottomConsoleTray({
 
           {/* MODEL CONTEXT PROTOCOL (MCP) STUDIO TAB */}
           {activeTab === 'mcp' && (
-            <div className="h-full flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
+            <div className="h-full w-full flex-1 flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
               <McpStudioPanel
                 workspaceFiles={workspaceFiles || {}}
                 onOpenFile={onOpenFile}
@@ -581,7 +585,7 @@ export default function BottomConsoleTray({
 
           {/* WASI WEBCONTAINER RUNTIME TAB */}
           {activeTab === 'wasi' && (
-            <div className="h-full flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
+            <div className="h-full w-full flex-1 flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
               <WasiRuntimeStudio
                 workspaceFiles={workspaceFiles}
                 onOpenFile={(p) => {
@@ -593,7 +597,7 @@ export default function BottomConsoleTray({
 
           {/* DAP VISUAL DEBUGGER TAB */}
           {activeTab === 'dap' && (
-            <div className="h-full flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
+            <div className="h-full w-full flex-1 flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
               <DapDebuggerPanel
                 currentFile={currentFile || 'components/Playground.tsx'}
                 sourceCode={workspaceFiles && currentFile ? workspaceFiles[currentFile] : undefined}
@@ -613,7 +617,7 @@ export default function BottomConsoleTray({
 
           {/* OPFS WORKSPACE & BINARY STORAGE TAB */}
           {activeTab === 'opfs' && (
-            <div className="h-full flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
+            <div className="h-full w-full flex-1 flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
               <OpfsWorkspaceStudio
                 workspaceFiles={workspaceFiles}
                 onOpenFile={(p) => {
@@ -625,7 +629,7 @@ export default function BottomConsoleTray({
 
           {/* VISUAL GIT DAG & 3-WAY MERGE RESOLVER TAB */}
           {activeTab === 'git' && (
-            <div className="h-full flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
+            <div className="h-full w-full flex-1 flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
               <GitVisualizerStudio
                 workspaceFiles={workspaceFiles}
                 currentFile={currentFile || 'components/Playground.tsx'}
@@ -638,7 +642,7 @@ export default function BottomConsoleTray({
 
           {/* PLUGINS, THEMES, KEYMAPS & VIM TAB */}
           {activeTab === 'plugins' && (
-            <div className="h-full flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
+            <div className="h-full w-full flex-1 flex flex-col min-h-0 rounded-xl overflow-hidden border border-[#27272a]">
               <PluginMarketplaceStudio />
             </div>
           )}

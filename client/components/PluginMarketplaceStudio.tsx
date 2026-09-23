@@ -157,7 +157,7 @@ export default function PluginMarketplaceStudio({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#09090b] text-zinc-100 overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col h-full w-full min-h-0 bg-[#09090b] text-zinc-100 overflow-hidden font-sans">
       {/* HEADER */}
       <div className="px-4 py-3 bg-[#111217] border-b border-[#27272a] flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export default function PluginMarketplaceStudio({
       </div>
 
       {/* BODY */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-4">
+      <div className="flex-1 min-h-0 h-full overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar">
         {/* TAB 1: MARKETPLACE */}
         {activeTab === 'marketplace' && (
           <div className="flex flex-col gap-4">

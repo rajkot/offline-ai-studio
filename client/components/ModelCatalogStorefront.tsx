@@ -488,7 +488,7 @@ export default function ModelCatalogStorefront() {
   }, [models, selectedCategory, selectedQuant, selectedSort, installedModelNames]);
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#09090b] text-zinc-100 overflow-y-auto p-4 md:p-6 font-sans">
+    <div className="w-full h-full min-h-0 flex flex-col bg-[#09090b] text-zinc-100 overflow-y-auto custom-scrollbar p-4 md:p-6 font-sans">
       {/* Top Header Banner */}
       <div className="flex flex-col gap-3 pb-5 border-b border-[#27272a]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

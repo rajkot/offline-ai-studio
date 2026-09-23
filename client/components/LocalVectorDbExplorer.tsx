@@ -109,7 +109,7 @@ export default function LocalVectorDbExplorer({ workspaceFiles, onOpenFile }: Lo
   }, [stats]);
 
   return (
-    <div className="flex flex-col h-full bg-[#0d0e12] text-zinc-200 text-xs overflow-hidden font-sans border-r border-[#27272a]">
+    <div className="flex flex-col h-full min-h-0 bg-[#0d0e12] text-zinc-200 text-xs overflow-hidden font-sans border-r border-[#27272a]">
       {/* Header Bar */}
       <div className="p-3 border-b border-[#27272a] bg-[#121318] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export default function LocalVectorDbExplorer({ workspaceFiles, onOpenFile }: Lo
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-3">
         {activeTab === 'search' && (
           <div className="space-y-3">
             {/* Search Input Box */}

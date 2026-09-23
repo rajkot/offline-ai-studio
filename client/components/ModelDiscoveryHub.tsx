@@ -460,7 +460,7 @@ export default function ModelDiscoveryHub() {
     : 0;
 
   return (
-    <div className="flex flex-col h-full bg-zinc-50 dark:bg-[#09090b] text-zinc-800 dark:text-zinc-100 antialiased rounded-xl">
+    <div className="flex flex-col h-full min-h-0 bg-zinc-50 dark:bg-[#09090b] text-zinc-800 dark:text-zinc-100 antialiased rounded-xl">
       
       {/* Top Banner & Status Telemetry Card */}
       <div className="bg-white dark:bg-[#18181b] border border-zinc-200 dark:border-[#27272a] rounded-xl p-4 mb-4 shadow-xs select-none">
@@ -631,7 +631,7 @@ export default function ModelDiscoveryHub() {
       )}
 
       {/* Model Grid Storefront Showcase */}
-      <div className="flex-1 overflow-y-auto max-h-[480px] pr-1 space-y-4 custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-4 custom-scrollbar">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredModels.map(model => {
             const download = downloadingModels[model.id];

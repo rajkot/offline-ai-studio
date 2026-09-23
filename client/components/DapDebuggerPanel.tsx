@@ -170,7 +170,7 @@ export default function DapDebuggerPanel({
   const currentFrame = stackFrames[selectedFrameIndex] || stackFrames[0];
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 text-slate-100 font-sans select-none overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 bg-slate-950 text-slate-100 font-sans select-none overflow-hidden">
       {/* Top Controls Toolbar (F5, F10, F11, Shift+F11, Shift+F5) */}
       <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
@@ -260,7 +260,7 @@ export default function DapDebuggerPanel({
       </div>
 
       {/* Main Panels Grid (Split View) */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-4">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-4">
         {/* Section 1: Dynamic Watch Expressions */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-md">
           <div className="px-3 py-2 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between">

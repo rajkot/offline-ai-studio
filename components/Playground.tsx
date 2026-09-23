@@ -4358,7 +4358,11 @@ export default function ExtractedVisionUI() {
             </div>
 
             {/* Dynamic Left Sidebar Body Content */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar bg-[#18181b]">
+            <div className={`flex-1 min-h-0 bg-[#18181b] flex flex-col overflow-hidden ${
+              (activeActivityTab === 'extensions' || activeActivityTab === 'plugins' || activeActivityTab === 'mcp' || activeActivityTab === 'debug' || activeActivityTab === 'testing' || activeActivityTab === 'search')
+                ? 'p-0'
+                : 'overflow-y-auto p-2 space-y-2 custom-scrollbar'
+            }`}>
               {/* Explorer Tab View */}
               {activeActivityTab === 'explorer' && (
                 <>
@@ -4758,7 +4762,7 @@ export default function ExtractedVisionUI() {
 
               {/* Extensions & Plugins Marketplace Tab View (Ctrl+Shift+X) */}
               {(activeActivityTab === 'extensions' || activeActivityTab === 'plugins') && (
-                <div className="flex-1 h-full overflow-hidden">
+                <div className="flex-1 h-full min-h-0 flex flex-col overflow-hidden">
                   <ExtensionsManagerStudio onExecuteCommand={handleExecuteCommand} />
                 </div>
               )}
@@ -4844,7 +4848,7 @@ export default function ExtractedVisionUI() {
 
               {/* MCP Hub Tab View */}
               {activeActivityTab === 'mcp' && (
-                <div className="flex-1 h-full overflow-hidden">
+                <div className="flex-1 h-full min-h-0 flex flex-col overflow-hidden">
                   <McpStudioPanel
                     workspaceFiles={parsedFiles}
                     onUpdateFile={handleUpdateFile}
@@ -5490,19 +5494,19 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : selectedFile === '__SUBJECT_CREATOR__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <SubjectCreationHub />
               </div>
             ) : selectedFile === '__EXTENSIONS_STUDIO__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <ExtensionsManagerStudio />
               </div>
             ) : selectedFile === '__MODELS_CATALOG__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-3">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-3">
                 <ModelCatalogStorefront />
               </div>
             ) : selectedFile === '__MCP_STUDIO__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <McpStudioPanel
                   workspaceFiles={parsedFiles}
                   onUpdateFile={(filePath, content) => {
@@ -5513,15 +5517,15 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : selectedFile === '__API_STUDIO__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-[#090d16]">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#090d16]">
                 <ApiStudioPanel onClose={() => handleSelectFile('components/Playground.tsx')} />
               </div>
             ) : selectedFile === '__PLUGINS__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <PluginMarketplaceStudio />
               </div>
             ) : selectedFile === '__GRID_STUDIO__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <MultiPaneEditorGrid
                   parsedFiles={parsedFiles}
                   onFileChange={(filePath, content) => {
@@ -5533,7 +5537,7 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : selectedFile === '__OPFS_STUDIO__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <OpfsWorkspaceStudio
                   workspaceFiles={parsedFiles}
                   onOpenFile={handleJumpToLocation}
@@ -5541,7 +5545,7 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : selectedFile === '__GIT_STUDIO__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <GitVisualizerStudio
                   workspaceFiles={parsedFiles}
                   currentFile={diffTargetFile || 'components/Playground.tsx'}
@@ -5550,21 +5554,21 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : selectedFile === '__MERGE_RESOLVER__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <MergeConflictResolver
                   onMergeComplete={handleBatchApplyFiles}
                   onAbort={() => handleSelectFile('components/Playground.tsx')}
                 />
               </div>
             ) : selectedFile === '__WASI_STUDIO__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <WasiRuntimeStudio
                   workspaceFiles={parsedFiles}
                   onOpenFile={handleJumpToLocation}
                 />
               </div>
             ) : selectedFile === '__DAP_DEBUGGER__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <DapDebuggerPanel
                   currentFile={diffTargetFile || 'components/Playground.tsx'}
                   sourceCode={parsedFiles[diffTargetFile || 'components/Playground.tsx']}
@@ -5573,7 +5577,7 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : selectedFile === '__COMPOSER__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <MultiFileComposer
                   workspaceFiles={parsedFiles}
                   onApplyFiles={handleBatchApplyFiles}
@@ -5581,14 +5585,14 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : selectedFile === '__VECTOR_DB__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                 <LocalVectorDbExplorer
                   workspaceFiles={parsedFiles}
                   onOpenFile={handleJumpToLocation}
                 />
               </div>
             ) : selectedFile === '__SCAFFOLDER_HUB__' ? (
-              <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800">
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800">
                 <ScaffolderDashboard
                   onScaffoldComplete={(scaffoldedFiles, primaryFile) => {
                     let formatted = '';

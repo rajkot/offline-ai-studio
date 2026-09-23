@@ -143,7 +143,7 @@ export default function GitVisualizerStudio({
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#0b0c10] text-zinc-200 select-none overflow-hidden font-sans border-r border-[#1f2028]">
+    <div className="h-full min-h-0 flex flex-col bg-[#0b0c10] text-zinc-200 select-none overflow-hidden font-sans border-r border-[#1f2028]">
       {/* Top Header */}
       <div className="p-3 bg-[#121319] border-b border-[#242531] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
@@ -267,11 +267,11 @@ export default function GitVisualizerStudio({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {activeTab === 'dag_graph' && (
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 min-h-0 flex overflow-hidden">
             {/* Left: Commit History & Branch DAG */}
-            <div className="w-3/5 border-r border-[#1f2028] flex flex-col bg-[#0d0e12]">
+            <div className="w-3/5 min-h-0 border-r border-[#1f2028] flex flex-col bg-[#0d0e12]">
               {/* Commit Creation Input */}
               <div className="p-3 bg-[#13141a] border-b border-[#242531] flex flex-col gap-2">
                 <div className="flex items-center gap-2">
@@ -312,7 +312,7 @@ export default function GitVisualizerStudio({
               </div>
 
               {/* Visual Commit DAG List */}
-              <div className="flex-1 overflow-y-auto divide-y divide-[#171821] font-mono text-xs">
+              <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar divide-y divide-[#171821] font-mono text-xs">
                 {commits.map((commit, index) => {
                   const isHead = commit.sha === gitEngine.getHeadSha();
                   const isSelected = selectedCommit?.sha === commit.sha;
@@ -380,7 +380,7 @@ export default function GitVisualizerStudio({
             </div>
 
             {/* Right: Commit Tree & Diff Detail */}
-            <div className="w-2/5 flex flex-col bg-[#07080b]">
+            <div className="w-2/5 min-h-0 flex flex-col bg-[#07080b]">
               <div className="p-2.5 bg-[#101117] border-b border-[#242531] flex items-center justify-between text-xs">
                 <span className="font-semibold text-zinc-300">
                   {selectedCommit ? `Commit: ${selectedCommit.shortSha}` : 'Select a commit to inspect'}
@@ -392,7 +392,7 @@ export default function GitVisualizerStudio({
                 )}
               </div>
 
-              <div className="flex-1 overflow-auto p-4 font-mono text-xs">
+              <div className="flex-1 min-h-0 overflow-auto custom-scrollbar p-4 font-mono text-xs">
                 {selectedCommit ? (
                   <div className="space-y-4">
                     <div className="p-3 rounded-lg bg-[#0d0e12] border border-zinc-800 space-y-1 text-xs">
@@ -449,7 +449,7 @@ export default function GitVisualizerStudio({
         )}
 
         {activeTab === 'blame_inspector' && (
-          <div className="flex-1 flex flex-col bg-[#07080b] overflow-hidden">
+          <div className="flex-1 min-h-0 flex flex-col bg-[#07080b] overflow-hidden">
             <div className="p-2.5 bg-[#101117] border-b border-[#242531] flex items-center justify-between text-xs">
               <span className="font-semibold text-zinc-300 flex items-center gap-2">
                 <FileCode size={14} className="text-cyan-400" />
@@ -460,7 +460,7 @@ export default function GitVisualizerStudio({
               </span>
             </div>
 
-            <div className="flex-1 overflow-auto p-2 font-mono text-xs divide-y divide-[#171821]">
+            <div className="flex-1 min-h-0 overflow-auto custom-scrollbar p-2 font-mono text-xs divide-y divide-[#171821]">
               {blameLines.map((line) => (
                 <div key={line.lineNumber} className="py-1.5 px-2 flex items-center gap-3 hover:bg-zinc-800/40 transition-colors group">
                   <span className="w-8 text-right text-zinc-600 select-none text-[11px]">{line.lineNumber}</span>
@@ -478,7 +478,7 @@ export default function GitVisualizerStudio({
         )}
 
         {activeTab === 'stash_stack' && (
-          <div className="flex-1 p-6 overflow-y-auto bg-[#090a0e] flex flex-col gap-6 max-w-3xl mx-auto w-full">
+          <div className="flex-1 min-h-0 p-6 overflow-y-auto custom-scrollbar bg-[#090a0e] flex flex-col gap-6 max-w-3xl mx-auto w-full">
             <div className="bg-[#13141a] p-5 rounded-xl border border-[#27272a] shadow-lg">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
