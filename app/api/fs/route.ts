@@ -122,6 +122,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, deleted: resolved });
     }
 
+    if (action === 'rename') {
+      const { newPath } = body;
+      if (!newPath) {
+        return NextResponse.json({ error: 'newPath is required for rename' }, { status: 400 });
+      }
+      const targetNew = path.resolve(newPath);
+      const newDir = path.dirname(targetNew);
+      if (!fs.existsSync(newDir)) {
+        fs.mkdirSync(newDir, { recursive: true });
+      }
+      fs.renameSync(resolved, targetNew);
+      return NextResponse.json({ success: true, oldPath: resolved, newPath: targetNew });
+    }
+
+    if (action === 'permissions') {
+      let isReadable = false;
+      let isWritable = false;
+      try {
+        fs.accessSync(resolved, fs.constants.R_OK);
+        isReadable = true;
+      } catch {}
+      try {
+        fs.accessSync(resolved, fs.constants.W_OK);
+        isWritable = true;
+      } catch {}
+      return NextResponse.json({
+        success: true,
+        path: resolved,
+        exists: fs.existsSync(resolved),
+        isDirectory: fs.existsSync(resolved) && fs.statSync(resolved).isDirectory(),
+        isReadable,
+        isWritable,
+        fullPermissions: isReadable && isWritable
+      });
+    }
+
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

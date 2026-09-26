@@ -9,6 +9,50 @@ let serverProcess = null;
 let activePort = parseInt(process.env.PORT, 10) || 3000;
 let isQuitting = false;
 
+// Discover folder from CLI or File Explorer Right-Click (%V or %1)
+function getFolderFromArgs(args) {
+  if (!args || !Array.isArray(args)) return null;
+  for (let i = 1; i < args.length; i++) {
+    const arg = args[i];
+    if (arg && typeof arg === 'string' && !arg.startsWith('-') && !arg.startsWith('--') && arg !== '.') {
+      try {
+        const resolved = path.resolve(arg);
+        if (fs.existsSync(resolved) && fs.statSync(resolved).isDirectory()) {
+          return resolved;
+        }
+      } catch (e) {}
+    }
+  }
+  return null;
+}
+
+let initialTargetFolder = getFolderFromArgs(process.argv);
+console.log('[MAIN] Initial target folder from CLI:', initialTargetFolder);
+
+// Enforce single instance lock for smooth Windows context menu folder opening
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  console.log('[MAIN] Another instance is already running. Forwarding request and exiting secondary instance.');
+  app.quit();
+} else {
+  app.on('second-instance', (event, commandLine, workingDirectory) => {
+    console.log('[MAIN] second-instance event received with commandLine:', commandLine);
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+      const folder = getFolderFromArgs(commandLine) || (workingDirectory && fs.existsSync(workingDirectory) ? workingDirectory : null);
+      if (folder) {
+        console.log('[MAIN] Switching workspace to second-instance folder:', folder);
+        initialTargetFolder = folder;
+        if (mainWindow.webContents && !mainWindow.webContents.isLoading()) {
+          mainWindow.webContents.send('open-folder', folder);
+        }
+        navigateToIDE(folder);
+      }
+    }
+  });
+}
+
 function sendStatus(msg) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('engine-status', msg);
@@ -221,9 +265,14 @@ async function startApplicationEngine() {
   }, 500);
 }
 
-function navigateToIDE() {
+function navigateToIDE(customFolder) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  const targetUrl = process.env.APP_URL || `http://127.0.0.1:${activePort}`;
+  const folder = customFolder || initialTargetFolder;
+  let targetUrl = process.env.APP_URL || `http://127.0.0.1:${activePort}`;
+  if (folder) {
+    const separator = targetUrl.includes('?') ? '&' : '?';
+    targetUrl += `${separator}folder=${encodeURIComponent(folder)}`;
+  }
   console.log('[NAVIGATE] Loading IDE workbench at:', targetUrl);
   mainWindow.loadURL(targetUrl).catch((err) => {
     console.warn('[NAVIGATE] Load error, falling back to offline screen:', err);
@@ -333,6 +382,59 @@ ipcMain.on('retry-engine', () => {
 ipcMain.on('open-devtools', () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.openDevTools();
+  }
+});
+
+// Windows Context Menu IPC Handlers
+const CONTEXT_MENU_KEYS = [
+  'HKCU\\Software\\Classes\\Directory\\shell\\OfflineAIStudio',
+  'HKCU\\Software\\Classes\\Directory\\Background\\shell\\OfflineAIStudio',
+  'HKCU\\Software\\Classes\\Drive\\shell\\OfflineAIStudio'
+];
+
+ipcMain.handle('get-target-folder', () => initialTargetFolder);
+
+ipcMain.handle('get-context-menu-status', () => {
+  if (process.platform !== 'win32') return { registered: false };
+  try {
+    const out = execSync(`reg.exe query "${CONTEXT_MENU_KEYS[0]}\\command" /ve`, { stdio: 'pipe' }).toString();
+    return { registered: true, details: out.trim() };
+  } catch {
+    return { registered: false };
+  }
+});
+
+ipcMain.handle('register-context-menu', () => {
+  if (process.platform !== 'win32') return { success: false, error: 'Not Windows' };
+  const exePath = process.execPath;
+  const iconPath = path.join(__dirname, 'icon.ico');
+  const commandStr = `\\"${exePath}\\" \\"%V\\"`;
+
+  try {
+    for (const key of CONTEXT_MENU_KEYS) {
+      execSync(`reg.exe add "${key}" /ve /t REG_SZ /d "Open with Offline AI Studio" /f`, { stdio: 'ignore' });
+      if (fs.existsSync(iconPath)) {
+        execSync(`reg.exe add "${key}" /v "Icon" /t REG_SZ /d "\\"${iconPath}\\",0" /f`, { stdio: 'ignore' });
+      }
+      execSync(`reg.exe add "${key}\\command" /ve /t REG_SZ /d "${commandStr}" /f`, { stdio: 'ignore' });
+    }
+    return { success: true, registered: true, exePath };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('unregister-context-menu', () => {
+  if (process.platform !== 'win32') return { success: false, error: 'Not Windows' };
+  try {
+    for (const key of CONTEXT_MENU_KEYS) {
+      try {
+        execSync(`reg.exe delete "${key}" /f`, { stdio: 'ignore' });
+      } catch {}
+    }
+    return { success: true, registered: false };
+  } catch (err) {
+    return { success: false, error: err.message };
   }
 });
 

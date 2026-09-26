@@ -11,5 +11,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   openDevTools: () => {
     ipcRenderer.send('open-devtools');
-  }
+  },
+  onOpenFolder: (callback) => {
+    ipcRenderer.on('open-folder', (_event, folder) => callback(folder));
+  },
+  getTargetFolder: () => ipcRenderer.invoke('get-target-folder'),
+  registerContextMenu: () => ipcRenderer.invoke('register-context-menu'),
+  unregisterContextMenu: () => ipcRenderer.invoke('unregister-context-menu'),
+  getContextMenuStatus: () => ipcRenderer.invoke('get-context-menu-status')
 });

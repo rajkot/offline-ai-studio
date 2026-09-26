@@ -411,6 +411,96 @@ class LocalFileSystemEngine {
   }
 
   /**
+   * Creates a new directory on local disk
+   */
+  public async createDirectory(relativeDirPath: string): Promise<boolean> {
+    const normalizedPath = relativeDirPath.replace(/\\/g, '/').replace(/^\/+/, '');
+
+    if (this.activeDirectoryHandle) {
+      try {
+        const parts = normalizedPath.split('/').filter(Boolean);
+        let currentDir = this.activeDirectoryHandle;
+        for (const part of parts) {
+          currentDir = await currentDir.getDirectoryHandle(part, { create: true });
+        }
+        return true;
+      } catch (err) {
+        console.error(`[LocalFs] Failed to create directory ${normalizedPath}:`, err);
+      }
+    }
+
+    if (this.activeHostDirectoryPath) {
+      try {
+        const fullPath = `${this.activeHostDirectoryPath}/${normalizedPath}`;
+        const res = await fetch('/api/fs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create', filePath: fullPath, isDirectory: true })
+        });
+        return res.ok;
+      } catch (e) {}
+    }
+
+    return false;
+  }
+
+  /**
+   * Renames a file or directory on local disk
+   */
+  public async renameFile(oldRelativePath: string, newRelativePath: string): Promise<boolean> {
+    const oldNorm = oldRelativePath.replace(/\\/g, '/').replace(/^\/+/, '');
+    const newNorm = newRelativePath.replace(/\\/g, '/').replace(/^\/+/, '');
+
+    if (this.activeHostDirectoryPath) {
+      try {
+        const oldFull = `${this.activeHostDirectoryPath}/${oldNorm}`;
+        const newFull = `${this.activeHostDirectoryPath}/${newNorm}`;
+        const res = await fetch('/api/fs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'rename', filePath: oldFull, newPath: newFull })
+        });
+        if (res.ok) {
+          const content = this.fileBufferCache.get(oldNorm) || '';
+          this.fileBufferCache.delete(oldNorm);
+          this.fileBufferCache.set(newNorm, content);
+          return true;
+        }
+      } catch (e) {}
+    }
+
+    return false;
+  }
+
+  /**
+   * Verifies read and write permissions for a target directory
+   */
+  public async checkPermissions(targetPath?: string): Promise<{ isReadable: boolean; isWritable: boolean; fullPermissions: boolean }> {
+    const checkPath = targetPath || this.activeHostDirectoryPath;
+    if (!checkPath) {
+      return { isReadable: true, isWritable: true, fullPermissions: true };
+    }
+
+    try {
+      const res = await fetch('/api/fs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'permissions', filePath: checkPath })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          isReadable: !!data.isReadable,
+          isWritable: !!data.isWritable,
+          fullPermissions: !!data.fullPermissions
+        };
+      }
+    } catch (e) {}
+
+    return { isReadable: true, isWritable: true, fullPermissions: true };
+  }
+
+  /**
    * Helper to create or retrieve nested FileSystemFileHandle
    */
   private async getOrCreateFileHandle(relativePath: string): Promise<FileSystemFileHandle> {

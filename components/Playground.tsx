@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { ArrowLeft, Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, LayoutGrid, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff, Palette, Languages, Flame, Binary, BookOpen } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, LayoutGrid, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff, Palette, Languages, Flame, Binary, BookOpen, FolderPlus, MousePointerClick } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import JSZip from 'jszip';
 import CommandPalette, { getActiveKeybindings } from './CommandPalette';
@@ -64,6 +64,7 @@ import MagicUiStudioModal from '@/client/components/MagicUiStudioModal';
 import CursorModernUiStudioModal from '@/client/components/CursorModernUiStudioModal';
 import { NanoBananaStudioModal } from '@/client/components/NanoBananaStudioModal';
 import SuperpowersStudioPanel from './SuperpowersStudioPanel';
+import { WindowsContextMenuModal } from '@/client/components/WindowsContextMenuModal';
 import ThemePickerModal from './ThemePickerModal';
 import HitlPermissionModal from './HitlPermissionModal';
 import ExtensionsManagerStudio from './ExtensionsManagerStudio';
@@ -377,9 +378,12 @@ export default function Playground({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<'general' | 'ollama' | 'security' | 'rag' | 'optimizer' | 'finops' | 'performance' | 'keybindings' | 'desktop' | 'diagnostics' | 'models'>('general');
 
-  // Create New File Modal State
+  // Create New File & Folder Modal State
   const [isNewFileModalOpen, setIsNewFileModalOpen] = useState(false);
   const [newFilePathInput, setNewFilePathInput] = useState('');
+  const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
+  const [newFolderPathInput, setNewFolderPathInput] = useState('');
+  const [isContextMenuModalOpen, setIsContextMenuModalOpen] = useState(false);
 
   // Online AI Hub & Project Scaffolder Modal State
   const [isOnlineAiHubOpen, setIsOnlineAiHubOpen] = useState(false);
@@ -1558,13 +1562,23 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
     });
   }, []);
 
-  // Mount real local disk directory via File System Access API
-  const handleOpenLocalFolder = useCallback(async () => {
+  // Mount real local disk directory via File System Access API or host path
+  const handleOpenLocalFolder = useCallback(async (customPath?: string) => {
     try {
-      const res = await localFileSystemEngine.openDirectory();
+      let res: { directoryName: string; files: Record<string, string> } | null = null;
+      if (customPath && typeof customPath === 'string') {
+        const hostRes = await localFileSystemEngine.openHostDirectory(customPath);
+        res = {
+          directoryName: hostRes.directoryName || customPath.split(/[/\\]/).filter(Boolean).pop() || 'Workspace',
+          files: hostRes.files
+        };
+      } else {
+        res = await localFileSystemEngine.openDirectory();
+      }
       if (!res) return; // User cancelled modal
 
-      setMountedLocalFolder(res.directoryName);
+      const dirTitle = res.directoryName || (customPath ? customPath.split(/[/\\]/).filter(Boolean).pop() || 'Workspace' : 'Workspace');
+      setMountedLocalFolder(dirTitle);
 
       // Serialize loaded disk files into rawOutput format so all subsystems index it
       let newRaw = '';
@@ -1580,12 +1594,48 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         setOpenTabs([firstFile]);
       }
 
-      setDiskToastMessage(`Mounted "${res.directoryName}" (${Object.keys(res.files).length} files) from local disk`);
-      setTimeout(() => setDiskToastMessage(null), 4000);
+      setDiskToastMessage(`📂 Mounted "${dirTitle}" (${Object.keys(res.files).length} files) with Full Read/Write Permissions`);
+      setTimeout(() => setDiskToastMessage(null), 5000);
     } catch (err: any) {
       alert(`Could not open local folder: ${err.message}`);
     }
   }, []);
+
+  // Handle creating a new physical directory in the active workspace
+  const handleCreateDirectory = useCallback(async (dirPath: string) => {
+    try {
+      const ok = await localFileSystemEngine.createDirectory(dirPath);
+      if (ok) {
+        setDiskToastMessage(`📁 Created folder "${dirPath}" on disk`);
+        setTimeout(() => setDiskToastMessage(null), 3000);
+      }
+    } catch (e: any) {
+      alert(`Could not create folder: ${e.message}`);
+    }
+  }, []);
+
+  // Handle deleting a file from workspace disk
+  const handleDeleteWorkspaceFile = useCallback(async (filePath: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${filePath}" from disk?`)) return;
+    try {
+      await localFileSystemEngine.deleteFile(filePath);
+      // Remove from rawOutput
+      setRawOutput(prev => {
+        const escaped = filePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`--- FILE: ${escaped} ---[\\s\\S]*?--- END FILE ---\\n\\n?`, 'g');
+        return prev.replace(regex, '');
+      });
+      // Close tab if open
+      setOpenTabs(prev => prev.filter(t => t !== filePath));
+      if (selectedFile === filePath) {
+        setSelectedFile(openTabs.find(t => t !== filePath) || '');
+      }
+      setDiskToastMessage(`🗑️ Deleted "${filePath}" from disk`);
+      setTimeout(() => setDiskToastMessage(null), 3000);
+    } catch (e: any) {
+      alert(`Could not delete file: ${e.message}`);
+    }
+  }, [selectedFile, openTabs]);
 
   const handleUnmountLocalFolder = useCallback(() => {
     localFileSystemEngine.unmountDirectory();
@@ -1641,6 +1691,30 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       }
     });
   }, [handleUpdateFile, dirtyFiles]);
+
+  // Auto-mount folder from URL query param (?folder=...) or Electron IPC (right-click Open with Offline AI Studio)
+  useEffect(() => {
+    let handled = false;
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const folderParam = urlParams.get('folder');
+      if (folderParam && !handled) {
+        handled = true;
+        handleOpenLocalFolder(folderParam);
+      }
+    }
+
+    if (typeof window !== 'undefined' && (window as any).electronAPI?.onOpenFolder) {
+      const unsubscribe = (window as any).electronAPI.onOpenFolder((folderPath: string) => {
+        if (folderPath) {
+          handleOpenLocalFolder(folderPath);
+        }
+      });
+      return () => {
+        if (typeof unsubscribe === 'function') unsubscribe();
+      };
+    }
+  }, [handleOpenLocalFolder]);
 
   // Subscribe to local Whisper audio state
   useEffect(() => {
@@ -2320,6 +2394,9 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         setPrompt(`Using superpowers:requesting-code-review, perform an adversarial code review on the latest edits in ${selectedFile || 'components/Playground.tsx'}: `);
         setIsSidebarOpen(true);
         setActiveSidebarTab('chat');
+        break;
+      case 'windows-context-menu':
+        setIsContextMenuModalOpen(true);
         break;
       case 'opfs-open':
         setSelectedFile('__OPFS_STUDIO__');
@@ -3992,6 +4069,9 @@ export default function ExtractedVisionUI() {
                   <button onClick={() => { handleOpenLocalFolder(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span className="flex items-center gap-1.5"><FolderOpen size={12} className="text-amber-400" /> Open Local Folder...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+O</span>
                   </button>
+                  <button onClick={() => { setIsContextMenuModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><MousePointerClick size={12} className="text-emerald-400" /> Windows Explorer Context Menu...</span>
+                  </button>
                   <button onClick={() => { setIsCloneRepoModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span className="flex items-center gap-1.5"><Download size={12} className="text-emerald-400" /> Clone Repository...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+G L</span>
                   </button>
@@ -4862,7 +4942,7 @@ export default function ExtractedVisionUI() {
                           </button>
                         ) : (
                           <button
-                            onClick={handleOpenLocalFolder}
+                            onClick={() => handleOpenLocalFolder()}
                             title="Open Local Folder from Disk (Ctrl+O)"
                             className="text-amber-400 hover:text-amber-300 flex items-center gap-0.5 text-[9.5px] font-semibold hover:underline cursor-pointer"
                           >
@@ -4878,6 +4958,23 @@ export default function ExtractedVisionUI() {
                           className="text-zinc-400 hover:text-white p-0.5 rounded cursor-pointer"
                         >
                           <FilePlus size={11} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setNewFolderPathInput('');
+                            setIsNewFolderModalOpen(true);
+                          }}
+                          title="New Folder"
+                          className="text-zinc-400 hover:text-white p-0.5 rounded cursor-pointer"
+                        >
+                          <FolderPlus size={11} />
+                        </button>
+                        <button
+                          onClick={() => setIsContextMenuModalOpen(true)}
+                          title="Windows Explorer Right-Click Integration"
+                          className="text-emerald-400 hover:text-emerald-300 p-0.5 rounded cursor-pointer"
+                        >
+                          <MousePointerClick size={11} />
                         </button>
                       </div>
                     </div>
@@ -4925,9 +5022,12 @@ export default function ExtractedVisionUI() {
                               const isMd = path.endsWith('.md');
                               const isSelected = selectedFile === path;
                               return (
-                                <button 
+                                <div 
                                   key={path}
+                                  role="button"
+                                  tabIndex={0}
                                   onClick={() => handleSelectFile(path)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') handleSelectFile(path); }}
                                   className={`w-full text-left px-2.5 py-1.2 rounded-md flex items-center justify-between text-xs font-medium transition-all cursor-pointer group ${
                                     isSelected 
                                       ? 'bg-indigo-600/20 text-white font-medium shadow-xs border border-indigo-500/30'
@@ -4950,14 +5050,26 @@ export default function ExtractedVisionUI() {
                                     )}
                                     <span className="truncate">{path.split('/').pop()}</span>
                                   </div>
-                                  {isExe ? (
-                                    <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded font-mono opacity-60 group-hover:opacity-100">
-                                      218M
-                                    </span>
-                                  ) : (
-                                    renderSecurityBadge(classification)
-                                  )}
-                                </button>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    {isExe ? (
+                                      <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded font-mono opacity-60 group-hover:opacity-100">
+                                        218M
+                                      </span>
+                                    ) : (
+                                      renderSecurityBadge(classification)
+                                    )}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteWorkspaceFile(path);
+                                      }}
+                                      title={`Delete ${path}`}
+                                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-rose-400 text-zinc-500 rounded transition-opacity cursor-pointer"
+                                    >
+                                      <Trash2 size={11} />
+                                    </button>
+                                  </div>
+                                </div>
                               );
                             })}
                         </div>
@@ -8121,6 +8233,67 @@ export default function ExtractedVisionUI() {
           </div>
         </div>
       )}
+
+      {/* Create New Folder Modal */}
+      {isNewFolderModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 text-slate-100 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <FolderPlus size={18} className="text-amber-400" /> Create New Directory
+              </h3>
+              <button onClick={() => setIsNewFolderModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X size={16} />
+              </button>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5">Directory Path / Name:</label>
+              <input
+                type="text"
+                autoFocus
+                placeholder="e.g. src/modules or components/modals"
+                value={newFolderPathInput}
+                onChange={e => setNewFolderPathInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newFolderPathInput.trim()) {
+                    handleCreateDirectory(newFolderPathInput.trim());
+                    setIsNewFolderModalOpen(false);
+                  } else if (e.key === 'Escape') {
+                    setIsNewFolderModalOpen(false);
+                  }
+                }}
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setIsNewFolderModalOpen(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (newFolderPathInput.trim()) {
+                    handleCreateDirectory(newFolderPathInput.trim());
+                    setIsNewFolderModalOpen(false);
+                  }
+                }}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer"
+              >
+                Create Directory
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Windows Explorer Context Menu Modal */}
+      <WindowsContextMenuModal
+        isOpen={isContextMenuModalOpen}
+        onClose={() => setIsContextMenuModalOpen(false)}
+        onOpenFolder={(folderPath: string) => handleOpenLocalFolder(folderPath)}
+      />
 
       {/* Global Interactive VS Code-Style Command Palette */}
       <CommandPalette

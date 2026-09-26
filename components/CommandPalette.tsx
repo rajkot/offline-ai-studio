@@ -65,6 +65,7 @@ export const COMMAND_METADATA = [
   { command: 'superpowers-tdd', name: 'Superpowers: Test-Driven Development (Red-Green TDD)', description: 'Enforce failing tests first before implementation code', category: 'Methodology' },
   { command: 'superpowers-debug', name: 'Superpowers: Systematic Root-Cause Debugging', description: '4-phase root-cause investigation without trial-and-error edits', category: 'Methodology' },
   { command: 'superpowers-review', name: 'Superpowers: Request Adversarial Code Review', description: 'Automated code review on active file inspecting invariants and security', category: 'Methodology' },
+  { command: 'windows-context-menu', name: 'Windows Explorer: Add "Open with Offline AI Studio" to Right-Click Menu', description: 'Enable 1-click Windows right-click folder opening with full project permissions (VS Code Style)', category: 'Preferences' },
 ];
 
 export const DEFAULT_KEYBINDINGS: Record<string, string> = {
