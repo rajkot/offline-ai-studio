@@ -21,6 +21,7 @@ interface BreadcrumbsBarProps {
   workspaceFiles: Record<string, string>;
   onSelectFile: (filePath: string) => void;
   onJumpToLine: (line: number, column?: number) => void;
+  rightSlot?: React.ReactNode;
 }
 
 export default function BreadcrumbsBar({
@@ -28,7 +29,8 @@ export default function BreadcrumbsBar({
   cursorLine,
   workspaceFiles,
   onSelectFile,
-  onJumpToLine
+  onJumpToLine,
+  rightSlot
 }: BreadcrumbsBarProps) {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -111,9 +113,9 @@ export default function BreadcrumbsBar({
     <div
       ref={containerRef}
       id="monaco-breadcrumbs-bar"
-      className="h-6 bg-[#111113] border-b border-[#27272a] px-3 flex items-center text-[11px] font-mono text-zinc-400 select-none overflow-x-auto scrollbar-none z-20 shrink-0"
+      className="h-6.5 min-h-[26px] max-h-[26px] bg-[#111113] border-b border-[#27272a]/70 px-3 flex items-center justify-between text-[11px] font-mono text-zinc-400 select-none z-20 shrink-0"
     >
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1 shrink-0 overflow-x-auto scrollbar-none">
         {/* Path Segments */}
         {pathSegments.map((segment, idx) => {
           const isLastSegment = idx === pathSegments.length - 1;
@@ -286,6 +288,11 @@ export default function BreadcrumbsBar({
           </div>
         )}
       </div>
+      {rightSlot && (
+        <div className="flex items-center gap-2.5 shrink-0 text-[10px] pl-2 font-sans">
+          {rightSlot}
+        </div>
+      )}
     </div>
   );
 }

@@ -20,7 +20,52 @@ async function buildStandalone() {
     fs.mkdirSync(releaseDir, { recursive: true });
   }
 
-  // 1. Pack full source tree into universal ZIP buffer
+  // 1. Stage .next/standalone bundle with static assets and public assets
+  console.log('[STANDALONE-STAGER] Preparing .next/standalone engine bundle...');
+  const standaloneDir = path.join(rootDir, '.next', 'standalone');
+  if (!fs.existsSync(path.join(standaloneDir, 'server.js'))) {
+    console.log('[STANDALONE-STAGER] Standalone server not found. Compiling Next.js build...');
+    execSync('npm run build', { cwd: rootDir, stdio: 'inherit' });
+  }
+
+  // Stage .next/static into .next/standalone/.next/static
+  const staticSrc = path.join(rootDir, '.next', 'static');
+  const staticDst = path.join(standaloneDir, '.next', 'static');
+  if (fs.existsSync(staticSrc)) {
+    if (!fs.existsSync(staticDst)) fs.mkdirSync(staticDst, { recursive: true });
+    fs.cpSync(staticSrc, staticDst, { recursive: true, force: true });
+    console.log('[STANDALONE-STAGER] Copied .next/static -> .next/standalone/.next/static');
+  }
+
+  // Stage public folder into .next/standalone/public (excluding large binaries/exes/releases)
+  const publicSrc = path.join(rootDir, 'public');
+  const publicDst = path.join(standaloneDir, 'public');
+  if (fs.existsSync(publicSrc)) {
+    if (!fs.existsSync(publicDst)) fs.mkdirSync(publicDst, { recursive: true });
+    fs.cpSync(publicSrc, publicDst, {
+      recursive: true,
+      force: true,
+      filter: (src) => {
+        const basename = path.basename(src);
+        if (basename === 'release') return false;
+        if (basename.endsWith('.exe') || basename.endsWith('.zip') || basename.endsWith('.dmg') || basename.endsWith('.AppImage')) return false;
+        return true;
+      }
+    });
+    console.log('[STANDALONE-STAGER] Copied public -> .next/standalone/public');
+  }
+
+  // Clean out stale heavy artifacts from standalone directory
+  const standaloneStaleExe = path.join(standaloneDir, 'OfflineAIStudio-Setup-1.0.0.exe');
+  if (fs.existsSync(standaloneStaleExe)) {
+    try { fs.unlinkSync(standaloneStaleExe); } catch (e) {}
+  }
+  const standaloneDesktopApp = path.join(standaloneDir, 'desktop-app');
+  if (fs.existsSync(standaloneDesktopApp)) {
+    try { fs.rmSync(standaloneDesktopApp, { recursive: true, force: true }); } catch (e) {}
+  }
+
+  // 2. Pack full source tree into universal ZIP buffer
   console.log('[SOURCE-PACKER] Scanning workspace files and dependencies...');
   const zip = new JSZip();
   const dirsToInclude = ['app', 'components', 'lib', 'client', 'desktop-app', 'public'];
@@ -69,24 +114,59 @@ async function buildStandalone() {
 
   const desktopAppDir = path.join(rootDir, 'desktop-app');
 
-  // 2. Invoke electron-builder for selected targets
+  // 3. Invoke electron-builder for selected targets
   if (buildWin) {
     console.log('[WINDOWS-BUILDER] Compiling native Windows Electron binaries with electron-builder...');
+    
+    // Close any lingering processes before build to prevent EBUSY
+    try {
+      execSync('powershell.exe -Command "Stop-Process -Name *OfflineAIStudio* -Force -ErrorAction SilentlyContinue"', { stdio: 'ignore' });
+    } catch (_) {}
+
     execSync('npx -y electron-builder --win', { cwd: desktopAppDir, stdio: 'inherit' });
 
-    // Ensure standard release filenames
+    // Safe copy with retry
+    const safeCopy = (src, dest, maxRetries = 5) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          if (fs.existsSync(dest)) {
+            try { fs.unlinkSync(dest); } catch (_) {}
+          }
+          fs.copyFileSync(src, dest);
+          return true;
+        } catch (err) {
+          if (attempt === maxRetries) {
+            console.warn(`[WINDOWS-BUILDER] Warning: could not copy to ${dest}: ${err.message}`);
+            return false;
+          }
+          try {
+            execSync('powershell.exe -Command "Stop-Process -Name *OfflineAIStudio* -Force -ErrorAction SilentlyContinue"', { stdio: 'ignore' });
+          } catch (_) {}
+          const delay = attempt * 500;
+          const end = Date.now() + delay;
+          while (Date.now() < end) {}
+        }
+      }
+      return false;
+    };
+
+    // Ensure standard release filenames across release, root, and desktop-app dirs
     const setupSrc = path.join(releaseDir, 'OfflineAIStudio Setup 1.0.0.exe');
     const setupDst = path.join(releaseDir, 'OfflineAIStudio-Setup-1.0.0.exe');
     if (fs.existsSync(setupSrc)) {
-      fs.copyFileSync(setupSrc, setupDst);
-      console.log(`[WINDOWS-BUILDER] Created ${setupDst}`);
+      safeCopy(setupSrc, setupDst);
+      safeCopy(setupSrc, path.join(rootDir, 'OfflineAIStudio-Setup-1.0.0.exe'));
+      safeCopy(setupSrc, path.join(desktopAppDir, 'OfflineAIStudio-Setup-1.0.0.exe'));
+      console.log(`[WINDOWS-BUILDER] Successfully synced: ${setupDst}`);
     }
 
     const portableSrc = path.join(releaseDir, 'OfflineAIStudio 1.0.0.exe');
     const portableDst = path.join(releaseDir, 'OfflineAIStudio-Portable-1.0.0.exe');
     if (fs.existsSync(portableSrc)) {
-      fs.copyFileSync(portableSrc, portableDst);
-      console.log(`[WINDOWS-BUILDER] Created ${portableDst}`);
+      safeCopy(portableSrc, portableDst);
+      safeCopy(portableSrc, path.join(rootDir, 'OfflineAIStudio-Portable-1.0.0.exe'));
+      safeCopy(portableSrc, path.join(desktopAppDir, 'OfflineAIStudio-Portable-1.0.0.exe'));
+      console.log(`[WINDOWS-BUILDER] Successfully synced: ${portableDst}`);
     }
   }
 

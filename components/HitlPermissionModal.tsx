@@ -28,6 +28,16 @@ export default function HitlPermissionModal() {
     return unsub;
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && requests.length > 0) {
+        handleReject();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [requests]);
+
   if (requests.length === 0) return null;
 
   const currentReq = requests[0];
@@ -85,8 +95,17 @@ export default function HitlPermissionModal() {
             </div>
           </div>
 
-          <div className="text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-1 rounded border border-zinc-800">
-            Queue: {requests.length}
+          <div className="flex items-center gap-2">
+            <div className="text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-1 rounded border border-zinc-800">
+              Queue: {requests.length}
+            </div>
+            <button
+              onClick={handleReject}
+              title="Close and reject (Esc)"
+              className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer"
+            >
+              <X size={16} />
+            </button>
           </div>
         </div>
 

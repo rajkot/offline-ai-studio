@@ -23,7 +23,8 @@ import {
   FileCode,
   Check,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from 'lucide-react';
 import { gitEngine, GitCommit, GitBranch as GitBranchType, GitStash, GitBlameLine } from '@/lib/gitEngine';
 import MergeConflictResolver from './MergeConflictResolver';
@@ -33,13 +34,15 @@ interface GitVisualizerStudioProps {
   currentFile?: string;
   onOpenFile?: (path: string) => void;
   onUpdateWorkspace?: (files: Record<string, string>) => void;
+  onCloneRepo?: () => void;
 }
 
 export default function GitVisualizerStudio({
   workspaceFiles = {},
   currentFile = 'components/Playground.tsx',
   onOpenFile,
-  onUpdateWorkspace
+  onUpdateWorkspace,
+  onCloneRepo
 }: GitVisualizerStudioProps) {
   const [commits, setCommits] = useState<GitCommit[]>([]);
   const [branches, setBranches] = useState<GitBranchType[]>([]);
@@ -163,6 +166,17 @@ export default function GitVisualizerStudio({
 
         {/* Quick Actions */}
         <div className="flex items-center gap-2">
+          {onCloneRepo && (
+            <button
+              onClick={onCloneRepo}
+              className="px-2.5 py-1.5 rounded-md bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-xs font-semibold text-indigo-200 flex items-center gap-1.5 cursor-pointer shadow-sm transition-colors"
+              title="Clone a remote Git repository or import local repository into IDE"
+            >
+              <Download size={13} className="text-indigo-400" />
+              Clone Repo
+            </button>
+          )}
+
           <button
             onClick={() => setIsCreatingBranch(!isCreatingBranch)}
             className="px-2.5 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs text-zinc-200 flex items-center gap-1.5 cursor-pointer shadow-sm"

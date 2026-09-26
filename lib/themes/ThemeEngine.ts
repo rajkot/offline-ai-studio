@@ -363,6 +363,66 @@ export const PRESET_VSCODE_THEMES: VsCodeThemeJson[] = [
       { scope: ['variable'], settings: { foreground: '#f3e8ff' } },
       { scope: ['constant.numeric'], settings: { foreground: '#ff7700' } }
     ]
+  },
+  {
+    name: 'Vesper Dark Obsidian',
+    type: 'dark',
+    colors: {
+      'editor.background': '#101010',
+      'editor.foreground': '#ffffff',
+      'activityBar.background': '#0c0c0c',
+      'activityBar.foreground': '#ffffff',
+      'activityBarBadge.background': '#ffcfa8',
+      'sideBar.background': '#0e0e0e',
+      'sideBar.foreground': '#a0a0a0',
+      'sideBar.border': '#1c1c1c',
+      'statusBar.background': '#0a0a0a',
+      'statusBar.foreground': '#a0a0a0',
+      'tab.activeBackground': '#101010',
+      'tab.inactiveBackground': '#0e0e0e',
+      'editorLineNumber.foreground': '#333333',
+      'editorLineNumber.activeForeground': '#ffffff',
+      'editor.selectionBackground': '#262626'
+    },
+    tokenColors: [
+      { scope: ['comment'], settings: { foreground: '#505050', fontStyle: 'italic' } },
+      { scope: ['keyword', 'storage'], settings: { foreground: '#ffcfa8' } },
+      { scope: ['string'], settings: { foreground: '#99ffe4' } },
+      { scope: ['entity.name.function'], settings: { foreground: '#ffc799' } },
+      { scope: ['entity.name.type'], settings: { foreground: '#ffffff', fontStyle: 'bold' } },
+      { scope: ['variable'], settings: { foreground: '#ffffff' } },
+      { scope: ['constant.numeric'], settings: { foreground: '#ffcfa8' } }
+    ]
+  },
+  {
+    name: "SynthWave '84",
+    type: 'dark',
+    colors: {
+      'editor.background': '#262335',
+      'editor.foreground': '#ffffff',
+      'activityBar.background': '#1f1b2e',
+      'activityBar.foreground': '#ff7edb',
+      'activityBarBadge.background': '#fe4450',
+      'sideBar.background': '#241b2f',
+      'sideBar.foreground': '#848bbd',
+      'sideBar.border': '#1e1a29',
+      'statusBar.background': '#181521',
+      'statusBar.foreground': '#ffffff',
+      'tab.activeBackground': '#262335',
+      'tab.inactiveBackground': '#1f1b2e',
+      'editorLineNumber.foreground': '#5c5482',
+      'editorLineNumber.activeForeground': '#ff7edb',
+      'editor.selectionBackground': '#ffffff22'
+    },
+    tokenColors: [
+      { scope: ['comment'], settings: { foreground: '#848bbd', fontStyle: 'italic' } },
+      { scope: ['keyword'], settings: { foreground: '#fede5d' } },
+      { scope: ['string'], settings: { foreground: '#ff7edb' } },
+      { scope: ['entity.name.function'], settings: { foreground: '#36f9f6' } },
+      { scope: ['entity.name.type'], settings: { foreground: '#fe4450' } },
+      { scope: ['variable'], settings: { foreground: '#72f1b8' } },
+      { scope: ['constant.numeric'], settings: { foreground: '#f97e72' } }
+    ]
   }
 ];
 

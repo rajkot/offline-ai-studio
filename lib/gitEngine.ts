@@ -231,6 +231,71 @@ class GitEngine {
     return this.activeMergeSession;
   }
 
+  /**
+   * Loads a cloned repository's files, branch, and commits into the in-memory Git DAG
+   */
+  public loadClonedRepository(
+    repoName: string,
+    branchName: string = 'main',
+    workspaceFiles: Record<string, string> = {},
+    customCommits?: any[]
+  ): void {
+    this.commits.clear();
+    this.branches.clear();
+    this.tags.clear();
+    this.stashes = [];
+    this.currentBranchName = branchName;
+
+    if (customCommits && customCommits.length > 0) {
+      for (let i = 0; i < customCommits.length; i++) {
+        const c = customCommits[i];
+        const sha = c.sha || `clone_${Math.random().toString(36).slice(2, 10)}`;
+        const shortSha = c.shortSha || sha.slice(0, 7);
+        const parents = c.parents && c.parents.length > 0
+          ? c.parents
+          : (i < customCommits.length - 1 && customCommits[i + 1]?.sha ? [customCommits[i + 1].sha] : []);
+        
+        const commitObj: GitCommit = {
+          sha,
+          shortSha,
+          parents,
+          tree: i === 0 ? { ...workspaceFiles } : {},
+          author: c.author || this.currentAuthor,
+          timestamp: c.timestamp || Date.now() - (i * 3600000 * 4),
+          message: c.message || `commit from ${repoName}`,
+          branch: branchName
+        };
+        this.commits.set(sha, commitObj);
+      }
+      this.headSha = customCommits[0].sha;
+    } else {
+      const sha = 'c107e' + Math.random().toString(16).slice(2, 10) + '00000000000000000000000000';
+      const initialCommit: GitCommit = {
+        sha,
+        shortSha: sha.slice(0, 7),
+        parents: [],
+        tree: { ...workspaceFiles },
+        author: {
+          name: 'Git Clone Provisioner',
+          email: `clone@${repoName}.local`
+        },
+        timestamp: Date.now(),
+        message: `chore: cloned repository "${repoName}" from source`,
+        branch: branchName
+      };
+      this.commits.set(sha, initialCommit);
+      this.headSha = sha;
+    }
+
+    this.branches.set(branchName, {
+      name: branchName,
+      targetSha: this.headSha,
+      isHead: true
+    });
+
+    this.notify();
+  }
+
   // --- ACTIONS ---
 
   /**

@@ -1,0 +1,31 @@
+node_modules/
+dist/
+.env
+.DS_Store
+*.log
+.next/
+out/
+*.bak
+*.tmp
+
+# Scraper debug/temp files
+*debug*.js
+*debug*.txt
+*debug*.json
+*scraper*.js
+*postprocess*.js
+*test-extract*.js
+page-debug.html
+id-enum-test.js
+prompt-urls*.jsonl
+prompt-urls*.json
+nano-banana-prompts-backup.jsonl
+nano-banana-prompts-empty-fixed.jsonl
+nano-banana-prompts-hastext.jsonl
+nano-banana-prompts-clean.json
+
+# Keep workflows
+!.github/workflows/
+
+# Keep website gitignore
+!website/.gitignore

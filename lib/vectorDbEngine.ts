@@ -590,7 +590,408 @@ export class VectorDatabaseEngine {
     this.lastQueryLatency = performance.now() - startTime;
     return results.slice(0, limit);
   }
+
+  // Chroma Vector DB Accessor
+  public getChromaCollection(name: string = 'offline_ai_workspace'): ChromaCollection {
+    return chromaClient.getOrCreateCollection({ name });
+  }
+
+  public getChromaClient(): ChromaClient {
+    return chromaClient;
+  }
+
+  public get chromaClient(): ChromaClient {
+    return chromaClient;
+  }
 }
+
+// -------------------------------------------------------------
+// CHROMA VECTOR DATABASE ENGINE IMPLEMENTATION
+// Conforms to https://github.com/chroma-core/chroma
+// -------------------------------------------------------------
+
+export type ChromaMetadata = Record<string, string | number | boolean>;
+export type ChromaWhere = Record<string, any>;
+export type ChromaWhereDocument = { $contains?: string; $not_contains?: string };
+export type DistanceMetric = 'cosine' | 'l2' | 'ip';
+
+export interface ChromaAddParams {
+  ids: string[];
+  embeddings?: number[][];
+  metadatas?: (ChromaMetadata | null)[];
+  documents?: string[];
+}
+
+export interface ChromaQueryParams {
+  queryTexts?: string[];
+  queryEmbeddings?: number[][];
+  nResults?: number;
+  where?: ChromaWhere;
+  whereDocument?: ChromaWhereDocument;
+  include?: ('documents' | 'embeddings' | 'metadatas' | 'distances')[];
+}
+
+export interface ChromaQueryResult {
+  ids: string[][];
+  distances: (number | null)[][];
+  metadatas: (ChromaMetadata | null)[][];
+  embeddings: (number[] | null)[][];
+  documents: (string | null)[][];
+}
+
+export interface ChromaGetParams {
+  ids?: string[];
+  where?: ChromaWhere;
+  whereDocument?: ChromaWhereDocument;
+  limit?: number;
+  offset?: number;
+  include?: ('documents' | 'embeddings' | 'metadatas')[];
+}
+
+export interface ChromaGetResult {
+  ids: string[];
+  embeddings: (number[] | null)[] | null;
+  documents: (string | null)[];
+  metadatas: (ChromaMetadata | null)[];
+}
+
+interface StoredChromaRecord {
+  id: string;
+  embedding: number[];
+  metadata: ChromaMetadata | null;
+  document: string;
+}
+
+export class ChromaCollection {
+  public id: string;
+  public name: string;
+  public metadata: Record<string, any>;
+  public distanceMetric: DistanceMetric;
+  private records: Map<string, StoredChromaRecord> = new Map();
+
+  constructor(name: string, metadata: Record<string, any> = {}) {
+    this.name = name;
+    this.id = `col_${name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}`;
+    this.metadata = metadata;
+    const hnswSpace = metadata['hnsw:space'];
+    this.distanceMetric = hnswSpace === 'l2' || hnswSpace === 'ip' ? hnswSpace : 'cosine';
+  }
+
+  public count(): number {
+    return this.records.size;
+  }
+
+  public add(params: ChromaAddParams): void {
+    const { ids, embeddings, metadatas, documents } = params;
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      if (this.records.has(id)) {
+        throw new Error(`ID ${id} already exists in collection ${this.name}`);
+      }
+      const doc = documents?.[i] || '';
+      const embedding = embeddings?.[i] || generateDenseEmbedding(doc);
+      const meta = metadatas?.[i] || null;
+
+      this.records.set(id, { id, embedding, metadata: meta, document: doc });
+    }
+  }
+
+  public upsert(params: ChromaAddParams): void {
+    const { ids, embeddings, metadatas, documents } = params;
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const doc = documents?.[i] || '';
+      const embedding = embeddings?.[i] || generateDenseEmbedding(doc);
+      const meta = metadatas?.[i] || null;
+
+      this.records.set(id, { id, embedding, metadata: meta, document: doc });
+    }
+  }
+
+  public update(params: ChromaAddParams): void {
+    const { ids, embeddings, metadatas, documents } = params;
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const existing = this.records.get(id);
+      if (!existing) {
+        throw new Error(`Cannot update: ID ${id} not found in collection ${this.name}`);
+      }
+      if (documents && documents[i] !== undefined) existing.document = documents[i];
+      if (embeddings && embeddings[i] !== undefined) existing.embedding = embeddings[i];
+      if (metadatas && metadatas[i] !== undefined) existing.metadata = metadatas[i];
+    }
+  }
+
+  public delete(params: { ids?: string[]; where?: ChromaWhere; whereDocument?: ChromaWhereDocument }): void {
+    const { ids, where, whereDocument } = params;
+    if (ids && ids.length > 0) {
+      for (const id of ids) {
+        this.records.delete(id);
+      }
+    } else if (where || whereDocument) {
+      for (const [id, record] of Array.from(this.records.entries())) {
+        if (this.matchesFilter(record, where, whereDocument)) {
+          this.records.delete(id);
+        }
+      }
+    }
+  }
+
+  public get(params: ChromaGetParams = {}): ChromaGetResult {
+    const { ids, where, whereDocument, limit, offset = 0, include = ['documents', 'metadatas'] } = params;
+    const filtered: StoredChromaRecord[] = [];
+
+    for (const record of this.records.values()) {
+      if (ids && ids.length > 0 && !ids.includes(record.id)) continue;
+      if (!this.matchesFilter(record, where, whereDocument)) continue;
+      filtered.push(record);
+    }
+
+    const sliced = limit !== undefined ? filtered.slice(offset, offset + limit) : filtered.slice(offset);
+
+    return {
+      ids: sliced.map(r => r.id),
+      embeddings: include.includes('embeddings') ? sliced.map(r => r.embedding) : null,
+      documents: include.includes('documents') ? sliced.map(r => r.document) : [],
+      metadatas: include.includes('metadatas') ? sliced.map(r => r.metadata) : []
+    };
+  }
+
+  public peek(limit: number = 10): ChromaGetResult {
+    return this.get({ limit });
+  }
+
+  public query(params: ChromaQueryParams): ChromaQueryResult {
+    const {
+      queryTexts,
+      queryEmbeddings,
+      nResults = 10,
+      where,
+      whereDocument,
+      include = ['documents', 'metadatas', 'distances']
+    } = params;
+
+    const queries: number[][] = [];
+    if (queryEmbeddings && queryEmbeddings.length > 0) {
+      queries.push(...queryEmbeddings);
+    } else if (queryTexts && queryTexts.length > 0) {
+      for (const text of queryTexts) {
+        queries.push(generateDenseEmbedding(text));
+      }
+    } else {
+      queries.push(new Array(64).fill(0));
+    }
+
+    // Filter candidate records
+    const candidates: StoredChromaRecord[] = [];
+    for (const record of this.records.values()) {
+      if (this.matchesFilter(record, where, whereDocument)) {
+        candidates.push(record);
+      }
+    }
+
+    const allIds: string[][] = [];
+    const allDistances: (number | null)[][] = [];
+    const allMetadatas: (ChromaMetadata | null)[][] = [];
+    const allEmbeddings: (number[] | null)[][] = [];
+    const allDocuments: (string | null)[][] = [];
+
+    for (const qVec of queries) {
+      const scored = candidates.map(rec => {
+        const dist = this.computeDistance(qVec, rec.embedding);
+        return { rec, dist };
+      });
+
+      scored.sort((a, b) => a.dist - b.dist);
+      const topN = scored.slice(0, nResults);
+
+      allIds.push(topN.map(s => s.rec.id));
+      allDistances.push(include.includes('distances') ? topN.map(s => s.dist) : topN.map(() => null));
+      allMetadatas.push(include.includes('metadatas') ? topN.map(s => s.rec.metadata) : topN.map(() => null));
+      allEmbeddings.push(include.includes('embeddings') ? topN.map(s => s.rec.embedding) : topN.map(() => null));
+      allDocuments.push(include.includes('documents') ? topN.map(s => s.rec.document) : topN.map(() => null));
+    }
+
+    return {
+      ids: allIds,
+      distances: allDistances,
+      metadatas: allMetadatas,
+      embeddings: allEmbeddings,
+      documents: allDocuments
+    };
+  }
+
+  private computeDistance(a: number[], b: number[]): number {
+    if (this.distanceMetric === 'cosine') {
+      const sim = cosineSimilarity(a, b);
+      return Math.max(0, 1 - sim);
+    } else if (this.distanceMetric === 'l2') {
+      let sum = 0;
+      for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        const diff = a[i] - b[i];
+        sum += diff * diff;
+      }
+      return Math.sqrt(sum);
+    } else if (this.distanceMetric === 'ip') {
+      let dot = 0;
+      for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        dot += a[i] * b[i];
+      }
+      return -dot;
+    }
+    return 1 - cosineSimilarity(a, b);
+  }
+
+  private matchesFilter(
+    record: StoredChromaRecord,
+    where?: ChromaWhere,
+    whereDocument?: ChromaWhereDocument
+  ): boolean {
+    if (whereDocument) {
+      if (whereDocument.$contains && !record.document.includes(whereDocument.$contains)) {
+        return false;
+      }
+      if (whereDocument.$not_contains && record.document.includes(whereDocument.$not_contains)) {
+        return false;
+      }
+    }
+
+    if (!where || Object.keys(where).length === 0) return true;
+    if (!record.metadata) return false;
+
+    // Evaluate where clause
+    for (const [key, condition] of Object.entries(where)) {
+      if (key === '$and' && Array.isArray(condition)) {
+        for (const sub of condition) {
+          if (!this.matchesFilter(record, sub)) return false;
+        }
+        continue;
+      }
+      if (key === '$or' && Array.isArray(condition)) {
+        let matchedAny = false;
+        for (const sub of condition) {
+          if (this.matchesFilter(record, sub)) {
+            matchedAny = true;
+            break;
+          }
+        }
+        if (!matchedAny) return false;
+        continue;
+      }
+
+      const val = record.metadata[key];
+      if (val === undefined) return false;
+
+      if (typeof condition === 'object' && condition !== null) {
+        if (condition.$eq !== undefined && val !== condition.$eq) return false;
+        if (condition.$ne !== undefined && val === condition.$ne) return false;
+        if (condition.$gt !== undefined && val <= condition.$gt) return false;
+        if (condition.$gte !== undefined && val < condition.$gte) return false;
+        if (condition.$lt !== undefined && val >= condition.$lt) return false;
+        if (condition.$lte !== undefined && val > condition.$lte) return false;
+        if (Array.isArray(condition.$in) && !condition.$in.includes(val)) return false;
+        if (Array.isArray(condition.$nin) && condition.$nin.includes(val)) return false;
+      } else {
+        if (val !== condition) return false;
+      }
+    }
+
+    return true;
+  }
+}
+
+export class ChromaClient {
+  private collections: Map<string, ChromaCollection> = new Map();
+
+  constructor() {}
+
+  public createCollection(params: { name: string; metadata?: Record<string, any> }): ChromaCollection {
+    if (this.collections.has(params.name)) {
+      throw new Error(`Collection ${params.name} already exists.`);
+    }
+    const col = new ChromaCollection(params.name, params.metadata);
+    this.collections.set(params.name, col);
+    return col;
+  }
+
+  public getOrCreateCollection(params: { name: string; metadata?: Record<string, any> }): ChromaCollection {
+    if (this.collections.has(params.name)) {
+      return this.collections.get(params.name)!;
+    }
+    return this.createCollection(params);
+  }
+
+  public getCollection(params: { name: string }): ChromaCollection {
+    const col = this.collections.get(params.name);
+    if (!col) {
+      throw new Error(`Collection ${params.name} does not exist.`);
+    }
+    return col;
+  }
+
+  public listCollections(): { name: string; id: string; metadata: Record<string, any>; count: number }[] {
+    return Array.from(this.collections.values()).map(c => ({
+      name: c.name,
+      id: c.id,
+      metadata: c.metadata,
+      count: c.count()
+    }));
+  }
+
+  public deleteCollection(params: { name: string }): void {
+    if (!this.collections.has(params.name)) {
+      throw new Error(`Collection ${params.name} does not exist.`);
+    }
+    this.collections.delete(params.name);
+  }
+
+  public reset(): void {
+    this.collections.clear();
+  }
+
+  public heartbeat(): { status: 'ok'; timestamp: number } {
+    return { status: 'ok', timestamp: Date.now() };
+  }
+
+  public version(): string {
+    return '0.6.3-integrated';
+  }
+}
+
+// Global Chroma Client Singleton
+export const chromaClient = new ChromaClient();
+
+// Sync workspace files into default Chroma collection
+const originalIndexWorkspace = VectorDatabaseEngine.prototype.indexWorkspace;
+VectorDatabaseEngine.prototype.indexWorkspace = function(files: Record<string, string>): VectorDbStats {
+  const stats = originalIndexWorkspace.call(this, files);
+  try {
+    const col = chromaClient.getOrCreateCollection({
+      name: 'offline_ai_workspace',
+      metadata: { 'hnsw:space': 'cosine', 'description': 'Auto-indexed Offline AI Studio workspace' }
+    });
+
+    const chunks = (this as any).chunks as VectorChunk[];
+    if (chunks && chunks.length > 0) {
+      col.upsert({
+        ids: chunks.map(c => c.id),
+        embeddings: chunks.map(c => c.vector),
+        documents: chunks.map(c => c.content),
+        metadatas: chunks.map(c => ({
+          filePath: c.filePath,
+          symbolName: c.symbolName || '',
+          startLine: c.startLine,
+          endLine: c.endLine,
+          pageRank: parseFloat(c.pageRankScore.toFixed(3))
+        }))
+      });
+    }
+  } catch (e) {
+    console.error('Chroma auto-sync error:', e);
+  }
+  return stats;
+};
 
 // Global Singleton for the Workspace
 export const vectorDbWorkspace = new VectorDatabaseEngine();
+

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Offline AI Studio - Initializing</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    body {
+      background: radial-gradient(circle at 50% 30%, #111827 0%, #080c16 60%, #03050a 100%);
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      margin: 0;
+      -webkit-app-region: drag;
+    }
+    .splash-container {
+      width: 480px;
+      padding: 44px 36px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 28px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7),
+                  0 0 40px -10px rgba(99, 102, 241, 0.25);
+      text-align: center;
+      position: relative;
+      -webkit-app-region: no-drag;
+    }
+    .logo-container {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .orbit-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: #6366f1;
+      border-right-color: #06b6d4;
+      animation: spin 2s cubic-bezier(0.55, 0.25, 0.25, 0.95) infinite;
+    }
+    .orbit-ring-outer {
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      border: 1px dashed rgba(99, 102, 241, 0.35);
+      animation: spin-reverse 8s linear infinite;
+    }
+    .logo-core {
+      width: 68px;
+      height: 68px;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+      position: relative;
+      z-index: 2;
+    }
+    .logo-core svg {
+      width: 36px;
+      height: 36px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818cf8;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 22px;
+    }
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #38bdf8;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #38bdf8;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .progress-bar {
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(90deg, #4f46e5, #06b6d4, #818cf8);
+      border-radius: 999px;
+      position: absolute;
+      animation: progress-slide 2.2s infinite ease-in-out;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+    }
+    .status-text {
+      font-size: 13px;
+      color: #94a3b8;
+      min-height: 20px;
+      transition: all 0.25s ease;
+      font-weight: 500;
+    }
+    .specs-row {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(51, 65, 85, 0.4);
+      display: flex;
+      justify-content: space-around;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .spec-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .spec-value {
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes spin-reverse {
+      0% { transform: rotate(360deg); }
+      100% { transform: rotate(0deg); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    @keyframes progress-slide {
+      0% { left: -45%; }
+      50% { left: 40%; }
+      100% { left: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-container">
+    <div class="logo-container">
+      <div class="orbit-ring-outer"></div>
+      <div class="orbit-ring"></div>
+      <div class="logo-core">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+    </div>
+    <h1>Offline AI Studio</h1>
+    <div class="badge">
+      <div class="badge-dot"></div>
+      <span>Self-Contained Local Core</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-bar"></div>
+    </div>
+    <div id="status" class="status-text">Booting local micro-kernel...</div>
+
+    <div class="specs-row">
+      <div class="spec-item">
+        <span>Engine Mode</span>
+        <span class="spec-value">100% Air-Gapped</span>
+      </div>
+      <div class="spec-item">
+        <span>Network</span>
+        <span class="spec-value">Zero Telemetry</span>
+      </div>
+      <div class="spec-item">
+        <span>Micro-Kernel</span>
+        <span class="spec-value">Active Port 3000</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const messages = [
+      "Booting local micro-kernel...",
+      "Initializing air-gapped MCP server...",
+      "Starting embedded IDE engine on port 3000...",
+      "Verifying local AI pipelines...",
+      "Connecting to desktop workbench..."
+    ];
+    let msgIdx = 0;
+    setInterval(() => {
+      msgIdx = (msgIdx + 1) % messages.length;
+      if (statusEl && !window._hasCustomStatus) {
+        statusEl.textContent = messages[msgIdx];
+      }
+    }, 2400);
+
+    if (window.electronAPI && window.electronAPI.onEngineStatus) {
+      window.electronAPI.onEngineStatus((text) => {
+        window._hasCustomStatus = true;
+        if (statusEl) statusEl.textContent = text;
+      });
+    }
+  </script>
+</body>
+</html>

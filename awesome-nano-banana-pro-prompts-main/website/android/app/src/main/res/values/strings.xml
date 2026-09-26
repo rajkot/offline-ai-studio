@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Prompt Gallery</string>
+    <string name="title_activity_main">Prompt Gallery</string>
+    <string name="package_name">com.promptgallery.app</string>
+    <string name="custom_url_scheme">com.promptgallery.app</string>
+</resources>

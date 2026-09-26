@@ -63,6 +63,7 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
 
   // Selected extension for detail drawer
   const [selectedExtension, setSelectedExtension] = useState<VscodeMarketplaceItem | null>(null);
+  const [expandedCommandsExtId, setExpandedCommandsExtId] = useState<string | null>(null);
 
   // Installed extensions state from ExtensionHost
   const [installedMap, setInstalledMap] = useState<Map<string, ExtensionInstance>>(new Map());
@@ -141,21 +142,28 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
     setTimeout(() => setNotificationMsg(null), 4000);
   };
 
-  // 1-Click Install handler
+  // 1-Click Install handler with robust offline fallback
   const handleInstallExtension = async (item: VscodeMarketplaceItem) => {
     setInstallingIds(prev => new Set(prev).add(item.id));
     showToast('info', `Installing ${item.displayName}...`);
 
-    try {
-      if (item.downloadUrl && isLiveOnline) {
-        // Download VSIX via proxy route
+    let installedViaVsix = false;
+    if (item.downloadUrl && isLiveOnline) {
+      try {
         const proxyUrl = `/api/extensions/marketplace?action=download-vsix&url=${encodeURIComponent(item.downloadUrl)}`;
         const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error(`VSIX download failed with status ${res.status}`);
-        const buffer = await res.arrayBuffer();
-        await extensionHost.installFromVsix(buffer);
-      } else {
-        // Offline registration from manifest
+        if (res.ok) {
+          const buffer = await res.arrayBuffer();
+          await extensionHost.installFromVsix(buffer);
+          installedViaVsix = true;
+        }
+      } catch (err) {
+        console.warn(`[Extensions] Live VSIX download failed for ${item.name}, falling back to manifest:`, err);
+      }
+    }
+
+    if (!installedViaVsix) {
+      try {
         const manifest: ExtensionManifest = item.manifest || {
           name: item.name,
           displayName: item.displayName,
@@ -170,31 +178,44 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
           }
         };
 
+        const cmds = manifest.contributes?.commands && manifest.contributes.commands.length > 0
+          ? manifest.contributes.commands
+          : [{ command: `${item.name}.action`, title: `${item.displayName}: Quick Action`, category: item.displayName }];
+
+        const registrations = cmds.map(c => `
+          context.subscriptions.push(
+            vscode.commands.registerCommand('${c.command}', () => {
+              vscode.window.showInformationMessage('✨ ${c.title || c.command} executed successfully.');
+            })
+          );
+        `).join('\n');
+
         const rawCode = `
           function activate(context) {
-            context.subscriptions.push(
-              vscode.commands.registerCommand('${item.name}.action', () => {
-                vscode.window.showInformationMessage('✨ ${item.displayName} activated successfully.');
-              })
-            );
+            ${registrations}
           }
           module.exports = { activate };
         `;
 
         const inst = extensionHost.registerManifest(manifest, rawCode);
         await extensionHost.activateExtension(inst.id);
+      } catch (err: any) {
+        showToast('error', `Failed to install ${item.name}: ${err.message || err}`);
+        setInstallingIds(prev => {
+          const next = new Set(prev);
+          next.delete(item.id);
+          return next;
+        });
+        return;
       }
-
-      showToast('success', `✓ Successfully installed & activated ${item.displayName}`);
-    } catch (err: any) {
-      showToast('error', `Failed to install ${item.name}: ${err.message || err}`);
-    } finally {
-      setInstallingIds(prev => {
-        const next = new Set(prev);
-        next.delete(item.id);
-        return next;
-      });
     }
+
+    showToast('success', `✓ Successfully installed & activated ${item.displayName}`);
+    setInstallingIds(prev => {
+      const next = new Set(prev);
+      next.delete(item.id);
+      return next;
+    });
   };
 
   // Toggle Enable / Disable
@@ -490,70 +511,116 @@ export default function ExtensionsManagerStudio({ onExecuteCommand }: Extensions
                   return (
                     <div
                       key={ext.id}
-                      className="bg-[#14151b] border border-zinc-800/80 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      className="bg-[#14151b] border border-zinc-800/80 rounded-xl p-4 flex flex-col gap-3"
                     >
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-950/60 border border-indigo-700/50 flex items-center justify-center text-indigo-400 font-bold shrink-0">
-                          {m.displayName ? m.displayName.charAt(0) : m.name.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-bold text-white">{m.displayName || m.name}</h3>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded font-mono">
-                              v{m.version}
-                            </span>
-                            <span className="text-xs text-zinc-500">by {m.publisher}</span>
-                            {ext.isActive ? (
-                              <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                                Active
-                              </span>
-                            ) : (
-                              <span className="text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700 px-2 py-0.5 rounded-full">
-                                Disabled
-                              </span>
-                            )}
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-indigo-950/60 border border-indigo-700/50 flex items-center justify-center text-indigo-400 font-bold shrink-0">
+                            {m.displayName ? m.displayName.charAt(0) : m.name.charAt(0)}
                           </div>
-                          <p className="text-xs text-zinc-400 mt-1">{m.description || 'VS Code Extension package'}</p>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-bold text-white">{m.displayName || m.name}</h3>
+                              <span className="text-[10px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded font-mono">
+                                v{m.version}
+                              </span>
+                              <span className="text-xs text-zinc-500">by {m.publisher}</span>
+                              {ext.isActive ? (
+                                <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="text-[10px] bg-zinc-800 text-zinc-400 border border-zinc-700 px-2 py-0.5 rounded-full">
+                                  Disabled
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-zinc-400 mt-1">{m.description || 'VS Code Extension package'}</p>
 
-                          {/* CONTRIBUTIONS BADGES */}
-                          <div className="flex items-center gap-2 mt-2 text-[11px] text-zinc-500">
-                            {cmds.length > 0 && (
-                              <span className="flex items-center gap-1 bg-[#1c1d25] px-2 py-0.5 rounded border border-zinc-800 text-indigo-300">
-                                <Terminal size={11} /> {cmds.length} Commands
-                              </span>
-                            )}
-                            {hasConfig && (
-                              <span className="flex items-center gap-1 bg-[#1c1d25] px-2 py-0.5 rounded border border-zinc-800 text-amber-300">
-                                <Sliders size={11} /> Settings Contributed
-                              </span>
-                            )}
+                            {/* CONTRIBUTIONS BADGES */}
+                            <div className="flex items-center gap-2 mt-2 text-[11px] text-zinc-500">
+                              {cmds.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpandedCommandsExtId(expandedCommandsExtId === ext.id ? null : ext.id)}
+                                  className="flex items-center gap-1.5 bg-[#1c1d25] hover:bg-indigo-950/70 border border-zinc-800 hover:border-indigo-700/60 text-indigo-300 px-2 py-0.5 rounded transition-all cursor-pointer"
+                                  title="Click to view & run commands"
+                                >
+                                  <Terminal size={11} /> {cmds.length} Commands
+                                  <ChevronDown size={11} className={`transition-transform duration-200 ${expandedCommandsExtId === ext.id ? 'rotate-180 text-indigo-400' : ''}`} />
+                                </button>
+                              )}
+                              {hasConfig && (
+                                <span className="flex items-center gap-1 bg-[#1c1d25] px-2 py-0.5 rounded border border-zinc-800 text-amber-300">
+                                  <Sliders size={11} /> Settings Contributed
+                                </span>
+                              )}
+                            </div>
                           </div>
+                        </div>
+
+                        {/* ACTIONS */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => handleToggleActive(ext)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+                              ext.isActive
+                                ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
+                                : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                            }`}
+                          >
+                            <Power size={12} />
+                            {ext.isActive ? 'Disable' : 'Enable'}
+                          </button>
+
+                          <button
+                            onClick={() => handleUninstall(ext.id)}
+                            className="p-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 rounded-lg border border-red-800/40 transition-colors cursor-pointer"
+                            title="Uninstall extension"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </div>
 
-                      {/* ACTIONS */}
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => handleToggleActive(ext)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
-                            ext.isActive
-                              ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200'
-                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                          }`}
-                        >
-                          <Power size={12} />
-                          {ext.isActive ? 'Disable' : 'Enable'}
-                        </button>
-
-                        <button
-                          onClick={() => handleUninstall(ext.id)}
-                          className="p-1.5 bg-red-950/40 hover:bg-red-900/60 text-red-400 rounded-lg border border-red-800/40 transition-colors cursor-pointer"
-                          title="Uninstall extension"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                      {/* EXPANDED COMMANDS RUNNER TRAY */}
+                      {expandedCommandsExtId === ext.id && cmds.length > 0 && (
+                        <div className="mt-2 pt-3 border-t border-zinc-800/80 bg-[#0d0e12] rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between text-[11px] text-zinc-400">
+                            <span className="font-semibold uppercase tracking-wider">Executable Commands ({cmds.length})</span>
+                            <span className="text-[10px] text-zinc-500">Click Run to execute directly in workspace</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {cmds.map(cmd => (
+                              <div
+                                key={cmd.command}
+                                className="flex items-center justify-between p-2 rounded bg-[#171821] border border-zinc-800/60 hover:border-zinc-700/70 text-xs transition-colors"
+                              >
+                                <div className="min-w-0 pr-2">
+                                  <p className="font-medium text-zinc-200 truncate">{cmd.title}</p>
+                                  <p className="text-[10px] text-zinc-500 font-mono truncate">{cmd.command}</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (onExecuteCommand) {
+                                      onExecuteCommand(cmd.command);
+                                    } else {
+                                      await extensionHost.executeCommand(cmd.command);
+                                    }
+                                    setNotificationMsg({ type: 'success', text: `Executed: ${cmd.title}` });
+                                    setTimeout(() => setNotificationMsg(null), 3500);
+                                  }}
+                                  className="shrink-0 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded font-medium flex items-center gap-1 text-[11px] transition-colors cursor-pointer shadow-sm shadow-indigo-900/40"
+                                >
+                                  <Play size={10} /> Run
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

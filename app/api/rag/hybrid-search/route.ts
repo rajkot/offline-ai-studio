@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { vectorDbWorkspace, chromaClient } from '@/lib/vectorDbEngine';
 
 export async function POST(req: Request) {
   try {
@@ -8,44 +9,86 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    // Mock data generation
-    const mockFiles = ['/src/App.tsx', '/src/utils.ts', '/src/styles.css', '/package.json'];
-    
-    const sparseResults = Array.from({ length: limit }).map((_, i) => ({
-      id: `sparse-${i}`,
-      file: mockFiles[i % mockFiles.length],
-      chunk: `Sparse chunk matched on keyword "${query.split(' ')[0] || 'search'}". This is a mock implementation representing BM25 exact match.`,
-      score: (Math.random() * 0.5 + 0.5).toFixed(3)
-    }));
-
-    const denseResults = Array.from({ length: limit }).map((_, i) => ({
-      id: `dense-${i}`,
-      file: mockFiles[(i + 1) % mockFiles.length],
-      chunk: `Dense chunk matching semantic intent of the query. Represents cosine similarity against vector embeddings.`,
-      score: (Math.random() * 0.4 + 0.6).toFixed(3)
-    }));
-
-    const fusedResults = Array.from({ length: limit }).map((_, i) => {
-      // Simulate RRF formula: 1 / (k + rank)
-      const sparseRank = i + 1;
-      const denseRank = (limit - i);
-      const rrfScore = (keywordWeight * (1 / (60 + sparseRank))) + (vectorWeight * (1 / (60 + denseRank)));
-      
-      return {
-        id: `fused-${i}`,
-        file: mockFiles[(i + 2) % mockFiles.length],
-        chunk: `Fused and re-ranked chunk based on Reciprocal Rank Fusion (RRF) with keyword weight ${keywordWeight} and vector weight ${vectorWeight}.`,
-        score: (rrfScore * 1000).toFixed(3)
-      };
-    }).sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
-
-    return NextResponse.json({
-      sparse: sparseResults,
-      dense: denseResults,
-      fused: fusedResults
+    // 1. Run Hybrid Search on Vector DB Engine
+    const hybrid = vectorDbWorkspace.hybridSearch(query, limit, {
+      bm25Weight: keywordWeight,
+      vectorWeight: vectorWeight,
+      pageRankWeight: 0.10
     });
 
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to perform hybrid search' }, { status: 500 });
+    // 2. Query Chroma Collection
+    let chromaMatches: { id: string; file: string; chunk: string; score: string; distance: number }[] = [];
+    try {
+      const col = chromaClient.getOrCreateCollection({ name: 'offline_ai_workspace' });
+      if (col.count() > 0) {
+        const queryRes = col.query({
+          queryTexts: [query],
+          nResults: limit,
+          include: ['documents', 'metadatas', 'distances']
+        });
+
+        if (queryRes.ids[0] && queryRes.ids[0].length > 0) {
+          chromaMatches = queryRes.ids[0].map((id, idx) => {
+            const doc = queryRes.documents[0]?.[idx] || '';
+            const meta = queryRes.metadatas[0]?.[idx] || {};
+            const dist = queryRes.distances[0]?.[idx] ?? 0;
+            const sim = Math.max(0, 1 - dist);
+            return {
+              id,
+              file: (meta.filePath as string) || 'workspace/code',
+              chunk: doc,
+              score: sim.toFixed(3),
+              distance: dist
+            };
+          });
+        }
+      }
+    } catch (_) {
+      // Fallback
+    }
+
+    // Transform into standard sparse/dense/fused response
+    const sparseResults = hybrid.map((h, i) => ({
+      id: `sparse-${i}-${h.chunk.id}`,
+      file: h.chunk.filePath,
+      chunk: h.chunk.content.slice(0, 300),
+      score: h.bm25Score.toFixed(3)
+    }));
+
+    const denseResults = (chromaMatches.length > 0
+      ? chromaMatches
+      : hybrid.map((h, i) => ({
+          id: `dense-${i}-${h.chunk.id}`,
+          file: h.chunk.filePath,
+          chunk: h.chunk.content.slice(0, 300),
+          score: h.denseScore.toFixed(3),
+          distance: 1 - h.denseScore
+        }))
+    ).slice(0, limit);
+
+    const fusedResults = hybrid.length > 0
+      ? hybrid.map((h, i) => ({
+          id: `fused-${i}-${h.chunk.id}`,
+          file: h.chunk.filePath,
+          chunk: h.chunk.content.slice(0, 300),
+          score: (h.rrfScore * 10).toFixed(3)
+        }))
+      : denseResults.map((d, i) => ({
+          id: `fused-${i}-${d.id}`,
+          file: d.file,
+          chunk: d.chunk,
+          score: (parseFloat(d.score) * 100).toFixed(3)
+        }));
+
+    return NextResponse.json({
+      success: true,
+      query,
+      sparse: sparseResults,
+      dense: denseResults,
+      fused: fusedResults,
+      engine: 'Chroma Vector DB + BM25 Hybrid Fusion'
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Failed to perform hybrid search' }, { status: 500 });
   }
 }

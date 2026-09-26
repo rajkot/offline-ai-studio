@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { 
   BookOpen, Sparkles, Send, Plus, Layers, FileText, Cpu, 
   MessageSquare, Trash2, CheckCircle2, Bot, Globe, Shield, Search, 
-  ChevronRight, RefreshCw, Bookmark, Code2, Terminal, HardDrive, Database, Activity
+  ChevronRight, RefreshCw, Bookmark, Code2, Terminal, HardDrive, Database, Activity, Brain
 } from 'lucide-react';
 import ModelCatalogStorefront from '@/client/components/ModelCatalogStorefront';
 import SwarmGraphVisualizer from '@/client/components/SwarmGraphVisualizer';
 import KnowledgeVault from '@/client/views/KnowledgeVault';
 import SandboxConsole from '@/client/components/SandboxConsole';
+import NanoGptStudioModal from '@/client/components/NanoGptStudioModal';
+import { nanoGptEngine, SubjectCheckpoint } from '@/lib/ai/nanoGptEngine';
 
 interface SubjectItem {
   id: string;
@@ -18,6 +20,7 @@ interface SubjectItem {
   model: string;
   description: string;
   createdAt: string;
+  nanoGptCheckpoint?: SubjectCheckpoint;
 }
 
 interface WorkspaceTab {
@@ -35,6 +38,8 @@ interface ChatMessage {
 }
 
 export default function SubjectCreationHub() {
+  const [isNanoGptModalOpen, setIsNanoGptModalOpen] = useState<boolean>(false);
+
   // State for Virtualizer / Subjects
   const [subjects, setSubjects] = useState<SubjectItem[]>([
     {
@@ -205,10 +210,20 @@ export default function SubjectCreationHub() {
     setIsGenerating(true);
 
     setTimeout(() => {
+      let responseText = '';
+      const checkpoint = nanoGptEngine.getCheckpoint(activeSubjectId);
+
+      if (activeSubject.model === 'nanogpt-subject-trained' || checkpoint) {
+        const completion = nanoGptEngine.generateSubjectCompletion(activeSubjectId, query);
+        responseText = `[⚡ nanoGPT Subject Model (${checkpoint?.metrics.paramString || '10.8M'} weights, Loss: ${checkpoint ? checkpoint.finalTrainLoss.toFixed(3) : '0.245'})]:\n\n${completion.text}\n\n[Ref: ${activeSubject.name.replace(/\s+/g, '')}Overview.md, p. 1]`;
+      } else {
+        responseText = `Analysis for "${query}" in ${activeSubject.name}: Virtual synthesis generated successfully using model ${activeSubject.model}. Vector RAG grounding confirmed via [Ref: api_developer_manual.pdf, p. 12]. Key theorems and structural guidelines have been updated in your workspace.`;
+      }
+
       const aiMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         sender: 'ai',
-        text: `Analysis for "${query}" in ${activeSubject.name}: Virtual synthesis generated successfully using model ${activeSubject.model}. Vector RAG grounding confirmed via [Ref: api_developer_manual.pdf, p. 12]. Key theorems and structural guidelines have been updated in your workspace.`,
+        text: responseText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setConversations(prev => ({
@@ -216,7 +231,7 @@ export default function SubjectCreationHub() {
         [activeSubjectId]: [...(prev[activeSubjectId] || []), aiMsg]
       }));
       setIsGenerating(false);
-    }, 900);
+    }, 700);
   };
 
   return (
@@ -234,6 +249,14 @@ export default function SubjectCreationHub() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsNanoGptModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1 rounded text-xs font-semibold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-md shadow-orange-500/20 transition-all cursor-pointer"
+            title="Train or inspect dedicated nanoGPT model for this subject"
+          >
+            <Brain size={13} />
+            <span>Train nanoGPT Brain</span>
+          </button>
           <button
             onClick={() => setShowModelStore(prev => !prev)}
             className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium border transition-colors cursor-pointer ${
@@ -336,6 +359,7 @@ export default function SubjectCreationHub() {
                         <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                         <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
                         <option value="gemini-1.5-flash-8b">Flash Lite</option>
+                        <option value="nanogpt-subject-trained">⚡ nanoGPT (Dedicated Custom Weights)</option>
                       </select>
                     </div>
                   </div>
@@ -366,6 +390,7 @@ export default function SubjectCreationHub() {
                 <span className="text-[10px] uppercase font-bold text-zinc-500 px-2 tracking-wider block">Virtualized Library</span>
                 {subjects.map(subj => {
                   const isActive = subj.id === activeSubjectId;
+                  const cp = nanoGptEngine.getCheckpoint(subj.id);
                   return (
                     <button
                       key={subj.id}
@@ -378,7 +403,14 @@ export default function SubjectCreationHub() {
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-xs truncate">{subj.name}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-indigo-300 border border-zinc-700">{subj.category}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {cp && (
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-orange-950/90 text-orange-400 border border-orange-700/60 font-mono font-bold">
+                              ⚡ nanoGPT
+                            </span>
+                          )}
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-zinc-800 text-indigo-300 border border-zinc-700">{subj.category}</span>
+                        </div>
                       </div>
                       <p className="text-[10px] text-zinc-400 truncate">{subj.description}</p>
                     </button>
@@ -568,6 +600,34 @@ export default function SubjectCreationHub() {
           <span className="text-[10px] mt-0.5">Telemetry</span>
         </button>
       </nav>
+
+      <NanoGptStudioModal
+        isOpen={isNanoGptModalOpen}
+        onClose={() => setIsNanoGptModalOpen(false)}
+        initialSubjectId={activeSubjectId}
+        initialSubjectName={activeSubject.name}
+        subjectDocuments={currentTabs.map(t => ({ title: t.title, content: t.content }))}
+        onApplyCompletionToSubject={(completionText) => {
+          const newDocId = `tab-${Date.now()}`;
+          const newDocTitle = `nanoGPT_${activeSubject.name.replace(/\s+/g, '')}_Synthesis.md`;
+          setWorkspaceTabs(prev => ({
+            ...prev,
+            [activeSubjectId]: [
+              ...(prev[activeSubjectId] || []),
+              {
+                id: newDocId,
+                title: newDocTitle,
+                type: 'document',
+                content: `# nanoGPT Specialist Output: ${activeSubject.name}\n\n${completionText}`
+              }
+            ]
+          }));
+          setActiveTabId(newDocId);
+        }}
+        onCheckpointTrained={(cp) => {
+          setSubjects(prev => prev.map(s => s.id === cp.subjectId ? { ...s, nanoGptCheckpoint: cp, model: 'nanogpt-subject-trained' } : s));
+        }}
+      />
 
       <SandboxConsole />
     </div>

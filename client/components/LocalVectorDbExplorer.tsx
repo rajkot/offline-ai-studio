@@ -21,7 +21,15 @@ import {
   Filter,
   BarChart2
 } from 'lucide-react';
-import { vectorDbWorkspace, VectorDbStats, HybridSearchResult, ASTSymbolNode } from '@/lib/vectorDbEngine';
+import { 
+  vectorDbWorkspace, 
+  VectorDbStats, 
+  HybridSearchResult, 
+  ASTSymbolNode,
+  chromaClient,
+  ChromaCollection,
+  DistanceMetric
+} from '@/lib/vectorDbEngine';
 
 interface LocalVectorDbExplorerProps {
   workspaceFiles: Record<string, string>;
@@ -34,7 +42,20 @@ export default function LocalVectorDbExplorer({ workspaceFiles, onOpenFile }: Lo
   const [searchResults, setSearchResults] = useState<HybridSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isIndexing, setIsIndexing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'search' | 'pagerank' | 'symbols' | 'architecture'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'pagerank' | 'symbols' | 'chroma'>('search');
+
+  // Chroma Vector DB State
+  const [chromaCollections, setChromaCollections] = useState<{ name: string; id: string; count: number; metadata: any }[]>([]);
+  const [selectedColName, setSelectedColName] = useState('offline_ai_workspace');
+  const [chromaQuery, setChromaQuery] = useState('');
+  const [chromaResults, setChromaResults] = useState<{ id: string; doc: string; meta: any; distance: number | null }[]>([]);
+  const [isChromaSearching, setIsChromaSearching] = useState(false);
+  const [newColName, setNewColName] = useState('');
+  const [newColMetric, setNewColMetric] = useState<DistanceMetric>('cosine');
+  const [newDocId, setNewDocId] = useState('');
+  const [newDocText, setNewDocText] = useState('');
+  const [filterKey, setFilterKey] = useState('');
+  const [filterVal, setFilterVal] = useState('');
   
   // Search Hyperparameters
   const [bm25Weight, setBm25Weight] = useState(0.45);
@@ -107,6 +128,97 @@ export default function LocalVectorDbExplorer({ workspaceFiles, onOpenFile }: Lo
       .map(([filePath, score]) => ({ filePath, score }))
       .sort((a, b) => b.score - a.score);
   }, [stats]);
+
+  // Chroma Collection Management
+  const refreshChromaCollections = useCallback(() => {
+    const cols = chromaClient.listCollections();
+    setChromaCollections(cols);
+    if (cols.length > 0 && !cols.some(c => c.name === selectedColName)) {
+      setSelectedColName(cols[0].name);
+    }
+  }, [selectedColName]);
+
+  useEffect(() => {
+    refreshChromaCollections();
+  }, [refreshChromaCollections, stats]);
+
+  const executeChromaQuery = useCallback(() => {
+    if (!selectedColName) return;
+    setIsChromaSearching(true);
+    try {
+      const col = chromaClient.getOrCreateCollection({ name: selectedColName });
+      const whereClause = filterKey && filterVal ? { [filterKey]: filterVal } : undefined;
+      const res = col.query({
+        queryTexts: chromaQuery.trim() ? [chromaQuery.trim()] : undefined,
+        nResults: 8,
+        where: whereClause,
+        include: ['documents', 'metadatas', 'distances']
+      });
+
+      if (res.ids[0]) {
+        const mapped = res.ids[0].map((id, idx) => ({
+          id,
+          doc: res.documents[0]?.[idx] || '',
+          meta: res.metadatas[0]?.[idx] || {},
+          distance: res.distances[0]?.[idx] ?? null
+        }));
+        setChromaResults(mapped);
+      } else {
+        setChromaResults([]);
+      }
+    } catch (e) {
+      console.error('Chroma query error:', e);
+    } finally {
+      setIsChromaSearching(false);
+    }
+  }, [selectedColName, chromaQuery, filterKey, filterVal]);
+
+  useEffect(() => {
+    if (activeTab === 'chroma') {
+      executeChromaQuery();
+    }
+  }, [activeTab, selectedColName, executeChromaQuery]);
+
+  const handleCreateCollection = () => {
+    if (!newColName.trim()) return;
+    chromaClient.getOrCreateCollection({
+      name: newColName.trim(),
+      metadata: { 'hnsw:space': newColMetric }
+    });
+    setSelectedColName(newColName.trim());
+    setNewColName('');
+    refreshChromaCollections();
+  };
+
+  const handleAddDocument = () => {
+    if (!selectedColName || !newDocText.trim()) return;
+    const col = chromaClient.getOrCreateCollection({ name: selectedColName });
+    const docId = newDocId.trim() || `doc_${Date.now()}`;
+    col.add({
+      ids: [docId],
+      documents: [newDocText.trim()],
+      metadatas: [{ source: 'manual-input', timestamp: Date.now() }]
+    });
+    setNewDocId('');
+    setNewDocText('');
+    refreshChromaCollections();
+    executeChromaQuery();
+  };
+
+  const handleSeedChromaQuickstart = async () => {
+    try {
+      const res = await fetch('/api/chroma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'seed-demo' })
+      });
+      if (res.ok) {
+        refreshChromaCollections();
+        setSelectedColName('chroma_quickstart');
+        setTimeout(() => executeChromaQuery(), 50);
+      }
+    } catch (_) {}
+  };
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-[#0d0e12] text-zinc-200 text-xs overflow-hidden font-sans border-r border-[#27272a]">
@@ -211,6 +323,18 @@ export default function LocalVectorDbExplorer({ workspaceFiles, onOpenFile }: Lo
         >
           <Code2 size={12} />
           <span>AST Symbol Graph</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('chroma')}
+          className={`px-3 py-1.5 font-medium border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
+            activeTab === 'chroma'
+              ? 'border-indigo-500 text-indigo-400 font-bold'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Database size={12} className="text-indigo-400" />
+          <span>Chroma Collections</span>
         </button>
       </div>
 
@@ -488,6 +612,215 @@ export default function LocalVectorDbExplorer({ workspaceFiles, onOpenFile }: Lo
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'chroma' && (
+          <div className="space-y-3.5">
+            {/* Collection Selector & Controls */}
+            <div className="p-3 bg-zinc-900/70 rounded-lg border border-zinc-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-semibold text-white">
+                  <Database size={13} className="text-indigo-400" />
+                  <span>Chroma Vector Collections</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700/60 font-mono">
+                    v0.6.3
+                  </span>
+                </div>
+                <button
+                  onClick={handleSeedChromaQuickstart}
+                  className="px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded text-[10px] font-medium transition-colors cursor-pointer border border-zinc-700"
+                >
+                  ⚡ Seed Demo
+                </button>
+              </div>
+
+              {/* Collection Dropdown & Info */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedColName}
+                  onChange={e => setSelectedColName(e.target.value)}
+                  className="flex-1 px-2.5 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 focus:outline-none focus:border-indigo-500"
+                >
+                  {chromaCollections.map(c => (
+                    <option key={c.name} value={c.name}>
+                      {c.name} ({c.count} records)
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={refreshChromaCollections}
+                  className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white cursor-pointer"
+                  title="Refresh collections"
+                >
+                  <RefreshCw size={12} />
+                </button>
+              </div>
+
+              {/* Create New Collection Form */}
+              <div className="pt-2 border-t border-zinc-800/60 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newColName}
+                  onChange={e => setNewColName(e.target.value)}
+                  placeholder="New collection name..."
+                  className="flex-1 px-2 py-1 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+                <select
+                  value={newColMetric}
+                  onChange={e => setNewColMetric(e.target.value as DistanceMetric)}
+                  className="px-2 py-1 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-300 focus:outline-none"
+                >
+                  <option value="cosine">Cosine</option>
+                  <option value="l2">L2 (Euclidean)</option>
+                  <option value="ip">Inner Product</option>
+                </select>
+                <button
+                  onClick={handleCreateCollection}
+                  disabled={!newColName.trim()}
+                  className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+
+            {/* Query Vector Space */}
+            <div className="space-y-2">
+              <div className="relative">
+                <Search size={13} className="absolute left-2.5 top-2.5 text-zinc-500" />
+                <input
+                  type="text"
+                  value={chromaQuery}
+                  onChange={e => setChromaQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && executeChromaQuery()}
+                  placeholder={`Search semantic vectors in collection "${selectedColName}"...`}
+                  className="w-full pl-8 pr-16 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  onClick={executeChromaQuery}
+                  disabled={isChromaSearching}
+                  className="absolute right-1.5 top-1.5 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-medium cursor-pointer transition-colors"
+                >
+                  {isChromaSearching ? '...' : 'Query'}
+                </button>
+              </div>
+
+              {/* Metadata Filter */}
+              <div className="p-2 bg-zinc-900/50 rounded border border-zinc-800/60 flex items-center gap-2 text-[10px]">
+                <Filter size={11} className="text-zinc-500 shrink-0" />
+                <span className="text-zinc-400">Where:</span>
+                <input
+                  type="text"
+                  value={filterKey}
+                  onChange={e => setFilterKey(e.target.value)}
+                  placeholder="Meta key (e.g. category)"
+                  className="w-28 px-1.5 py-0.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-200"
+                />
+                <span className="text-zinc-500">=</span>
+                <input
+                  type="text"
+                  value={filterVal}
+                  onChange={e => setFilterVal(e.target.value)}
+                  placeholder="Value"
+                  className="w-24 px-1.5 py-0.5 bg-zinc-950 border border-zinc-800 rounded text-zinc-200"
+                />
+                {(filterKey || filterVal) && (
+                  <button
+                    onClick={() => { setFilterKey(''); setFilterVal(''); }}
+                    className="text-zinc-500 hover:text-zinc-300 ml-auto"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Results List */}
+            <div className="space-y-2">
+              <div className="text-[10px] text-zinc-400 flex items-center justify-between">
+                <span>Retrieved Documents ({chromaResults.length})</span>
+                <span className="font-mono text-zinc-500">Metric: Cosine Distance</span>
+              </div>
+
+              {chromaResults.length === 0 ? (
+                <div className="p-6 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-lg">
+                  No matching documents in this Chroma collection.
+                </div>
+              ) : (
+                chromaResults.map(item => (
+                  <div
+                    key={item.id}
+                    className="p-3 bg-zinc-900/80 rounded-lg border border-zinc-800/80 space-y-1.5 hover:border-zinc-700 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-indigo-400 text-[11px] truncate max-w-[200px]">
+                        {item.id}
+                      </span>
+                      {item.distance !== null && (
+                        <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-zinc-800 text-emerald-400 border border-zinc-700">
+                          Dist: {item.distance.toFixed(4)}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="text-[11px] text-zinc-300 leading-relaxed font-sans line-clamp-3">
+                      {item.doc}
+                    </p>
+
+                    {item.meta && Object.keys(item.meta).length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1 border-t border-zinc-800/50">
+                        {Object.entries(item.meta).map(([k, v]) => (
+                          <span
+                            key={k}
+                            className="px-1.5 py-0.2 rounded bg-zinc-950 text-zinc-400 text-[9px] font-mono border border-zinc-800"
+                          >
+                            {k}: <span className="text-zinc-200">{String(v)}</span>
+                          </span>
+                        ))}
+                        {item.meta.filePath && (
+                          <button
+                            onClick={() => onOpenFile(String(item.meta.filePath), Number(item.meta.startLine) || 1)}
+                            className="ml-auto text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
+                          >
+                            <ExternalLink size={10} /> Open
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Quick Add Document */}
+            <div className="p-3 bg-zinc-900/40 rounded-lg border border-zinc-800/80 space-y-2">
+              <div className="text-[11px] font-semibold text-zinc-300">Add Record to &ldquo;{selectedColName}&rdquo;</div>
+              <div className="space-y-1.5">
+                <input
+                  type="text"
+                  value={newDocId}
+                  onChange={e => setNewDocId(e.target.value)}
+                  placeholder="Document ID (optional, auto-generated if blank)..."
+                  className="w-full px-2 py-1 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-200 focus:outline-none focus:border-indigo-500 font-mono"
+                />
+                <textarea
+                  rows={2}
+                  value={newDocText}
+                  onChange={e => setNewDocText(e.target.value)}
+                  placeholder="Document text to embed and store..."
+                  className="w-full p-2 bg-zinc-950 border border-zinc-800 rounded text-[11px] text-zinc-200 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+              <button
+                onClick={handleAddDocument}
+                disabled={!newDocText.trim()}
+                className="w-full py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded text-[11px] font-medium transition-colors cursor-pointer disabled:opacity-50"
+              >
+                + Insert Chroma Document
+              </button>
             </div>
           </div>
         )}

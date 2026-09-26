@@ -452,6 +452,20 @@ export class ExtensionHost {
     `, true);
 
     // 3. Dracula Official Theme Pack
+    const draculaFiles = new Map<string, string>();
+    draculaFiles.set('./themes/dracula.json', JSON.stringify({
+      name: 'Dracula Official',
+      type: 'dark',
+      colors: {
+        'editor.background': '#282a36',
+        'editor.foreground': '#f8f8f2',
+        'editorCursor.foreground': '#aeafad',
+        'editor.lineHighlightBackground': '#44475a',
+        'editor.selectionBackground': '#44475a'
+      }
+    }));
+    draculaFiles.set('themes/dracula.json', draculaFiles.get('./themes/dracula.json')!);
+
     this.registerManifest({
       name: 'dracula-theme',
       displayName: 'Dracula Official Theme',
@@ -465,7 +479,7 @@ export class ExtensionHost {
           { label: 'Dracula Soft', uiTheme: 'vs-dark', path: './themes/dracula-soft.json' },
         ],
       },
-    }, undefined, true);
+    }, undefined, true, draculaFiles);
 
     // 4. Todo Tree Indicator
     this.registerManifest({

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff, Palette } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, LayoutGrid, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff, Palette, Languages, Flame, Binary, BookOpen } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import JSZip from 'jszip';
 import CommandPalette, { getActiveKeybindings } from './CommandPalette';
@@ -46,6 +46,24 @@ import FloatingPopoutWindow from '@/client/components/FloatingPopoutWindow';
 import PluginMarketplaceStudio from '@/client/components/PluginMarketplaceStudio';
 import McpStudioPanel from '@/client/components/McpStudioPanel';
 import SubjectCreationHub from '@/client/views/SubjectCreationHub';
+import NanoGptStudioModal from '@/client/components/NanoGptStudioModal';
+import AiderPairProgrammerStudio from '@/client/components/AiderPairProgrammerStudio';
+import TransformersJsStudioModal from '@/client/components/TransformersJsStudioModal';
+import OutlinesStructuredStudio from '@/client/components/OutlinesStructuredStudio';
+import LlamaCppStudioModal from '@/client/components/LlamaCppStudioModal';
+import RipgrepStudioModal from '@/client/components/RipgrepStudioModal';
+import AstGrepStudioModal from '@/client/components/AstGrepStudioModal';
+import LanceDbStudioModal from '@/client/components/LanceDbStudioModal';
+import ChonkieStudioModal from '@/client/components/ChonkieStudioModal';
+import TabbyStudioModal from '@/client/components/TabbyStudioModal';
+import UniversalModeSwitcherModal from '@/client/components/UniversalModeSwitcherModal';
+import NovelCreativeEditor from '@/client/components/NovelCreativeEditor';
+import DockviewLayoutStudio from '@/client/components/DockviewLayoutStudio';
+import SonnerToastHost from '@/client/components/SonnerToastHost';
+import MagicUiStudioModal from '@/client/components/MagicUiStudioModal';
+import CursorModernUiStudioModal from '@/client/components/CursorModernUiStudioModal';
+import { NanoBananaStudioModal } from '@/client/components/NanoBananaStudioModal';
+import SuperpowersStudioPanel from './SuperpowersStudioPanel';
 import ThemePickerModal from './ThemePickerModal';
 import HitlPermissionModal from './HitlPermissionModal';
 import ExtensionsManagerStudio from './ExtensionsManagerStudio';
@@ -53,6 +71,7 @@ import OllamaStatusBar from '@/client/components/OllamaStatusBar';
 import OnlineAiStatusBar from '@/client/components/OnlineAiStatusBar';
 import OnlineAiHubModal from '@/client/components/OnlineAiHubModal';
 import OnlineProjectScaffolderModal from '@/client/components/OnlineProjectScaffolderModal';
+import CloneRepositoryModal, { ClonedRepoResult } from '@/client/components/CloneRepositoryModal';
 import ModelCatalogStorefront from '@/client/components/ModelCatalogStorefront';
 import AutonomousAgentModal from '@/client/components/AutonomousAgentModal';
 import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
@@ -83,6 +102,10 @@ import { gitGutterEngine, GutterClickEvent } from '@/lib/git/gitGutterEngine';
 import { fileTimelineEngine } from '@/lib/fileTimelineEngine';
 import FileTimelineAccordion from '@/client/components/FileTimelineAccordion';
 import ApiStudioPanel from '@/client/components/ApiStudioPanel';
+import ToolJetStudioPanel from './ToolJetStudioPanel';
+import AutoGptStudioPanel from './AutoGptStudioPanel';
+import IndicNlpStudioPanel from './IndicNlpStudioPanel';
+import CandleStudioPanel from './CandleStudioPanel';
 import TestExplorerSidebar from '@/client/components/TestExplorerSidebar';
 import { testExplorerEngine } from '@/lib/testing/testExplorerEngine';
 import { terminalMultiSessionEngine } from '@/lib/terminal/terminalMultiSessionEngine';
@@ -361,6 +384,7 @@ export default function Playground({
   // Online AI Hub & Project Scaffolder Modal State
   const [isOnlineAiHubOpen, setIsOnlineAiHubOpen] = useState(false);
   const [isOnlineProjectModalOpen, setIsOnlineProjectModalOpen] = useState(false);
+  const [isCloneRepoModalOpen, setIsCloneRepoModalOpen] = useState(false);
 
   // Autonomous Agent, WebGPU Studio & Local Voice-to-Code State
   const [isAutonomousAgentOpen, setIsAutonomousAgentOpen] = useState(false);
@@ -375,6 +399,7 @@ export default function Playground({
   // Multi-File RAG Composer & Docker Sandbox State
   const [isRagComposerOpen, setIsRagComposerOpen] = useState(false);
   const [isDockerSandboxOpen, setIsDockerSandboxOpen] = useState(false);
+  const [isNanoGptModalOpen, setIsNanoGptModalOpen] = useState(false);
 
   // LAN Pair Programming, Semantic Search & GGUF Quantizer State
   const [isLanCollabOpen, setIsLanCollabOpen] = useState(false);
@@ -701,6 +726,60 @@ export default function Playground({
     return path.split('/').pop() || path;
   }, []);
 
+  // Track last active regular code file so returning from studios or closed tabs always has a file
+  const lastActiveCodeFileRef = useRef<string>('components/Playground.tsx');
+
+  useEffect(() => {
+    if (selectedFile && !selectedFile.startsWith('__') && !selectedFile.endsWith('.exe')) {
+      lastActiveCodeFileRef.current = selectedFile;
+    }
+  }, [selectedFile]);
+
+  // Universal Return / Cancel / Close System: 1-click back to Playground code editor
+  const handleReturnToPlayground = useCallback(() => {
+    // 1. Close all potential overlay modals & floating prompts
+    setIsSettingsOpen(false);
+    setIsCloneRepoModalOpen(false);
+    setIsNewFileModalOpen(false);
+    setIsOnlineAiHubOpen(false);
+    setIsOnlineProjectModalOpen(false);
+    setIsThemePickerOpen(false);
+    setIsDatabaseStudioOpen(false);
+    setIsAutonomousAgentOpen(false);
+    setIsAgenticComposerOpen(false);
+    setIsLanCollabOpen(false);
+    setIsVoiceOverlayOpen(false);
+    setIsVoiceRecording(false);
+    setIsCommandPaletteOpen(false);
+    setIsSemanticSearchOpen(false);
+    setIsRagComposerOpen(false);
+    setIsDockerSandboxOpen(false);
+    setIsGgufQuantizerOpen(false);
+    setIsTranslateModalOpen(false);
+    setIsWebGpuStudioOpen(false);
+    setIsNanoGptModalOpen(false);
+    setIsGitCommitModalOpen(false);
+    setIsPreCommitReviewModalOpen(false);
+    setIsTasksLauncherOpen(false);
+    setIsInlineAiOpen(false);
+    setIsLivePreviewOpen(false);
+    setIsVimExPromptOpen(false);
+    setActiveAuditMessageId(null);
+    setActiveBreakpointToEdit(null);
+    setActiveReferencesPeek(null);
+    setActiveGutterEvent(null);
+
+    // 2. Return to the code editor view with fallback guarantee
+    const targetFile = lastActiveCodeFileRef.current || 'components/Playground.tsx';
+    setSelectedFile(targetFile);
+    setOpenTabs(prev => {
+      if (!prev.includes(targetFile)) {
+        return [...prev, targetFile];
+      }
+      return prev;
+    });
+  }, []);
+
   const handleCloseTab = useCallback((tabToClose: string) => {
     setOpenTabs(prev => {
       const nextTabs = prev.filter(t => t !== tabToClose);
@@ -708,7 +787,9 @@ export default function Playground({
         if (nextTabs.length > 0) {
           setSelectedFile(nextTabs[nextTabs.length - 1]);
         } else {
-          setSelectedFile(null);
+          const fallback = lastActiveCodeFileRef.current || 'components/Playground.tsx';
+          setSelectedFile(fallback);
+          return [fallback];
         }
       }
       return nextTabs;
@@ -1513,6 +1594,31 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
     setTimeout(() => setDiskToastMessage(null), 3000);
   }, []);
 
+  // Mount Cloned Repository directly into active workspace & in-memory Git DAG
+  const handleApplyClonedRepo = useCallback((data: ClonedRepoResult) => {
+    let newRaw = '';
+    for (const [path, content] of Object.entries(data.files)) {
+      newRaw += `--- FILE: ${path} ---\n${content}\n--- END FILE ---\n\n`;
+    }
+    setRawOutput(newRaw);
+
+    const targetFile = data.primaryFile ||
+      Object.keys(data.files).find(f => f.toLowerCase() === 'readme.md') ||
+      Object.keys(data.files).find(f => f.endsWith('index.html') || f.endsWith('package.json') || f.endsWith('App.tsx') || f.endsWith('main.py')) ||
+      Object.keys(data.files)[0];
+
+    if (targetFile) {
+      setSelectedFile(targetFile);
+      setOpenTabs([targetFile]);
+    }
+
+    gitEngine.loadClonedRepository(data.repoName, data.branch || 'main', data.files, data.commits);
+    setGitBranch(data.branch || 'main');
+
+    setDiskToastMessage(`Cloned repository "${data.repoName}" (${Object.keys(data.files).length} files) into workspace`);
+    setTimeout(() => setDiskToastMessage(null), 4000);
+  }, []);
+
   const [externalConflictFile, setExternalConflictFile] = useState<{ path: string; diskContent: string } | null>(null);
   const [isDragOverExplorer, setIsDragOverExplorer] = useState<boolean>(false);
 
@@ -1704,9 +1810,12 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
   const isResizingLeftRef = useRef(false);
   const isResizingRightRef = useRef(false);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [chatMessages]);
 
   const [copiedTextId, setCopiedTextId] = useState<string | null>(null);
@@ -1837,7 +1946,7 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
   };
 
   const [editorMenuDropdown, setEditorMenuDropdown] = useState<'ai' | 'tools' | null>(null);
-  const [activeActivityTab, setActiveActivityTab] = useState<'explorer' | 'search' | 'git' | 'debug' | 'extensions' | 'chat' | 'mcp' | 'swarm' | 'database' | 'training' | 'wasi' | 'composer' | 'plugins' | 'hitl' | 'api' | 'testing'>('explorer');
+  const [activeActivityTab, setActiveActivityTab] = useState<'explorer' | 'search' | 'git' | 'debug' | 'extensions' | 'chat' | 'mcp' | 'swarm' | 'database' | 'training' | 'wasi' | 'composer' | 'plugins' | 'hitl' | 'api' | 'testing' | 'tooljet' | 'autogpt' | 'superpowers'>('explorer');
   const [activeMenuDropdown, setActiveMenuDropdown] = useState<string | null>(null);
   const [isZenMode, setIsZenMode] = useState(false);
   
@@ -1987,6 +2096,35 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
           setTimeout(() => setShowWorkspaceToast(false), 3000);
         }
         break;
+      case 'format-document':
+      case 'prettier.formatDocument':
+      case 'prettier-vscode.formatDocument':
+        if (editorRef.current) {
+          const model = editorRef.current.getModel();
+          if (model) {
+            const code = model.getValue();
+            const lang = model.getLanguageId() || 'typescript';
+            prettierFormatterEngine.formatCode(code, lang, selectedFileRef.current || 'file.ts').then(({ formatted, error }) => {
+              if (!error && formatted) {
+                editorRef.current.setValue(formatted);
+                if (selectedFileRef.current) {
+                  handleUpdateFile(selectedFileRef.current, formatted);
+                }
+                setDiskToastMessage('✨ Document formatted cleanly with Prettier');
+                setTimeout(() => setDiskToastMessage(null), 2500);
+              }
+            });
+          }
+        }
+        break;
+      case 'gitlens.toggleLineBlame':
+      case 'gitlens.showCommitGraph':
+        setSelectedFile('__GIT_STUDIO__');
+        break;
+      case 'todo-tree.scanWorkspace':
+        setDiskToastMessage('🔍 Todo Tree: Workspace scanned. Found active TODO markers.');
+        setTimeout(() => setDiskToastMessage(null), 2500);
+        break;
       case 'folder-open':
         handleOpenLocalFolder();
         break;
@@ -2016,6 +2154,9 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         break;
       case 'project-ai-scaffold':
         setIsOnlineProjectModalOpen(true);
+        break;
+      case 'git-clone':
+        setIsCloneRepoModalOpen(true);
         break;
       case 'autonomous-agent':
         setIsAutonomousAgentOpen(true);
@@ -2068,6 +2209,117 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         break;
       case 'dap-open':
         setSelectedFile('__DAP_DEBUGGER__');
+        break;
+      case 'tooljet-studio':
+        handleSelectFile('__TOOLJET_STUDIO__');
+        break;
+      case 'autogpt-studio':
+        handleSelectFile('__AUTOGPT_STUDIO__');
+        break;
+      case 'indicnlp-studio':
+      case 'indicnlp-open':
+        handleSelectFile('__INDIC_NLP_STUDIO__');
+        break;
+      case 'chroma-open':
+      case 'chroma-studio':
+        handleSelectFile('__VECTOR_DB__');
+        break;
+      case 'candle-studio':
+      case 'candle-open':
+        handleSelectFile('__CANDLE_STUDIO__');
+        break;
+      case 'nanogpt-studio':
+      case 'nanogpt-open':
+        setIsNanoGptModalOpen(true);
+        break;
+      case 'aider-studio':
+      case 'aider-open':
+        handleSelectFile('__AIDER_STUDIO__');
+        break;
+      case 'transformers-studio':
+      case 'transformers-open':
+        handleSelectFile('__TRANSFORMERS_JS_STUDIO__');
+        break;
+      case 'outlines-studio':
+      case 'outlines-open':
+        handleSelectFile('__OUTLINES_STUDIO__');
+        break;
+      case 'llamacpp-studio':
+      case 'llamacpp-open':
+        handleSelectFile('__LLAMACPP_STUDIO__');
+        break;
+      case 'ripgrep-studio':
+      case 'ripgrep-open':
+        handleSelectFile('__RIPGREP_STUDIO__');
+        break;
+      case 'astgrep-studio':
+      case 'astgrep-open':
+        handleSelectFile('__ASTGREP_STUDIO__');
+        break;
+      case 'lancedb-studio':
+      case 'lancedb-open':
+        handleSelectFile('__LANCEDB_STUDIO__');
+        break;
+      case 'chonkie-studio':
+      case 'chonkie-open':
+        handleSelectFile('__CHONKIE_STUDIO__');
+        break;
+      case 'tabby-studio':
+      case 'tabby-open':
+        handleSelectFile('__TABBY_STUDIO__');
+        break;
+      case 'universal-modes-studio':
+      case 'universal-modes-open':
+        handleSelectFile('__UNIVERSAL_MODES__');
+        break;
+      case 'novel-editor-studio':
+      case 'novel-editor-open':
+        handleSelectFile('__NOVEL_STUDIO__');
+        break;
+      case 'dockview-studio':
+      case 'dockview-open':
+      case 'layout-dock-studio':
+        handleSelectFile('__DOCKVIEW_STUDIO__');
+        break;
+      case 'magic-ui-studio':
+      case 'magic-ui-open':
+        handleSelectFile('__MAGIC_UI_STUDIO__');
+        break;
+      case 'cursor-ui-studio':
+      case 'cursor-ui-open':
+        handleSelectFile('__CURSOR_UI_STUDIO__');
+        break;
+      case 'nano-banana-studio':
+      case 'nano-banana-open':
+        handleSelectFile('__NANO_BANANA_STUDIO__');
+        break;
+      case 'superpowers-studio':
+      case 'superpowers-open':
+        handleSelectFile('__SUPERPOWERS_STUDIO__');
+        break;
+      case 'superpowers-brainstorm':
+        handleSelectFile('__SUPERPOWERS_STUDIO__');
+        setPrompt('Using superpowers:brainstorming, please interview me to clarify the specifications and user experience for our next feature: ');
+        setIsSidebarOpen(true);
+        setActiveSidebarTab('chat');
+        break;
+      case 'superpowers-tdd':
+        handleSelectFile('__SUPERPOWERS_STUDIO__');
+        setPrompt(`Using superpowers:test-driven-development, write a failing unit test first for the current functionality in ${selectedFile || 'active file'}: `);
+        setIsSidebarOpen(true);
+        setActiveSidebarTab('chat');
+        break;
+      case 'superpowers-debug':
+        handleSelectFile('__SUPERPOWERS_STUDIO__');
+        setPrompt('Using superpowers:systematic-debugging, investigate this issue without guessing or speculative patches: ');
+        setIsSidebarOpen(true);
+        setActiveSidebarTab('chat');
+        break;
+      case 'superpowers-review':
+        handleSelectFile('__SUPERPOWERS_STUDIO__');
+        setPrompt(`Using superpowers:requesting-code-review, perform an adversarial code review on the latest edits in ${selectedFile || 'components/Playground.tsx'}: `);
+        setIsSidebarOpen(true);
+        setActiveSidebarTab('chat');
         break;
       case 'opfs-open':
         setSelectedFile('__OPFS_STUDIO__');
@@ -2344,6 +2596,48 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         return;
       }
 
+      // Ctrl+Alt+U: Universal Modes Studio
+      if ((e.key === 'U' || e.key === 'u') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        handleSelectFile('__UNIVERSAL_MODES__');
+        return;
+      }
+
+      // Ctrl+Alt+E: Novel Creative Studio (Notion/WYSIWYG)
+      if ((e.key === 'E' || e.key === 'e') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        handleSelectFile('__NOVEL_STUDIO__');
+        return;
+      }
+
+      // Ctrl+Alt+W: Dockview Layout Studio & Multi-Pane Manager
+      if ((e.key === 'W' || e.key === 'w') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        handleSelectFile('__DOCKVIEW_STUDIO__');
+        return;
+      }
+
+      // Ctrl+Alt+M: Magic UI & Sonner Luxury Aesthetics Studio
+      if ((e.key === 'M' || e.key === 'm') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        handleSelectFile('__MAGIC_UI_STUDIO__');
+        return;
+      }
+
+      // Ctrl+Alt+V: Cursor & v0 Ultra-Modern UI/UX Suite (10 Extensions)
+      if ((e.key === 'V' || e.key === 'v') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        handleSelectFile('__CURSOR_UI_STUDIO__');
+        return;
+      }
+
+      // Ctrl+Alt+J: Nano Banana Pro AI 2,500 Prompts Studio
+      if ((e.key === 'J' || e.key === 'j') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        handleSelectFile('__NANO_BANANA_STUDIO__');
+        return;
+      }
+
       // Ctrl+Shift+B: Run Default Build Task
       if ((e.key === 'B' || e.key === 'b') && (e.ctrlKey || e.metaKey) && e.shiftKey) {
         e.preventDefault();
@@ -2380,7 +2674,7 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         return;
       }
 
-      // Escape exits dropdowns or Zen Mode
+      // Escape exits dropdowns, Zen Mode, studios, or open modals
       if (e.key === 'Escape') {
         if (activeMenuDropdown) {
           setActiveMenuDropdown(null);
@@ -2390,6 +2684,9 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
           setIsZenMode(false);
           return;
         }
+        // Universal Escape: Return to Playground from any studio, installer view, or open modal
+        handleReturnToPlayground();
+        return;
       }
 
       // VS Code Sliding Panel toggles (work globally)
@@ -2868,22 +3165,16 @@ export default function ExtractedVisionUI() {
   const renderSecurityBadge = (classification: 'restricted' | 'dev' | 'public') => {
     if (classification === 'restricted') {
       return (
-        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider bg-rose-950/40 text-rose-400 border border-rose-800/60 ml-auto flex items-center gap-0.5 shrink-0" title="Restricted - Admin Only">
-          <ShieldAlert size={9} /> Restricted
-        </span>
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.6)] ml-auto shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" title="Security: Restricted (Admin Only)" />
       );
     }
     if (classification === 'dev') {
       return (
-        <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider bg-amber-950/40 text-amber-400 border border-amber-800/60 ml-auto flex items-center gap-0.5 shrink-0" title="Dev - Admin & Developer">
-          <Cpu size={9} /> Dev
-        </span>
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500/80 ml-auto shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" title="Security: Dev Scope" />
       );
     }
     return (
-      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider bg-emerald-950/40 text-emerald-400 border border-emerald-800/60 ml-auto flex items-center gap-0.5 shrink-0" title="Public - All Roles">
-        <Globe size={9} /> Public
-      </span>
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 ml-auto shrink-0 opacity-30 group-hover:opacity-80 transition-opacity" title="Security: Public File" />
     );
   };
 
@@ -3650,7 +3941,11 @@ export default function ExtractedVisionUI() {
   };
 
   return (
-    <div id="playground-parent" className="flex flex-col w-screen h-screen overflow-hidden bg-[#09090b] text-[#f4f4f5] select-none relative">
+    <div 
+      id="playground-parent" 
+      onScroll={(e) => { if (e.currentTarget.scrollTop !== 0) e.currentTarget.scrollTop = 0; }}
+      className="flex flex-col w-full h-full min-h-0 flex-1 overflow-hidden bg-[#09090b] text-[#f4f4f5] select-none relative"
+    >
       {/* Zen Focus Mode Floating Reveal Button */}
       {isZenMode && (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50 group flex flex-col items-center">
@@ -3666,7 +3961,7 @@ export default function ExtractedVisionUI() {
       {/* VS Code Sliding Top Header Bar */}
       <header 
         id="playground-header" 
-        className={`flex justify-between items-center px-3 bg-[#09090b] text-[#f4f4f5] border-b border-[#27272a] select-none z-50 shrink-0 transition-all duration-300 ease-in-out ${
+        className={`flex justify-between items-center px-3 bg-[#09090b] text-[#f4f4f5] border-b border-[#27272a] select-none z-50 shrink-0 relative transition-all duration-300 ease-in-out ${
           isZenMode ? 'h-0 min-h-0 max-h-0 opacity-0 overflow-hidden border-b-0 pointer-events-none' : 'h-11 min-h-[44px] max-h-[44px] opacity-100'
         }`}
       >
@@ -3697,11 +3992,74 @@ export default function ExtractedVisionUI() {
                   <button onClick={() => { handleOpenLocalFolder(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span className="flex items-center gap-1.5"><FolderOpen size={12} className="text-amber-400" /> Open Local Folder...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+O</span>
                   </button>
+                  <button onClick={() => { setIsCloneRepoModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Download size={12} className="text-emerald-400" /> Clone Repository...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+G L</span>
+                  </button>
                   <button onClick={() => { handleExecuteCommand('file-save'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Save</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+S</span>
                   </button>
                   <button onClick={() => { handleSelectFile('__SCAFFOLDER_HUB__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Project Scaffolder...</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__TOOLJET_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><LayoutGrid size={12} className="text-orange-400" /> ToolJet Low-Code Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+J</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__AUTOGPT_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Brain size={12} className="text-purple-400" /> AutoGPT Autonomous Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+G</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__INDIC_NLP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Languages size={12} className="text-amber-400" /> IndicNLP Corpus & Vectors...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+I</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__CANDLE_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Flame size={12} className="text-orange-400" /> Candle Rust ML & WASM...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+K</span>
+                  </button>
+                  <button onClick={() => { setIsNanoGptModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Brain size={12} className="text-amber-400" /> nanoGPT Subject Model Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+N</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__AIDER_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><GitBranch size={12} className="text-cyan-400" /> Aider Pair Programmer & Repo Map...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+P</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__TRANSFORMERS_JS_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Zap size={12} className="text-amber-400" /> Transformers.js WebGPU ML Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+T</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__OUTLINES_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Binary size={12} className="text-cyan-400" /> Outlines FSM Guided Generation...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+O</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__LLAMACPP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Cpu size={12} className="text-orange-400" /> llama.cpp Native C/C++ Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+L</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__RIPGREP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-rose-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Search size={12} className="text-rose-400" /> ripgrep Fast Code Search...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+R</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__ASTGREP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Code2 size={12} className="text-emerald-400" /> ast-grep AST Refactor...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+S</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__LANCEDB_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-teal-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Database size={12} className="text-teal-400" /> LanceDB Vector Database...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+D</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__CHONKIE_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Layers size={12} className="text-amber-400" /> Chonkie RAG Chunking...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+H</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__TABBY_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Zap size={12} className="text-cyan-400" /> Tabby FIM Autocomplete...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+Y</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__UNIVERSAL_MODES__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-indigo-400" /> Universal Field Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+U</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__NOVEL_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-pink-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><BookOpen size={12} className="text-pink-400" /> Novel Creative Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+E</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__DOCKVIEW_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Layout size={12} className="text-cyan-400" /> Dockview Window Manager...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+W</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__MAGIC_UI_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-indigo-400" /> Magic UI & Sonner Effects...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+M</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__CURSOR_UI_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Palette size={12} className="text-purple-400" /> Cursor / v0 Modern UI/UX...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+V</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__NANO_BANANA_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                    <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-amber-400" /> 🍌 Nano Banana Prompts (2,500)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+J</span>
                   </button>
                   <button onClick={() => { setIsOnlineProjectModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-amber-400" /> New Project with AI...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+A</span>
@@ -3896,11 +4254,14 @@ export default function ExtractedVisionUI() {
         <div id="header-center" className="flex-1 max-w-md mx-4 hidden md:block">
           <div 
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="flex items-center gap-2 w-full h-7 bg-[#18181b] border border-[#27272a] hover:border-zinc-600 px-2.5 rounded-md text-[11px] text-zinc-400 cursor-pointer transition-all shadow-inner group"
+            className="flex items-center gap-2.5 w-full h-7.5 bg-zinc-900/70 hover:bg-zinc-800/80 border border-white/5 hover:border-zinc-600/60 px-3 rounded-full text-[11px] text-zinc-400 hover:text-zinc-200 cursor-pointer transition-all duration-200 shadow-sm backdrop-blur-sm group"
           >
-            <Search size={12} className="text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-            <span className="truncate flex-1">offline-ai-studio — Search files (Ctrl+P) or commands</span>
-            <kbd className="text-[9px] bg-zinc-800 border border-zinc-700 text-zinc-400 px-1 py-0.5 rounded font-mono font-medium">Ctrl+P</kbd>
+            <Search size={12} className="text-zinc-500 group-hover:text-indigo-400 transition-colors shrink-0" />
+            <span className="truncate flex-1 font-sans text-zinc-400 group-hover:text-zinc-200">offline-ai-studio — Search files, commands...</span>
+            <div className="flex items-center gap-1 shrink-0">
+              <kbd className="text-[9px] bg-zinc-800/90 border border-zinc-700/60 text-zinc-400 px-1.5 py-0.5 rounded font-mono font-medium shadow-xs">Ctrl+P</kbd>
+              <kbd className="text-[9px] bg-zinc-800/90 border border-zinc-700/60 text-zinc-400 px-1.5 py-0.5 rounded font-mono font-medium shadow-xs">⌘K</kbd>
+            </div>
           </div>
         </div>
 
@@ -3911,6 +4272,17 @@ export default function ExtractedVisionUI() {
 
           {/* Online AI Hub & Model Connection Widget */}
           <OnlineAiStatusBar onOpenHub={() => setIsOnlineAiHubOpen(true)} />
+
+          {/* Universal Field Studio Quick Switcher */}
+          <button
+            onClick={() => handleSelectFile('__UNIVERSAL_MODES__')}
+            className="flex items-center gap-1.5 px-2 py-0.5 bg-[#18181b] hover:bg-indigo-950/60 border border-[#27272a] hover:border-indigo-600/70 rounded text-[11px] text-zinc-300 hover:text-indigo-200 transition-all h-7 cursor-pointer"
+            title="Open Universal Field Studio (Ctrl+Alt+U)"
+          >
+            <Sparkles size={11} className="text-indigo-400" />
+            <span className="hidden xl:inline">Studio Modes</span>
+            <kbd className="text-[9px] bg-zinc-800 text-zinc-400 px-1 rounded font-mono hidden 2xl:inline">Ctrl+Alt+U</kbd>
+          </button>
 
           {/* Run Build Task Quick Action (Ctrl+Shift+B) */}
           <button
@@ -4013,6 +4385,13 @@ export default function ExtractedVisionUI() {
             >
               <Maximize2 size={13} />
             </button>
+            <button
+              onClick={() => handleSelectFile('__DOCKVIEW_STUDIO__')}
+              title="Dockview Workspace & Multi-Pane Layouts (Ctrl+Alt+W)"
+              className="p-1 rounded transition-colors cursor-pointer flex items-center justify-center text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800"
+            >
+              <Layout size={13} />
+            </button>
           </div>
 
           {/* Peer-to-Peer Offline LAN Pair Programming Button */}
@@ -4068,7 +4447,11 @@ export default function ExtractedVisionUI() {
       </header>
 
       {/* Main Workspace Body */}
-      <div id="playground-body" className="flex flex-row flex-1 overflow-hidden h-full relative">
+      <div 
+        id="playground-body" 
+        onScroll={(e) => { if (e.currentTarget.scrollTop !== 0) e.currentTarget.scrollTop = 0; }}
+        className="flex flex-row flex-1 overflow-hidden min-h-0 relative"
+      >
         {/* VS Code Activity Bar (Far Left 48px) */}
         <aside 
           id="activity-bar"
@@ -4121,6 +4504,9 @@ export default function ExtractedVisionUI() {
               { id: 'mcp' as const, label: 'MCP Protocol Studio & Hub', icon: <Radio size={18} /> },
               { id: 'swarm' as const, label: 'Multi-Agent Swarm Orchestrator', icon: <Users size={18} /> },
               { id: 'database' as const, label: 'Database Studio (SQLite & PG)', icon: <Database size={18} /> },
+              { id: 'tooljet' as const, label: 'ToolJet Low-Code Studio (Ctrl+Shift+J)', icon: <LayoutGrid size={18} className="text-orange-400" /> },
+              { id: 'autogpt' as const, label: 'AutoGPT Autonomous Studio (Ctrl+Alt+G)', icon: <Brain size={18} className="text-purple-400" /> },
+              { id: 'superpowers' as const, label: 'Superpowers Methodology (7-Stage TDD & Spec Pipeline)', icon: <Flame size={18} className="text-amber-400" /> },
               { id: 'wasi' as const, label: 'WASI WebContainer Dev Sandbox', icon: <Cpu size={18} /> },
             ].map(tab => {
               const isActive = activeActivityTab === tab.id && isLeftPanelOpen;
@@ -4328,8 +4714,19 @@ export default function ExtractedVisionUI() {
                 {activeActivityTab === 'composer' && <><Layers size={13} className="text-purple-400" /> Composer</>}
                 {activeActivityTab === 'plugins' && <><Package size={13} className="text-purple-400" /> Extensions</>}
                 {activeActivityTab === 'hitl' && <><ShieldAlert size={13} className="text-rose-400" /> HITL Review</>}
+                {activeActivityTab === 'superpowers' && <><Flame size={13} className="text-amber-400" /> Superpowers Methodology</>}
               </h3>
               <div className="flex items-center gap-1">
+                {activeActivityTab !== 'explorer' && (
+                  <button
+                    onClick={() => setActiveActivityTab('explorer')}
+                    title="Return to Explorer (Files Tree)"
+                    className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] text-zinc-300 hover:text-white bg-zinc-800 hover:bg-zinc-700 rounded transition-colors cursor-pointer mr-0.5"
+                  >
+                    <ArrowLeft size={10} />
+                    <span>Files</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setIsCommandPaletteOpen(true)}
                   title="Command Palette (Ctrl+Shift+P)"
@@ -4531,30 +4928,30 @@ export default function ExtractedVisionUI() {
                                 <button 
                                   key={path}
                                   onClick={() => handleSelectFile(path)}
-                                  className={`w-full text-left px-2 py-1 rounded flex items-center justify-between text-[10.5px] font-medium transition-colors cursor-pointer group ${
+                                  className={`w-full text-left px-2.5 py-1.2 rounded-md flex items-center justify-between text-xs font-medium transition-all cursor-pointer group ${
                                     isSelected 
-                                      ? (isExe ? 'bg-emerald-950/70 text-emerald-200 font-semibold border-l-2 border-emerald-500 pl-1.5' : 'bg-indigo-950/70 text-indigo-100 font-semibold border-l-2 border-indigo-500 pl-1.5')
-                                      : (isExe ? 'text-emerald-300 hover:bg-emerald-950/30 font-medium' : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200')
+                                      ? 'bg-indigo-600/20 text-white font-medium shadow-xs border border-indigo-500/30'
+                                      : 'text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200 border border-transparent'
                                   }`}
                                 >
-                                  <div className="flex items-center gap-1.5 truncate">
+                                  <div className="flex items-center gap-2 truncate">
                                     {isExe ? (
-                                      <Package size={12} className="text-emerald-400 shrink-0" />
+                                      <Package size={13} className="text-emerald-400 shrink-0" />
                                     ) : isTs ? (
-                                      <Code2 size={12} className="text-sky-400 shrink-0" />
+                                      <Code2 size={13} className="text-sky-400 shrink-0" />
                                     ) : isJson ? (
-                                      <FileText size={12} className="text-amber-400 shrink-0" />
+                                      <FileText size={13} className="text-amber-400 shrink-0" />
                                     ) : isCss ? (
-                                      <FileText size={12} className="text-cyan-400 shrink-0" />
+                                      <FileText size={13} className="text-cyan-400 shrink-0" />
                                     ) : isMd ? (
-                                      <FileText size={12} className="text-purple-400 shrink-0" />
+                                      <FileText size={13} className="text-purple-400 shrink-0" />
                                     ) : (
-                                      <FileText size={11} className="text-zinc-500 shrink-0" />
+                                      <FileText size={12} className="text-zinc-500 shrink-0" />
                                     )}
                                     <span className="truncate">{path.split('/').pop()}</span>
                                   </div>
                                   {isExe ? (
-                                    <span className="text-[9px] px-1 bg-emerald-900/60 text-emerald-300 rounded font-mono font-bold border border-emerald-700/40">
+                                    <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded font-mono opacity-60 group-hover:opacity-100">
                                       218M
                                     </span>
                                   ) : (
@@ -4641,6 +5038,26 @@ export default function ExtractedVisionUI() {
                           { id: '__MERGE_RESOLVER__', label: '🔀 3-Way Conflict Resolver', icon: <GitMerge size={12} className="text-purple-400 shrink-0" /> },
                           { id: '__WASI_STUDIO__', label: '⚡ WASI WebContainer', icon: <Zap size={12} className="text-amber-400 shrink-0" /> },
                           { id: '__DAP_DEBUGGER__', label: '🐛 DAP Debugger', icon: <Bug size={12} className="text-rose-400 shrink-0" /> },
+                          { id: '__TOOLJET_STUDIO__', label: '🛠️ ToolJet Low-Code Studio', icon: <LayoutGrid size={12} className="text-orange-400 shrink-0" /> },
+                          { id: '__AUTOGPT_STUDIO__', label: '🤖 AutoGPT Studio', icon: <Brain size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__INDIC_NLP_STUDIO__', label: '🇮🇳 IndicNLP Corpus & Vectors', icon: <Languages size={12} className="text-amber-400 shrink-0" /> },
+                          { id: '__CANDLE_STUDIO__', label: '🔥 Candle Rust ML Studio', icon: <Flame size={12} className="text-orange-400 shrink-0" /> },
+                          { id: '__NANOGPT_STUDIO__', label: '🧠 nanoGPT Subject Studio', icon: <Brain size={12} className="text-amber-400 shrink-0" /> },
+                          { id: '__AIDER_STUDIO__', label: '🤝 Aider Pair Programmer & Repo Map', icon: <GitBranch size={12} className="text-cyan-400 shrink-0" /> },
+                          { id: '__TRANSFORMERS_JS_STUDIO__', label: '🤗 Transformers.js WebGPU ML', icon: <Zap size={12} className="text-amber-400 shrink-0" /> },
+                          { id: '__OUTLINES_STUDIO__', label: '📐 Outlines FSM Structured AI', icon: <Binary size={12} className="text-cyan-400 shrink-0" /> },
+                          { id: '__LLAMACPP_STUDIO__', label: '🦙 llama.cpp Native C/C++', icon: <Cpu size={12} className="text-orange-400 shrink-0" /> },
+                          { id: '__RIPGREP_STUDIO__', label: '⚡ ripgrep Workspace Search', icon: <Search size={12} className="text-rose-400 shrink-0" /> },
+                          { id: '__ASTGREP_STUDIO__', label: '🌳 ast-grep AST Refactor', icon: <Code2 size={12} className="text-emerald-400 shrink-0" /> },
+                          { id: '__LANCEDB_STUDIO__', label: '🗄️ LanceDB Vector Database', icon: <Database size={12} className="text-teal-400 shrink-0" /> },
+                          { id: '__CHONKIE_STUDIO__', label: '🧩 Chonkie RAG Chunking', icon: <Layers size={12} className="text-amber-400 shrink-0" /> },
+                          { id: '__TABBY_STUDIO__', label: '⚡ Tabby FIM Autocomplete', icon: <Zap size={12} className="text-cyan-400 shrink-0" /> },
+                          { id: '__UNIVERSAL_MODES__', label: '🌐 Universal Field Studio', icon: <Sparkles size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__NOVEL_STUDIO__', label: '📖 Novel Creative Studio', icon: <BookOpen size={12} className="text-pink-400 shrink-0" /> },
+                          { id: '__DOCKVIEW_STUDIO__', label: '🪟 Dockview Window Manager', icon: <Layout size={12} className="text-cyan-400 shrink-0" /> },
+                          { id: '__MAGIC_UI_STUDIO__', label: '✨ Magic UI & Sonner Effects', icon: <Sparkles size={12} className="text-indigo-400 shrink-0" /> },
+                          { id: '__CURSOR_UI_STUDIO__', label: '🎨 Cursor & v0 Modern UI/UX', icon: <Palette size={12} className="text-purple-400 shrink-0" /> },
+                          { id: '__NANO_BANANA_STUDIO__', label: '🍌 Nano Banana AI Prompts (2,500)', icon: <Sparkles size={12} className="text-amber-400 shrink-0" /> },
                           { id: '__COMPOSER__', label: '⚡ Multi-File Composer', icon: <Layers size={12} className="text-purple-400 shrink-0" /> },
                           { id: '__VECTOR_DB__', label: '🗄️ Vector DB & PageRank', icon: <Database size={12} className="text-blue-400 shrink-0" /> },
                           { id: '__PERFORMANCE_PROFILE__', label: '📊 Perf Profile', icon: <Activity size={12} className="text-indigo-400 shrink-0" /> },
@@ -4733,6 +5150,13 @@ export default function ExtractedVisionUI() {
                   >
                     <GitBranch size={13} /> Visual Git DAG & History
                   </button>
+                  <button
+                    onClick={() => setIsCloneRepoModalOpen(true)}
+                    className="w-full py-1.5 bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 hover:text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    title="Clone a remote repository or import sibling local folder"
+                  >
+                    <Download size={13} className="text-indigo-400" /> Clone Repository...
+                  </button>
                 </div>
               )}
 
@@ -4783,6 +5207,57 @@ export default function ExtractedVisionUI() {
                       className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold shadow transition-colors cursor-pointer"
                     >
                       Open Secondary AI Chat Panel
+                    </button>
+                  </div>
+
+                  {/* Superpowers Methodology Quick Launch Card */}
+                  <div className="p-3 bg-[#121214] border border-amber-500/30 rounded-lg space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-amber-300 font-semibold font-mono">
+                        <Flame size={14} className="text-amber-400" />
+                        <span>Superpowers Methodology</span>
+                      </div>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-950 text-amber-300 border border-amber-800 font-mono">Active</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">
+                      Enforce disciplined engineering: Socratic spec brainstorming, red/green TDD, subagents, and automated code review.
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        onClick={() => handleExecuteCommand('superpowers-brainstorm')}
+                        className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1"
+                      >
+                        <span>💡</span>
+                        <span>Brainstorm</span>
+                      </button>
+                      <button
+                        onClick={() => handleExecuteCommand('superpowers-tdd')}
+                        className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1"
+                      >
+                        <span>🧪</span>
+                        <span>Red/Green TDD</span>
+                      </button>
+                      <button
+                        onClick={() => handleExecuteCommand('superpowers-debug')}
+                        className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1"
+                      >
+                        <span>🔍</span>
+                        <span>Root Debug</span>
+                      </button>
+                      <button
+                        onClick={() => handleExecuteCommand('superpowers-review')}
+                        className="p-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[11px] text-zinc-300 hover:text-white transition-colors cursor-pointer text-left flex items-center gap-1"
+                      >
+                        <span>🛡️</span>
+                        <span>Code Review</span>
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => handleSelectFile('__SUPERPOWERS_STUDIO__')}
+                      className="w-full py-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 hover:text-white border border-indigo-500/40 rounded text-[11px] font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Zap size={12} />
+                      <span>Open Full Superpowers Studio</span>
                     </button>
                   </div>
                 </div>
@@ -4839,6 +5314,144 @@ export default function ExtractedVisionUI() {
                             <span className="truncate group-hover:text-white">{ep.label}</span>
                           </div>
                           <span className="text-[10px] text-zinc-500">↗</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ToolJet Low-Code Studio Sidebar View */}
+              {activeActivityTab === 'tooljet' && (
+                <div className="space-y-3 p-1">
+                  <div className="p-3 bg-[#121214] border border-orange-900/40 rounded-lg space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-orange-300 font-semibold font-mono">
+                        <LayoutGrid size={15} className="text-orange-400" />
+                        <span>ToolJet Studio</span>
+                      </div>
+                      <span className="text-[9px] bg-orange-950 text-orange-300 border border-orange-700/60 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                        Low-Code Visual
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      Visual drag-and-drop builder for internal tools, admin dashboards, and custom portals connected to Offline AI and local databases.
+                    </p>
+                    <button
+                      onClick={() => handleSelectFile('__TOOLJET_STUDIO__')}
+                      className="w-full py-1.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <LayoutGrid size={13} />
+                      <span>Launch ToolJet Canvas</span>
+                    </button>
+                  </div>
+
+                  <div className="border border-zinc-800 rounded-lg p-2.5 bg-zinc-900/40 space-y-2">
+                    <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider font-mono">
+                      🛠️ Builder Features
+                    </div>
+                    <div className="space-y-1 text-[11px] text-zinc-400">
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-emerald-400" /> 10+ Visual Draggable Widgets</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-emerald-400" /> Local AI Query Engine (Ollama/WebGPU)</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-emerald-400" /> REST API &amp; SQLite/PG Connectors</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-emerald-400" /> Export to Clean Next.js / React Code</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-emerald-400" /> Official Docker Stack Runner (:8082)</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* AutoGPT Autonomous Studio Sidebar View */}
+              {activeActivityTab === 'autogpt' && (
+                <div className="space-y-3 p-1">
+                  <div className="p-3 bg-[#121214] border border-purple-900/40 rounded-lg space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-purple-300 font-semibold font-mono">
+                        <Brain size={15} className="text-purple-400" />
+                        <span>AutoGPT Studio</span>
+                      </div>
+                      <span className="text-[9px] bg-purple-950 text-purple-300 border border-purple-700/60 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                        Cognitive Loop
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      Official AutoGPT recursive agent loop. Self-driven reasoning, planning, self-criticism, and tool execution in your workspace.
+                    </p>
+                    <button
+                      onClick={() => handleSelectFile('__AUTOGPT_STUDIO__')}
+                      className="w-full py-1.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 hover:brightness-110 text-white rounded text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Brain size={13} />
+                      <span>Launch AutoGPT Studio</span>
+                    </button>
+                  </div>
+
+                  <div className="border border-zinc-800 rounded-lg p-2.5 bg-zinc-900/40 space-y-2">
+                    <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider font-mono">
+                      🤖 AutoGPT Subsystems
+                    </div>
+                    <div className="space-y-1 text-[11px] text-zinc-400">
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-purple-400" /> Recursive Thought &amp; Plan Engine</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-purple-400" /> Multi-Step Autonomous Self-Healing</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-purple-400" /> Graph Templates &amp; Platform Engine</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-purple-400" /> Air-Gapped Local Ollama / WebGPU</div>
+                      <div className="flex items-center gap-1.5"><Check size={12} className="text-purple-400" /> 1-Click Code Patching to Monaco</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Superpowers Methodology Sidebar Drawer */}
+              {activeActivityTab === 'superpowers' && (
+                <div className="space-y-3 p-1">
+                  <div className="p-3 bg-[#121214] border border-amber-900/40 rounded-lg space-y-2.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-amber-300 font-semibold font-mono">
+                        <Flame size={15} className="text-amber-400" />
+                        <span>Superpowers Engine</span>
+                      </div>
+                      <span className="text-[9px] bg-amber-950 text-amber-300 border border-amber-700/60 px-1.5 py-0.2 rounded-full font-mono font-bold">
+                        7-Stage TDD
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-relaxed">
+                      Complete software engineering methodology: Socratic spec brainstorming, red/green TDD, subagents, and automated code review.
+                    </p>
+                    <button
+                      onClick={() => handleSelectFile('__SUPERPOWERS_STUDIO__')}
+                      className="w-full py-1.5 bg-gradient-to-r from-amber-600 via-orange-600 to-indigo-600 hover:brightness-110 text-white rounded text-xs font-semibold shadow transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Zap size={13} />
+                      <span>Launch Superpowers Studio</span>
+                    </button>
+                  </div>
+
+                  <div className="border border-zinc-800 rounded-lg p-2.5 bg-zinc-900/40 space-y-2">
+                    <div className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider font-mono">
+                      ⚡ 7-Stage Methodology Flow
+                    </div>
+                    <div className="space-y-1.5 text-[11px] text-zinc-300">
+                      {[
+                        { num: '1', title: 'Brainstorm & Clarify', cmd: 'superpowers-brainstorm' },
+                        { num: '2', title: 'Architect & Write Plan', cmd: 'superpowers-studio' },
+                        { num: '3', title: 'Red/Green TDD Tests', cmd: 'superpowers-tdd' },
+                        { num: '4', title: 'Subagent Execution', cmd: 'superpowers-studio' },
+                        { num: '5', title: 'Root-Cause Debugging', cmd: 'superpowers-debug' },
+                        { num: '6', title: 'Adversarial Code Review', cmd: 'superpowers-review' },
+                        { num: '7', title: 'Finish & Ship Branch', cmd: 'superpowers-studio' },
+                      ].map(step => (
+                        <button
+                          key={step.num}
+                          onClick={() => handleExecuteCommand(step.cmd)}
+                          className="w-full flex items-center justify-between p-1.5 rounded hover:bg-zinc-800/80 text-left cursor-pointer transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="w-4 h-4 rounded-full bg-amber-500/20 text-amber-300 font-mono text-[10px] flex items-center justify-center font-bold">
+                              {step.num}
+                            </span>
+                            <span className="text-[11px] text-zinc-200">{step.title}</span>
+                          </span>
+                          <ChevronRight size={11} className="text-zinc-500" />
                         </button>
                       ))}
                     </div>
@@ -4968,9 +5581,13 @@ export default function ExtractedVisionUI() {
         </div>
 
         {/* Center Panel: Editor & Dashboard Views */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#09090b] h-full overflow-hidden">
+        <div 
+          id="center-editor-panel"
+          onScroll={(e) => { if (e.currentTarget.scrollTop !== 0) e.currentTarget.scrollTop = 0; }}
+          className="flex-1 flex flex-col min-w-0 bg-[#09090b] min-h-0 overflow-hidden relative"
+        >
           {/* Active Tabs Bar */}
-          <div className="h-9 min-h-[36px] max-h-[36px] flex items-center bg-[#18181b] border-b border-[#27272a] select-none shrink-0 font-sans relative">
+          <div id="active-tabs-bar" className="h-9 min-h-[36px] max-h-[36px] flex items-center bg-[#18181b] border-b border-[#27272a] select-none shrink-0 font-sans relative z-10">
             {/* Touch-Friendly Left Sidebar Toggle (PWA Adaptive) */}
             <button
               onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
@@ -4980,6 +5597,19 @@ export default function ExtractedVisionUI() {
             >
               {isLeftPanelOpen ? <ChevronLeft size={14} /> : <Menu size={14} />}
             </button>
+
+            {/* Quick 1-Click Return to Code Button when inside a Studio or Installer */}
+            {selectedFile && (selectedFile.startsWith('__') || selectedFile.endsWith('.exe')) && (
+              <button
+                onClick={handleReturnToPlayground}
+                title="Return to Playground Editor (Esc)"
+                className="h-full px-2.5 flex items-center gap-1.5 bg-indigo-950/70 hover:bg-indigo-600 text-indigo-300 hover:text-white border-r border-indigo-500/40 text-[11px] font-medium transition-colors cursor-pointer shrink-0"
+              >
+                <ArrowLeft size={13} className="shrink-0" />
+                <span className="font-semibold">Back to Editor</span>
+                <kbd className="hidden sm:inline-block px-1 py-0.2 bg-black/40 rounded text-[9px] text-indigo-200 border border-indigo-500/30">Esc</kbd>
+              </button>
+            )}
 
             {/* Scrollable Tabs Area */}
             <div className="flex-1 flex items-center overflow-x-auto scrollbar-none h-full">
@@ -5267,81 +5897,138 @@ export default function ExtractedVisionUI() {
             </button>
           </div>
 
-          {/* VS Code Breadcrumb & Status Bar below tabs */}
-          <div className="h-6 min-h-[24px] max-h-[24px] px-3 bg-[#111113] border-b border-[#27272a]/60 flex items-center justify-between text-[11px] text-zinc-400 font-sans select-none shrink-0">
-            <div className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap">
-              <span className="text-zinc-500">offline-ide</span>
-              <span className="text-zinc-600">›</span>
-              <span className="text-zinc-500">src</span>
-              <span className="text-zinc-600">›</span>
-              <span className="text-zinc-300 font-medium font-mono">{selectedFile || 'components/Playground.tsx'}</span>
-            </div>
-            
-            <div className="flex items-center gap-2.5 shrink-0 text-[10px]">
-              <div className="flex items-center gap-1 text-zinc-400">
-                <Globe size={10} className="text-zinc-500" />
-                <select
-                  value={activeLanguage}
-                  onChange={(e) => handleSetLanguage(e.target.value)}
-                  className="bg-transparent text-[10px] font-medium text-zinc-400 outline-none cursor-pointer p-0 select-none border-none leading-none"
-                >
-                  {SUPPORTED_LANGUAGES.map(l => (
-                    <option key={l.code} value={l.code} className="bg-[#18181b]">
-                      {l.flag} {l.code}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <span className="text-zinc-700">|</span>
-
-              <button
-                onClick={() => setActiveSidebarTab('auditor')}
-                className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
-                title="Grounding verification score"
-              >
-                <ShieldCheck size={10} />
-                <span>{activeAuditData?.score || 94}% Grounded</span>
-              </button>
-
-              {isLowResourceMode && (
+          {/* Unified Breadcrumb & Status Bar below tabs */}
+          {selectedFile && !selectedFile.startsWith('__') ? (
+            <BreadcrumbsBar
+              currentFilePath={selectedFile}
+              cursorLine={activeCursorLine}
+              workspaceFiles={parsedFiles}
+              onSelectFile={handleSelectFile}
+              onJumpToLine={handleJumpToLine}
+              rightSlot={
                 <>
-                  <span className="text-zinc-700">|</span>
-                  <span className="px-1 py-0.2 text-[9px] bg-amber-950/80 text-amber-300 rounded border border-amber-800 font-mono">
-                    Low-RAM
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
+                  <div className="flex items-center gap-1 text-zinc-400">
+                    <Globe size={10} className="text-zinc-500" />
+                    <select
+                      value={activeLanguage}
+                      onChange={(e) => handleSetLanguage(e.target.value)}
+                      className="bg-transparent text-[10px] font-medium text-zinc-400 outline-none cursor-pointer p-0 select-none border-none leading-none"
+                    >
+                      {SUPPORTED_LANGUAGES.map(l => (
+                        <option key={l.code} value={l.code} className="bg-[#18181b]">
+                          {l.flag} {l.code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-          <div className="flex-1 flex flex-col p-4 overflow-hidden min-h-0 relative">
-            <div className="flex justify-between items-center mb-3 border-b border-[#27272a] pb-2 shrink-0">
-              <h2 className="font-bold text-sm text-white flex items-center gap-2">
-                {selectedFile === '__SUBJECT_CREATOR__' && <Sparkles size={14} className="text-indigo-400" />}
-                {selectedFile === '__HITL_HUB__' && <ShieldAlert size={14} className="text-rose-500" />}
-                {selectedFile === '__RAG_ANALYZER__' && <Search size={14} className="text-indigo-500" />}
-                {selectedFile === '__PROMPT_LAB__' && <Beaker size={14} className="text-purple-500" />}
-                {selectedFile === '__FINE_TUNING_LAB__' && <Brain size={14} className="text-indigo-400" />}
-                {selectedFile === '__FINOPS_DASHBOARD__' && <DollarSign size={14} className="text-emerald-500" />}
-                {selectedFile === '__RELEASE_HUB__' && <Package size={14} className="text-purple-500" />}
-                {selectedFile === '__GRAPH_RAG__' && <Brain size={14} className="text-indigo-400" />}
-                {selectedFile === '__SWARM_TRACKER__' && <Bot size={14} className="text-indigo-400" />}
-                {selectedFile === '__INTERACTIVE_DIFF__' && <GitMerge size={14} className="text-emerald-400" />}
-                {selectedFile === '__VRAM_OPTIMIZER__' && <Gauge size={14} className="text-amber-500" />}
-                {selectedFile === '__PERFORMANCE_PROFILE__' && <Activity size={14} className="text-indigo-400" />}
-                {selectedFile === '__COMPLIANCE_SHIELD__' && <ShieldCheck size={14} className="text-emerald-500" />}
-                {selectedFile === '__VISION_STUDIO__' && <Camera size={14} className="text-purple-500" />}
-                {selectedFile === '__TDD_STUDIO__' && <Beaker size={14} className="text-indigo-400" />}
-                {selectedFile === '__DESKTOP_BUILDER__' && <Package size={14} className="text-cyan-400" />}
-                {selectedFile === '__DIAGNOSTICS__' && <Activity size={14} className="text-emerald-400" />}
-                {selectedFile === '__MODELS_CATALOG__' && <Database size={14} className="text-indigo-400" />}
-                {isStreaming ? 'AI is thinking...' : selectedFile === '__MODELS_CATALOG__' ? '📥 Hugging Face & Ollama GGUF Models Store (1,000+ Models)' : selectedFile === '__SUBJECT_CREATOR__' ? '⚡ Standalone Subject Creator AI Hub' : selectedFile === '__ACCESS_DENIED__' ? 'Access Violation' : selectedFile === '__HITL_HUB__' ? 'HITL Review Hub' : selectedFile === '__RAG_ANALYZER__' ? 'RAG Search Analyzer' : selectedFile === '__PROMPT_LAB__' ? 'Prompt Lab & A/B Studio' : selectedFile === '__FINE_TUNING_LAB__' ? 'AI Training & Model Distillation Lab' : selectedFile === '__FINOPS_DASHBOARD__' ? 'FinOps & Token Quota Control' : selectedFile === '__RELEASE_HUB__' ? 'Release & VSIX Hub' : selectedFile === '__GRAPH_RAG__' ? '🧠 Semantic Graph-RAG & AST Explorer' : selectedFile === '__SWARM_TRACKER__' ? '🤖 Multi-Agent Swarm Tracker' : selectedFile === '__INTERACTIVE_DIFF__' ? '🔀 Selective Code Diff & Merge Interface' : selectedFile === '__VRAM_OPTIMIZER__' ? '⚡ VRAM & System Optimizer Dashboard' : selectedFile === '__COMPLIANCE_SHIELD__' ? '🛡️ Security Compliance Governance Dashboard' : selectedFile === '__SCAFFOLDER_HUB__' ? '🚀 Project Scaffolder & Architecture Planner' : selectedFile === '__VISION_STUDIO__' ? '📸 Vision Studio (Image-to-Code & Multimodal AI)' : selectedFile === '__TDD_STUDIO__' ? '🧪 TDD Studio & Automated Test Runner' : selectedFile === '__DESKTOP_BUILDER__' ? '📦 Standalone Desktop Release Builder' : selectedFile === '__DIAGNOSTICS__' ? '🎓 Onboarding & System Diagnostics' : (selectedFile || 'No file selected')}
-              </h2>
-              <button onClick={handleExport} className="flex items-center gap-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#27272a] text-white px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors shadow-xs">
-                <Download size={13} /> Export Workspace
-              </button>
+                  <span className="text-zinc-700">|</span>
+
+                  <button
+                    onClick={() => setActiveSidebarTab('auditor')}
+                    className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                    title="Grounding verification score"
+                  >
+                    <ShieldCheck size={10} />
+                    <span>{activeAuditData?.score || 94}% Grounded</span>
+                  </button>
+
+                  {isLowResourceMode && (
+                    <>
+                      <span className="text-zinc-700">|</span>
+                      <span className="px-1 py-0.2 text-[9px] bg-amber-950/80 text-amber-300 rounded border border-amber-800 font-mono">
+                        Low-RAM
+                      </span>
+                    </>
+                  )}
+                </>
+              }
+            />
+          ) : (
+            <div className="h-6.5 min-h-[26px] max-h-[26px] px-3 bg-[#111113] border-b border-[#27272a]/60 flex items-center justify-between text-[11px] text-zinc-400 font-sans select-none shrink-0">
+              <div className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap">
+                <span className="text-zinc-500">offline-ide</span>
+                <span className="text-zinc-600">›</span>
+                <span className="text-zinc-400">hub</span>
+                <span className="text-zinc-600">›</span>
+                <span className="text-zinc-300 font-medium font-mono">{selectedFile || 'Workspace'}</span>
+              </div>
+              
+              <div className="flex items-center gap-2 shrink-0 text-[10px]">
+                <button
+                  onClick={handleReturnToPlayground}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 hover:text-white border border-indigo-500/30 transition-colors cursor-pointer font-medium"
+                  title="Return to Playground Code Editor (Esc)"
+                >
+                  <ArrowLeft size={10} />
+                  <span>Back to Code</span>
+                </button>
+                <button
+                  onClick={() => setActiveSidebarTab('auditor')}
+                  className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                  title="Grounding verification score"
+                >
+                  <ShieldCheck size={10} />
+                  <span>{activeAuditData?.score || 94}% Grounded</span>
+                </button>
+              </div>
             </div>
+          )}
+
+          <div className={`flex-1 flex flex-col overflow-hidden min-h-0 relative ${selectedFile && !selectedFile.startsWith('__') ? 'p-0' : 'p-4'}`}>
+            {selectedFile && selectedFile.startsWith('__') && (
+              <div className="flex justify-between items-center mb-3 border-b border-[#27272a] pb-2 shrink-0 gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <button
+                    onClick={handleReturnToPlayground}
+                    title="Return to Playground Editor (Esc)"
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold cursor-pointer transition-all shadow-xs shrink-0"
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Back to Playground</span>
+                    <kbd className="hidden sm:inline-block px-1 py-0.2 bg-indigo-800/80 rounded text-[9px] border border-indigo-400/40 font-mono">Esc</kbd>
+                  </button>
+                  <div className="h-4 w-[1px] bg-zinc-700 shrink-0" />
+                  <h2 className="font-bold text-sm text-white flex items-center gap-2 truncate">
+                    {selectedFile === '__SUBJECT_CREATOR__' && <Sparkles size={14} className="text-indigo-400 shrink-0" />}
+                    {selectedFile === '__HITL_HUB__' && <ShieldAlert size={14} className="text-rose-500 shrink-0" />}
+                    {selectedFile === '__RAG_ANALYZER__' && <Search size={14} className="text-indigo-500 shrink-0" />}
+                    {selectedFile === '__PROMPT_LAB__' && <Beaker size={14} className="text-purple-500 shrink-0" />}
+                    {selectedFile === '__FINE_TUNING_LAB__' && <Brain size={14} className="text-indigo-400 shrink-0" />}
+                    {selectedFile === '__FINOPS_DASHBOARD__' && <DollarSign size={14} className="text-emerald-500 shrink-0" />}
+                    {selectedFile === '__RELEASE_HUB__' && <Package size={14} className="text-purple-500 shrink-0" />}
+                    {selectedFile === '__GRAPH_RAG__' && <Brain size={14} className="text-indigo-400 shrink-0" />}
+                    {selectedFile === '__SWARM_TRACKER__' && <Bot size={14} className="text-indigo-400 shrink-0" />}
+                    {selectedFile === '__INTERACTIVE_DIFF__' && <GitMerge size={14} className="text-emerald-400 shrink-0" />}
+                    {selectedFile === '__VRAM_OPTIMIZER__' && <Gauge size={14} className="text-amber-500 shrink-0" />}
+                    {selectedFile === '__PERFORMANCE_PROFILE__' && <Activity size={14} className="text-indigo-400 shrink-0" />}
+                    {selectedFile === '__COMPLIANCE_SHIELD__' && <ShieldCheck size={14} className="text-emerald-500 shrink-0" />}
+                    {selectedFile === '__VISION_STUDIO__' && <Camera size={14} className="text-purple-500 shrink-0" />}
+                    {selectedFile === '__TDD_STUDIO__' && <Beaker size={14} className="text-indigo-400 shrink-0" />}
+                    {selectedFile === '__DESKTOP_BUILDER__' && <Package size={14} className="text-cyan-400 shrink-0" />}
+                    {selectedFile === '__DIAGNOSTICS__' && <Activity size={14} className="text-emerald-400 shrink-0" />}
+                    {selectedFile === '__MODELS_CATALOG__' && <Database size={14} className="text-indigo-400 shrink-0" />}
+                    {selectedFile === '__SUPERPOWERS_STUDIO__' && <Flame size={14} className="text-amber-400 shrink-0" />}
+                    <span className="truncate">
+                      {isStreaming ? 'AI is thinking...' : selectedFile === '__SUPERPOWERS_STUDIO__' ? '⚡ Superpowers Autonomous Engineering Methodology Hub' : selectedFile === '__MODELS_CATALOG__' ? '📥 Hugging Face & Ollama GGUF Models Store (1,000+ Models)' : selectedFile === '__SUBJECT_CREATOR__' ? '⚡ Standalone Subject Creator AI Hub' : selectedFile === '__ACCESS_DENIED__' ? 'Access Violation' : selectedFile === '__HITL_HUB__' ? 'HITL Review Hub' : selectedFile === '__RAG_ANALYZER__' ? 'RAG Search Analyzer' : selectedFile === '__PROMPT_LAB__' ? 'Prompt Lab & A/B Studio' : selectedFile === '__FINE_TUNING_LAB__' ? 'AI Training & Model Distillation Lab' : selectedFile === '__FINOPS_DASHBOARD__' ? 'FinOps & Token Quota Control' : selectedFile === '__RELEASE_HUB__' ? 'Release & VSIX Hub' : selectedFile === '__GRAPH_RAG__' ? '🧠 Semantic Graph-RAG & AST Explorer' : selectedFile === '__SWARM_TRACKER__' ? '🤖 Multi-Agent Swarm Tracker' : selectedFile === '__INTERACTIVE_DIFF__' ? '🔀 Selective Code Diff & Merge Interface' : selectedFile === '__VRAM_OPTIMIZER__' ? '⚡ VRAM & System Optimizer Dashboard' : selectedFile === '__COMPLIANCE_SHIELD__' ? '🛡️ Security Compliance Governance Dashboard' : selectedFile === '__SCAFFOLDER_HUB__' ? '🚀 Project Scaffolder & Architecture Planner' : selectedFile === '__VISION_STUDIO__' ? '📸 Vision Studio (Image-to-Code & Multimodal AI)' : selectedFile === '__TDD_STUDIO__' ? '🧪 TDD Studio & Automated Test Runner' : selectedFile === '__DESKTOP_BUILDER__' ? '📦 Standalone Desktop Release Builder' : selectedFile === '__DIAGNOSTICS__' ? '🎓 Onboarding & System Diagnostics' : (selectedFile || 'No file selected')}
+                    </span>
+                  </h2>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={handleExport} className="flex items-center gap-1.5 bg-[#27272a] hover:bg-[#3f3f46] border border-[#27272a] text-white px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors shadow-xs">
+                    <Download size={13} /> Export
+                  </button>
+                  <button
+                    onClick={handleReturnToPlayground}
+                    title="Close Studio (Esc)"
+                    className="flex items-center gap-1.5 bg-rose-500/15 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 px-2.5 py-1 rounded text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+                  >
+                    <X size={13} />
+                    <span>Close Studio</span>
+                  </button>
+                </div>
+              </div>
+            )}
             {selectedFile === null ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#09090b] text-[#f4f4f5] border border-[#27272a] rounded-xl my-auto">
                 <div className="p-4 rounded-2xl bg-[#18181b] border border-[#27272a] shadow-xl text-indigo-400 mb-5 relative">
@@ -5382,9 +6069,16 @@ export default function ExtractedVisionUI() {
                 <p className="text-xs text-rose-400 max-w-md mb-4 leading-relaxed">
                   Your active role (<span className="font-bold uppercase underline">{userRole}</span>) is restricted from viewing this resource under the workspace security policy. This violation attempt has been logged.
                 </p>
-                <div className="text-xs text-zinc-400 bg-zinc-950 px-4 py-2.5 rounded-lg border border-zinc-800 font-mono shadow-xs">
+                <div className="text-xs text-zinc-400 bg-zinc-950 px-4 py-2.5 rounded-lg border border-zinc-800 font-mono shadow-xs mb-4">
                   🛡️ Check the <span className="text-indigo-400 font-semibold">&quot;Access &amp; Security Audit&quot;</span> console tab below for violation logs with red pulsing indicators.
                 </div>
+                <button
+                  onClick={handleReturnToPlayground}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                >
+                  <ArrowLeft size={13} />
+                  <span>Return to Workspace Files</span>
+                </button>
               </div>
             ) : selectedFile === '__HITL_HUB__' ? (
               <HitlReviewDashboard
@@ -5499,7 +6193,7 @@ export default function ExtractedVisionUI() {
               </div>
             ) : selectedFile === '__EXTENSIONS_STUDIO__' ? (
               <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
-                <ExtensionsManagerStudio />
+                <ExtensionsManagerStudio onExecuteCommand={handleExecuteCommand} />
               </div>
             ) : selectedFile === '__MODELS_CATALOG__' ? (
               <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950 p-3">
@@ -5551,6 +6245,7 @@ export default function ExtractedVisionUI() {
                   currentFile={diffTargetFile || 'components/Playground.tsx'}
                   onOpenFile={handleJumpToLocation}
                   onUpdateWorkspace={handleBatchApplyFiles}
+                  onCloneRepo={() => setIsCloneRepoModalOpen(true)}
                 />
               </div>
             ) : selectedFile === '__MERGE_RESOLVER__' ? (
@@ -5591,6 +6286,198 @@ export default function ExtractedVisionUI() {
                   onOpenFile={handleJumpToLocation}
                 />
               </div>
+            ) : selectedFile === '__TOOLJET_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0a0f]">
+                <ToolJetStudioPanel
+                  onOpenFile={handleJumpToLocation}
+                  workspaceFiles={parsedFiles}
+                />
+              </div>
+            ) : selectedFile === '__AUTOGPT_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0a0f]">
+                <AutoGptStudioPanel
+                  onOpenFile={handleJumpToLocation}
+                  onUpdateFile={handleUpdateFile}
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                />
+              </div>
+            ) : selectedFile === '__INDIC_NLP_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0a0f]">
+                <IndicNlpStudioPanel
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__CANDLE_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0a0f]">
+                <CandleStudioPanel
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__NANOGPT_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+                <SubjectCreationHub />
+              </div>
+            ) : selectedFile === '__AIDER_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#090d16]">
+                <AiderPairProgrammerStudio
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onApplyFiles={handleBatchApplyFiles}
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__TRANSFORMERS_JS_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <TransformersJsStudioModal
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__OUTLINES_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d16]">
+                <OutlinesStructuredStudio
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__LLAMACPP_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <LlamaCppStudioModal
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__RIPGREP_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <RipgrepStudioModal
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                  onApplyFiles={handleBatchApplyFiles}
+                />
+              </div>
+            ) : selectedFile === '__ASTGREP_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <AstGrepStudioModal
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                  onApplyFiles={handleBatchApplyFiles}
+                />
+              </div>
+            ) : selectedFile === '__LANCEDB_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <LanceDbStudioModal
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__CHONKIE_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <ChonkieStudioModal
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                  onOpenLanceDb={() => handleSelectFile('__LANCEDB_STUDIO__')}
+                />
+              </div>
+            ) : selectedFile === '__TABBY_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <TabbyStudioModal
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                />
+              </div>
+            ) : selectedFile === '__UNIVERSAL_MODES__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <UniversalModeSwitcherModal
+                  activeFile={selectedFile || 'components/Playground.tsx'}
+                  onOpenFile={handleJumpToLocation}
+                  onApplyContent={(content, filename) => {
+                    if (filename) {
+                      handleBatchApplyFiles({ [filename]: content });
+                      handleSelectFile(filename);
+                    }
+                  }}
+                />
+              </div>
+            ) : selectedFile === '__NOVEL_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <NovelCreativeEditor
+                  filename="creative_studio_doc.md"
+                  onSave={(savedContent) => {
+                    const docName = `creative_draft_${Date.now()}.md`;
+                    handleBatchApplyFiles({ [docName]: savedContent });
+                    handleSelectFile(docName);
+                  }}
+                />
+              </div>
+            ) : selectedFile === '__DOCKVIEW_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <DockviewLayoutStudio
+                  onApplyPreset={(preset) => {
+                    setIsLeftPanelOpen(preset.panels.sidebarLeft);
+                    setIsSidebarOpen(preset.panels.sidebarRight);
+                    setIsBottomPanelOpen(preset.panels.bottomPanel);
+                    if (preset.id === 'zen-focus') {
+                      setIsZenMode(true);
+                    } else {
+                      setIsZenMode(false);
+                    }
+                    if (preset.panels.activePrimary === 'novel') {
+                      handleSelectFile('__NOVEL_STUDIO__');
+                    } else if (preset.panels.activePrimary === 'research') {
+                      handleSelectFile('__UNIVERSAL_MODES__');
+                    }
+                  }}
+                />
+              </div>
+            ) : selectedFile === '__MAGIC_UI_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <MagicUiStudioModal
+                  onClose={() => handleSelectFile('components/Playground.tsx')}
+                />
+              </div>
+            ) : selectedFile === '__CURSOR_UI_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800 bg-[#0a0d14]">
+                <CursorModernUiStudioModal
+                  onClose={() => handleSelectFile('components/Playground.tsx')}
+                />
+              </div>
+            ) : selectedFile === '__NANO_BANANA_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-amber-500/30 bg-[#0a0d14]">
+                <NanoBananaStudioModal
+                  isOpen={true}
+                  onClose={() => handleSelectFile('components/Playground.tsx')}
+                  onInsertIntoEditor={(snippet) => {
+                    const targetFile = 'prompts_scratchpad.txt';
+                    const existing = parsedFiles[targetFile] || '';
+                    handleBatchApplyFiles({ [targetFile]: existing ? existing + '\n\n' + snippet : snippet });
+                    handleSelectFile(targetFile);
+                  }}
+                  onSendToChat={(promptText) => {
+                    setPrompt(promptText);
+                    setIsSidebarOpen(true);
+                  }}
+                />
+              </div>
+            ) : selectedFile === '__SUPERPOWERS_STUDIO__' ? (
+              <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-indigo-500/30 bg-[#0a0a0f]">
+                <SuperpowersStudioPanel
+                  onOpenFile={handleJumpToLocation}
+                  onSendToChat={(promptText) => {
+                    setPrompt(promptText);
+                    setIsSidebarOpen(true);
+                    setActiveSidebarTab('chat');
+                  }}
+                  workspaceFiles={parsedFiles}
+                  activeFile={selectedFile && !selectedFile.startsWith('__') ? selectedFile : 'components/Playground.tsx'}
+                />
+              </div>
             ) : selectedFile === '__SCAFFOLDER_HUB__' ? (
               <div className="flex-1 flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-slate-800">
                 <ScaffolderDashboard
@@ -5609,6 +6496,26 @@ export default function ExtractedVisionUI() {
               </div>
             ) : (selectedFile?.endsWith('.exe') || selectedFile === 'OfflineAIStudio-Setup-1.0.0.exe') ? (
               <div className="flex-1 flex flex-col rounded-xl overflow-y-auto border border-zinc-800 bg-[#0c0c0e] p-6 text-white justify-between">
+                {/* Top Nav Return & Close Bar */}
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-zinc-800 max-w-2xl mx-auto w-full">
+                  <button
+                    onClick={handleReturnToPlayground}
+                    title="Return to Playground Editor (Esc)"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Back to Playground</span>
+                    <kbd className="hidden sm:inline-block px-1 py-0.2 bg-indigo-800 rounded text-[9px] font-mono">Esc</kbd>
+                  </button>
+                  <button
+                    onClick={handleReturnToPlayground}
+                    title="Close Installer View (Esc)"
+                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <X size={13} />
+                    <span>Close</span>
+                  </button>
+                </div>
                 <div className="space-y-6 max-w-2xl mx-auto w-full">
                   <div className="flex items-center gap-4 p-4 rounded-xl bg-zinc-900/90 border border-emerald-500/30 shadow-lg">
                     <div className="p-3.5 bg-emerald-950 rounded-xl border border-emerald-600/40 text-emerald-400 shrink-0">
@@ -5744,7 +6651,7 @@ export default function ExtractedVisionUI() {
                 </div>
               </div>
             ) : workbenchLayout.panes.length > 1 ? (
-              <div className="flex-1 w-full rounded-xl overflow-hidden border border-[#27272a] bg-slate-950 flex flex-col min-h-[380px] relative">
+              <div className="flex-1 w-full overflow-hidden bg-[#09090b] flex flex-col min-h-0 relative">
                 <MultiPaneEditorGrid
                   parsedFiles={parsedFiles}
                   onFileChange={(filePath, content) => {
@@ -5756,10 +6663,10 @@ export default function ExtractedVisionUI() {
                 />
               </div>
             ) : (
-              <div className="flex-1 flex flex-col gap-2 min-h-0">
+              <div className="flex-1 flex flex-col min-h-0">
                 {/* Real-Time Hallucination Alert Banner (if any flagged symbols) */}
                 {activeAuditData?.hallucinatedSymbols && activeAuditData.hallucinatedSymbols.length > 0 && (
-                  <div className="bg-amber-950/80 border border-amber-800 text-amber-200 px-3.5 py-2.5 rounded-xl flex items-center justify-between text-xs shrink-0 shadow-sm">
+                  <div className="bg-amber-950/80 border-b border-amber-800 text-amber-200 px-3.5 py-2 flex items-center justify-between text-xs shrink-0 shadow-sm">
                     <div className="flex items-center gap-2">
                       <AlertTriangle size={16} className="text-amber-400 shrink-0" />
                       <div>
@@ -5788,7 +6695,7 @@ export default function ExtractedVisionUI() {
                 )}
 
                 {/* Full-featured Monaco Code Editor with Live Hallucination Wavy Underlines & Tooltips */}
-                <div className="flex-1 w-full rounded-xl overflow-hidden border border-[#27272a] bg-slate-950 flex flex-col min-h-[380px] relative">
+                <div className="flex-1 w-full overflow-hidden bg-[#09090b] flex flex-col min-h-0 relative">
                   {/* Floating Selection Gutter Actions */}
                   {selectedText && selectedText.trim().length > 0 && (
                     <div 
@@ -5852,17 +6759,6 @@ export default function ExtractedVisionUI() {
                     </div>
                   )}
 
-                  {/* Breadcrumbs Symbol & Path Navigation Bar */}
-                  {selectedFile && !selectedFile.startsWith('__') && (
-                    <BreadcrumbsBar
-                      currentFilePath={selectedFile}
-                      cursorLine={activeCursorLine}
-                      workspaceFiles={parsedFiles}
-                      onSelectFile={handleSelectFile}
-                      onJumpToLine={handleJumpToLine}
-                    />
-                  )}
-
                   <div className="flex-1 w-full relative min-h-0 flex flex-row overflow-hidden">
                     <div className={`h-full transition-all ${isLivePreviewOpen ? 'w-1/2 border-r border-slate-800' : 'w-full'}`}>
                       <MonacoEditor
@@ -5884,6 +6780,7 @@ export default function ExtractedVisionUI() {
                         options={{
                           fontSize: 13,
                           fontFamily: 'JetBrains Mono, Fira Code, Menlo, Monaco, monospace',
+                          fontLigatures: true,
                           minimap: { enabled: !isLivePreviewOpen },
                           scrollBeyondLastLine: false,
                           lineNumbers: 'on',
@@ -5892,6 +6789,9 @@ export default function ExtractedVisionUI() {
                           tabSize: 2,
                           smoothScrolling: true,
                           cursorBlinking: 'smooth',
+                          cursorSmoothCaretAnimation: 'on',
+                          bracketPairColorization: { enabled: true },
+                          guides: { bracketPairs: true, indentation: true },
                           contextmenu: true,
                           inlineSuggest: { enabled: ghostTextEnabled, mode: 'subwordSmart' },
                           inlayHints: { enabled: inlayHintsEnabled ? 'on' : 'off' },
@@ -6355,7 +7255,7 @@ export default function ExtractedVisionUI() {
                             </div>
                           )}
 
-                           <div className="flex-1 overflow-y-auto p-4 space-y-5 bg-zinc-950 custom-scrollbar select-text">
+                           <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-5 bg-zinc-950 custom-scrollbar select-text">
                               {chatMessages.map((msg, i) => (
                                   <div key={i} className={`p-4 rounded-2xl text-sm leading-relaxed chat-selectable select-text cursor-text ${msg.role === 'user' ? 'bg-indigo-600/10 border border-indigo-500/20 text-indigo-50 self-end ml-8 shadow-sm' : 'bg-zinc-900/40 border border-zinc-800/60 shadow-md text-zinc-200 mr-8'}`}>
                                       {/* Message Header with Role and 1-Click Copy Message button */}
@@ -6627,7 +7527,7 @@ export default function ExtractedVisionUI() {
                                 </button>
                               </div>
 
-                              <div className="flex gap-2 items-end">
+                              <div className="flex flex-col rounded-2xl bg-[#141417]/95 border border-zinc-800/90 shadow-xl shadow-black/40 focus-within:border-indigo-500/70 focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all p-2 gap-1.5">
                                   <input
                                     type="file"
                                     ref={chatFileInputRef}
@@ -6643,53 +7543,26 @@ export default function ExtractedVisionUI() {
                                       }
                                     }}
                                   />
-                                  <button
-                                    onClick={() => chatFileInputRef.current?.click()}
-                                    className="p-2.5 text-zinc-400 hover:text-purple-400 border border-[#27272a] hover:border-purple-500 rounded-xl bg-[#18181b] hover:bg-purple-950/40 transition-colors shrink-0 cursor-pointer mb-0.5"
-                                    title="📸 Attach Drag & Drop Wireframe or Screenshot"
-                                  >
-                                    <Camera size={16} />
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsChatMentionOpen(prev => !prev)}
-                                    className={`p-2.5 rounded-xl border transition-all shrink-0 cursor-pointer mb-0.5 flex items-center gap-1 text-xs font-mono ${
-                                      chatContextChips.length > 0
-                                        ? 'bg-indigo-950/90 border-indigo-500 text-indigo-300 shadow-md shadow-indigo-950/60'
-                                        : 'bg-[#18181b] border-[#27272a] text-zinc-400 hover:text-indigo-300 hover:border-indigo-500'
-                                    }`}
-                                    title="Attach Project Context (@file, @folder, @symbol, @git, @terminal, @problems)"
-                                  >
-                                    <span className="font-bold text-sm">@</span>
-                                    {chatContextChips.length > 0 && (
-                                      <span className="bg-indigo-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-sans font-bold">
-                                        {chatContextChips.length}
-                                      </span>
-                                    )}
-                                  </button>
-
-                                  <textarea 
+                                  <textarea
                                     id="ai-chat-prompt-input"
-                                    value={prompt} 
+                                    value={prompt}
                                     onChange={handlePromptChange}
                                     rows={1}
                                     onPaste={e => {
                                       const clipboardData = e.clipboardData;
                                       if (!clipboardData) return;
-                                      
                                       const items = clipboardData.items;
                                       let imageFound = false;
                                       if (items) {
                                         for (let i = 0; i < items.length; i++) {
-                                          if (items[i].type.startsWith('image/')) {
+                                          if (items[i].type.startsWith("image/")) {
                                             const file = items[i].getAsFile();
                                             if (file) {
                                               imageFound = true;
                                               e.preventDefault();
                                               const reader = new FileReader();
                                               reader.onload = () => {
-                                                if (typeof reader.result === 'string') setAttachedChatImage(reader.result);
+                                                if (typeof reader.result === "string") setAttachedChatImage(reader.result);
                                               };
                                               reader.readAsDataURL(file);
                                               break;
@@ -6697,46 +7570,74 @@ export default function ExtractedVisionUI() {
                                           }
                                         }
                                       }
-                                      // If text/code is pasted, allow standard paste so characters render with high-contrast text color
                                     }}
                                     onKeyDown={e => {
-                                      if (e.key === 'Enter' && !e.shiftKey && !isStreaming && (prompt.trim() || attachedChatImage) && !showMentionMenu && !isChatMentionOpen) {
+                                      if (e.key === "Enter" && !e.shiftKey && !isStreaming && (prompt.trim() || attachedChatImage) && !showMentionMenu && !isChatMentionOpen) {
                                         e.preventDefault();
                                         if (attachedChatImage) {
                                           handleSendVisionChatMessage(prompt, attachedChatImage);
                                         } else {
                                           runPipeline(prompt, true);
                                         }
-                                        setPrompt('');
+                                        setPrompt("");
                                       }
                                     }}
                                     disabled={isStreaming}
-                                    className="flex-1 bg-[#18181b] border border-[#27272a] text-zinc-100 placeholder-zinc-500 p-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-zinc-900 disabled:text-zinc-600 transition-colors shadow-inner resize-none min-h-[42px] max-h-36 overflow-y-auto leading-relaxed custom-scrollbar" 
+                                    className="w-full bg-transparent border-0 text-zinc-100 placeholder-zinc-500 px-2 py-1 text-sm focus:outline-none focus:ring-0 disabled:text-zinc-600 transition-colors resize-none min-h-[42px] max-h-36 overflow-y-auto leading-relaxed custom-scrollbar"
                                     placeholder={isStreaming ? "AI is generating..." : "Ask AI, paste code snippet, or type @..."}
                                   />
-                                  {isStreaming ? (
-                                    <button 
-                                      onClick={stopGeneration} 
-                                      className="bg-rose-600 hover:bg-rose-700 transition-colors text-white px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm animate-pulse shrink-0 cursor-pointer mb-0.5"
-                                    >
-                                      <Square size={13} fill="currentColor" /> Stop
-                                    </button>
-                                  ) : (
-                                    <button 
-                                      onClick={() => {
-                                        if (!prompt.trim() && !attachedChatImage) return;
-                                        if (attachedChatImage) {
-                                          handleSendVisionChatMessage(prompt, attachedChatImage);
-                                        } else {
-                                          runPipeline(prompt, true);
-                                        }
-                                        setPrompt('');
-                                      }} 
-                                      className="bg-purple-600 hover:bg-purple-700 transition-colors text-white p-2.5 rounded-xl shrink-0 shadow-sm cursor-pointer mb-0.5 hover:scale-105 active:scale-95"
-                                    >
-                                      <Send size={16}/>
-                                    </button>
-                                  )}
+                                  <div className="flex items-center justify-between pt-1 border-t border-zinc-800/40 px-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        onClick={() => chatFileInputRef.current?.click()}
+                                        className="p-1.5 text-zinc-400 hover:text-purple-300 rounded-lg hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                                        title="Attach Drag & Drop Wireframe or Screenshot"
+                                      >
+                                        <Camera size={15} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setIsChatMentionOpen(prev => !prev)}
+                                        className={`px-2 py-1 rounded-lg border transition-all cursor-pointer flex items-center gap-1 text-xs font-mono ${chatContextChips.length > 0 ? "bg-indigo-950/90 border-indigo-500 text-indigo-300 shadow-sm" : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-indigo-300 hover:border-indigo-500/60"}`}
+                                        title="Attach Project Context (@file, @folder, @symbol, @git, @terminal, @problems)"
+                                      >
+                                        <span className="font-bold text-xs">@</span>
+                                        <span className="text-[10px] text-zinc-400 hidden sm:inline">Context</span>
+                                        {chatContextChips.length > 0 && (
+                                          <span className="bg-indigo-600 text-white text-[10px] px-1.5 rounded-full font-sans font-bold">
+                                            {chatContextChips.length}
+                                          </span>
+                                        )}
+                                      </button>
+                                    </div>
+                                    <div>
+                                      {isStreaming ? (
+                                        <button
+                                          onClick={stopGeneration}
+                                          className="bg-rose-600 hover:bg-rose-700 transition-colors text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm animate-pulse cursor-pointer"
+                                        >
+                                          <Square size={12} fill="currentColor" /> Stop
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => {
+                                            if (!prompt.trim() && !attachedChatImage) return;
+                                            if (attachedChatImage) {
+                                              handleSendVisionChatMessage(prompt, attachedChatImage);
+                                            } else {
+                                              runPipeline(prompt, true);
+                                            }
+                                            setPrompt("");
+                                          }}
+                                          disabled={!prompt.trim() && !attachedChatImage}
+                                          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:hover:bg-indigo-600 transition-all text-white p-2 rounded-xl shadow-md shadow-indigo-600/30 cursor-pointer hover:scale-105 active:scale-95"
+                                          title="Send prompt (Enter)"
+                                        >
+                                          <Send size={14}/>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
                               </div>
                           </div>
                         </div>
@@ -6744,7 +7645,7 @@ export default function ExtractedVisionUI() {
 
                     {activeSidebarTab === 'extensions' && (
                       <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-[#0a0a0c]">
-                        <ExtensionsManagerStudio />
+                        <ExtensionsManagerStudio onExecuteCommand={handleExecuteCommand} />
                       </div>
                     )}
 
@@ -6819,6 +7720,7 @@ export default function ExtractedVisionUI() {
                           currentFile={selectedFile || 'components/Playground.tsx'}
                           onOpenFile={handleJumpToLocation}
                           onUpdateWorkspace={handleBatchApplyFiles}
+                          onCloneRepo={() => setIsCloneRepoModalOpen(true)}
                         />
                       </div>
                     )}
@@ -6982,6 +7884,105 @@ export default function ExtractedVisionUI() {
           />
         }
       />
+
+      {/* VS Code / Cursor Luxury Global Bottom Status Bar */}
+      <footer 
+        id="ide-global-status-bar" 
+        className={`bg-[#0d0d10] border-t border-zinc-800/80 px-3 flex items-center justify-between text-[11px] font-sans text-zinc-400 select-none shrink-0 z-30 transition-all duration-200 ${
+          isZenMode ? 'h-0 min-h-0 max-h-0 opacity-0 overflow-hidden border-t-0 pointer-events-none' : 'h-6 min-h-[24px] max-h-[24px] opacity-100'
+        }`}
+      >
+        {/* Left: Git Branch, Sync Status, Problems Count, Terminal Toggle */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveSidebarTab('git')}
+            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer text-zinc-300 font-mono"
+            title={`Active Git Branch: ${gitBranch}. Click to open Git panel.`}
+          >
+            <GitBranch size={11} className="text-indigo-400" />
+            <span>{gitBranch}</span>
+            {gitSyncCount.ahead > 0 && <span className="text-[10px] text-emerald-400 font-bold">↑{gitSyncCount.ahead}</span>}
+            {gitSyncCount.behind > 0 && <span className="text-[10px] text-amber-400 font-bold">↓{gitSyncCount.behind}</span>}
+          </button>
+
+          <span className="text-zinc-700">|</span>
+
+          <button
+            onClick={() => {
+              setIsBottomPanelOpen(true);
+            }}
+            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
+            title="Toggle LSP Problems & Diagnostics"
+          >
+            <ShieldAlert size={11} className={lspWorkerHub.getAllProblems().length > 0 ? 'text-amber-400' : 'text-zinc-500'} />
+            <span className="font-mono">{lspWorkerHub.getAllProblems().length}</span>
+            <span className="text-[10px] text-zinc-500 hidden sm:inline">problems</span>
+          </button>
+
+          <span className="text-zinc-700">|</span>
+
+          <button
+            onClick={() => setIsBottomPanelOpen(prev => !prev)}
+            className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
+            title="Toggle Bottom Terminal Tray (Ctrl+`)"
+          >
+            <Terminal size={11} className={isBottomPanelOpen ? 'text-indigo-400' : 'text-zinc-500'} />
+            <span>Terminal</span>
+          </button>
+        </div>
+
+        {/* Center: Offline AI Model Indicator Pill */}
+        <div className="hidden md:flex items-center gap-2">
+          <div 
+            onClick={() => handleSelectFile('__MODELS_CATALOG__')}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-900/90 border border-zinc-800 text-[10px] text-zinc-300 hover:text-indigo-200 hover:border-indigo-500/50 transition-colors cursor-pointer font-mono shadow-xs"
+            title="Active Local AI Engine — Click to browse models store"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{activeOllamaModel || 'Offline AI'}</span>
+          </div>
+        </div>
+
+        {/* Right: Line/Col, Spacing, UTF-8, Language Mode, Air-Gapped Badge */}
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[10.5px] text-zinc-400">
+            Ln {activeCursorLine}, Col 1
+          </span>
+
+          <span className="text-zinc-700 hidden sm:inline">|</span>
+
+          <span className="text-zinc-400 hidden sm:inline font-mono text-[10.5px]">
+            Spaces: 2
+          </span>
+
+          <span className="text-zinc-700 hidden sm:inline">|</span>
+
+          <span className="text-zinc-400 hidden sm:inline font-mono text-[10.5px]">
+            UTF-8
+          </span>
+
+          <span className="text-zinc-700 hidden sm:inline">|</span>
+
+          <button
+            onClick={() => setIsThemePickerOpen(true)}
+            className="flex items-center gap-1 hover:text-white transition-colors cursor-pointer font-mono text-[10.5px]"
+            title="Language Mode & Color Themes"
+          >
+            <Code2 size={11} className="text-indigo-400" />
+            <span>{editorLanguage}</span>
+          </button>
+
+          <span className="text-zinc-700">|</span>
+
+          <div 
+            className="flex items-center gap-1 text-[10px] text-emerald-400 font-semibold cursor-default"
+            title="100% Offline Air-Gapped Development Environment"
+          >
+            <ShieldCheck size={11} className="text-emerald-400" />
+            <span className="hidden xl:inline">Air-Gapped</span>
+          </div>
+        </div>
+      </footer>
 
       {/* HITL Tool Approval Modal */}
       {pendingToolCall && (
@@ -7150,6 +8151,13 @@ export default function ExtractedVisionUI() {
         onClose={() => setIsOnlineAiHubOpen(false)}
       />
 
+      {/* Clone Git Repository Modal */}
+      <CloneRepositoryModal
+        isOpen={isCloneRepoModalOpen}
+        onClose={() => setIsCloneRepoModalOpen(false)}
+        onApplyClonedRepo={handleApplyClonedRepo}
+      />
+
       {/* Universal AI Project Scaffolder & Multi-File Generator */}
       <OnlineProjectScaffolderModal
         isOpen={isOnlineProjectModalOpen}
@@ -7181,12 +8189,19 @@ export default function ExtractedVisionUI() {
       />
 
       {/* Local Voice-to-Code Whisper Floating Overlay */}
-      <VoiceToCodeOverlay
-        onInsertToEditor={handleInsertVoiceToEditor}
-        onSendToComposer={handleSendVoiceToComposer}
-        onSendToAgent={handleSendVoiceToAgent}
-        onClose={() => setIsVoiceOverlayOpen(false)}
-      />
+      {isVoiceOverlayOpen && (
+        <VoiceToCodeOverlay
+          isOpen={isVoiceOverlayOpen}
+          onInsertToEditor={handleInsertVoiceToEditor}
+          onSendToComposer={handleSendVoiceToComposer}
+          onSendToAgent={handleSendVoiceToAgent}
+          onClose={() => {
+            setIsVoiceOverlayOpen(false);
+            setIsVoiceRecording(false);
+            localWhisperEngine.cancelRecording();
+          }}
+        />
+      )}
 
       {/* Built-in Database Studio Modal */}
       <DatabaseStudioModal
@@ -7210,6 +8225,14 @@ export default function ExtractedVisionUI() {
         isOpen={isDockerSandboxOpen}
         onClose={() => setIsDockerSandboxOpen(false)}
         workspaceFiles={Object.entries(parsedFiles).map(([path, content]) => ({ path, content }))}
+      />
+
+      {/* nanoGPT Subject Model Studio Modal */}
+      <NanoGptStudioModal
+        isOpen={isNanoGptModalOpen}
+        onClose={() => setIsNanoGptModalOpen(false)}
+        initialSubjectId="sub-1"
+        initialSubjectName="Quantum Physics & Mechanics"
       />
 
       {/* LAN Pair Programming — zero-cloud P2P collaboration */}
@@ -7486,6 +8509,9 @@ export default function ExtractedVisionUI() {
       {(isResizingLeft || isResizingRight) && (
         <div className="fixed inset-0 z-50 cursor-col-resize select-none bg-transparent" />
       )}
+
+      {/* Global Sonner Stacked Toast Notification Host */}
+      <SonnerToastHost />
 
       <style jsx global>{`
         .hallucination-wavy-underline {

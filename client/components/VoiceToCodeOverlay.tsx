@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
   MicOff,
@@ -12,7 +12,8 @@ import {
   Bot,
   MessageSquare,
   Check,
-  X
+  X,
+  GripHorizontal
 } from 'lucide-react';
 import {
   localWhisperEngine,
@@ -21,6 +22,7 @@ import {
 } from '@/lib/ai/localWhisperEngine';
 
 interface VoiceToCodeOverlayProps {
+  isOpen?: boolean;
   onInsertToEditor?: (text: string) => void;
   onSendToComposer?: (text: string) => void;
   onSendToAgent?: (text: string) => void;
@@ -28,12 +30,19 @@ interface VoiceToCodeOverlayProps {
 }
 
 export default function VoiceToCodeOverlay({
+  isOpen = true,
   onInsertToEditor,
   onSendToComposer,
   onSendToAgent,
   onClose
 }: VoiceToCodeOverlayProps) {
   const [whisperState, setWhisperState] = useState<WhisperEngineState>(localWhisperEngine.getState());
+  
+  // Draggable positioning state
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const unsub = localWhisperEngine.subscribe((s) => {
@@ -42,6 +51,69 @@ export default function VoiceToCodeOverlay({
     return unsub;
   }, []);
 
+  // Global ESC key and F8 listener to close
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' || e.key === 'F8') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleCancel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [onClose]);
+
+  // Mouse move and up handlers for dragging
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setPosition({
+        x: Math.max(20, Math.min(window.innerWidth - 540, dragRef.current.initialX + dx)),
+        y: Math.max(20, Math.min(window.innerHeight - 300, dragRef.current.initialY + dy))
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      dragRef.current = null;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only drag from header handle
+    if ((e.target as HTMLElement).closest('button')) return;
+    
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialX: position ? position.x : rect.left,
+      initialY: position ? position.y : rect.top
+    };
+    setIsDragging(true);
+  };
+
+  // If explicitly closed or inactive without recording/transcript
+  if (!isOpen) {
+    return null;
+  }
+
   if (!whisperState.isRecording && !whisperState.isTranscribing && !whisperState.transcript) {
     return null;
   }
@@ -49,7 +121,7 @@ export default function VoiceToCodeOverlay({
   const handleStopAndDispatch = async () => {
     const finalTranscript = await localWhisperEngine.stopRecording();
     if (!finalTranscript) {
-      if (onClose) onClose();
+      handleCancel();
       return;
     }
 
@@ -61,27 +133,38 @@ export default function VoiceToCodeOverlay({
       onSendToAgent(finalTranscript);
     }
 
+    localWhisperEngine.cancelRecording();
     if (onClose) onClose();
   };
 
-  const handleCancel = async () => {
-    await localWhisperEngine.stopRecording();
+  const handleCancel = () => {
+    localWhisperEngine.cancelRecording();
     if (onClose) onClose();
   };
 
   const currentDisplay = whisperState.transcript + (whisperState.interimTranscript ? ' ' + whisperState.interimTranscript : '');
 
+  const dynamicStyle: React.CSSProperties = position
+    ? { position: 'fixed', left: `${position.x}px`, top: `${position.y}px`, zIndex: 9999 }
+    : { position: 'fixed', bottom: '60px', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 };
+
   return (
-    <div className="fixed bottom-14 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-200">
-      <div className="bg-slate-900/95 border border-indigo-500/50 rounded-2xl shadow-2xl shadow-indigo-500/20 backdrop-blur-xl p-4 w-[520px] flex flex-col gap-3 text-white">
-        
-        {/* Top Status & Controls */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            {/* Pulsing Mic Indicator */}
+    <div style={dynamicStyle} className="animate-in slide-in-from-bottom-5 duration-200">
+      <div 
+        ref={cardRef}
+        className="bg-slate-900/98 border border-indigo-500/60 rounded-2xl shadow-2xl shadow-black/80 backdrop-blur-2xl p-4 w-[520px] flex flex-col gap-3 text-white ring-1 ring-white/10"
+      >
+        {/* Drag Handle & Top Controls */}
+        <div 
+          onMouseDown={handleMouseDown}
+          className="flex items-center justify-between pb-1 border-b border-slate-800/80 cursor-grab active:cursor-grabbing select-none"
+          title="Drag to move this window anywhere"
+        >
+          <div className="flex items-center gap-2">
+            <GripHorizontal size={14} className="text-slate-500" />
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/30">
-                <Mic className="w-4 h-4 text-white animate-pulse" />
+              <div className="w-7 h-7 rounded-full bg-rose-600 flex items-center justify-center shadow-lg shadow-rose-600/30">
+                <Mic className="w-3.5 h-3.5 text-white animate-pulse" />
               </div>
               {whisperState.isRecording && (
                 <span className="absolute -inset-1 rounded-full border-2 border-rose-500/60 animate-ping" />
@@ -94,7 +177,7 @@ export default function VoiceToCodeOverlay({
                   {whisperState.isRecording ? 'Listening (Speak Now)...' : 'Processing Voice...'}
                 </span>
                 <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded font-mono">
-                  F8 to toggle
+                  F8 / Esc
                 </span>
               </div>
               <div className="flex items-center gap-1 text-[10px] text-emerald-400">
@@ -104,61 +187,76 @@ export default function VoiceToCodeOverlay({
             </div>
           </div>
 
-          {/* Target Destination Selector */}
-          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px]">
-            <button
-              onClick={() => localWhisperEngine.setTargetDestination('editor')}
-              className={`px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all ${
-                whisperState.targetDestination === 'editor'
-                  ? 'bg-indigo-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Insert transcription into active Monaco editor cursor"
-            >
-              <Code2 size={11} />
-              <span>Cursor</span>
-            </button>
+          <div className="flex items-center gap-2">
+            {/* Target Destination Selector */}
+            <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px]">
+              <button
+                onClick={(e) => { e.stopPropagation(); localWhisperEngine.setTargetDestination('editor'); }}
+                className={`px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all ${
+                  whisperState.targetDestination === 'editor'
+                    ? 'bg-indigo-600 text-white font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Insert transcription into active Monaco editor cursor"
+              >
+                <Code2 size={11} />
+                <span>Cursor</span>
+              </button>
 
-            <button
-              onClick={() => localWhisperEngine.setTargetDestination('composer')}
-              className={`px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all ${
-                whisperState.targetDestination === 'composer'
-                  ? 'bg-indigo-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Send speech as prompt to Multi-File Composer"
-            >
-              <MessageSquare size={11} />
-              <span>Composer</span>
-            </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); localWhisperEngine.setTargetDestination('composer'); }}
+                className={`px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all ${
+                  whisperState.targetDestination === 'composer'
+                    ? 'bg-indigo-600 text-white font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Send speech as prompt to Multi-File Composer"
+              >
+                <MessageSquare size={11} />
+                <span>Composer</span>
+              </button>
 
+              <button
+                onClick={(e) => { e.stopPropagation(); localWhisperEngine.setTargetDestination('agent'); }}
+                className={`px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all ${
+                  whisperState.targetDestination === 'agent'
+                    ? 'bg-indigo-600 text-white font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Send speech as goal to Autonomous Agent"
+              >
+                <Bot size={11} />
+                <span>Agent</span>
+              </button>
+            </div>
+
+            {/* Prominent Close X Button */}
             <button
-              onClick={() => localWhisperEngine.setTargetDestination('agent')}
-              className={`px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all ${
-                whisperState.targetDestination === 'agent'
-                  ? 'bg-indigo-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Send speech as goal to Autonomous Agent"
+              onClick={(e) => { e.stopPropagation(); handleCancel(); }}
+              title="Close window (Esc)"
+              className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
             >
-              <Bot size={11} />
-              <span>Agent</span>
+              <X size={16} />
             </button>
           </div>
         </div>
 
         {/* Live Audio Waveform Bars */}
         <div className="h-7 bg-slate-950/80 rounded-xl px-3 flex items-center justify-between gap-1.5 border border-slate-800/80 overflow-hidden">
-          {whisperState.waveformData.map((val, idx) => (
-            <div
-              key={idx}
-              className="flex-1 bg-gradient-to-t from-indigo-600 to-pink-500 rounded-full transition-all duration-75"
-              style={{
-                height: `${Math.max(4, Math.min(100, val))}%`,
-                opacity: val > 5 ? 1 : 0.25
-              }}
-            />
-          ))}
+          {whisperState.waveformData.length > 0 ? (
+            whisperState.waveformData.map((val, idx) => (
+              <div
+                key={idx}
+                className="flex-1 bg-gradient-to-t from-indigo-600 to-pink-500 rounded-full transition-all duration-75"
+                style={{
+                  height: `${Math.max(4, Math.min(100, val))}%`,
+                  opacity: val > 5 ? 1 : 0.25
+                }}
+              />
+            ))
+          ) : (
+            <div className="w-full text-center text-[10px] text-slate-500 font-mono">Microphone ready • Speak naturally</div>
+          )}
         </div>
 
         {/* Live Transcription Speech Bubble */}
@@ -190,17 +288,17 @@ export default function VoiceToCodeOverlay({
         <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
           <button
             onClick={handleCancel}
-            className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer"
+            className="px-3 py-1.5 text-xs text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer font-medium"
           >
-            <X size={13} />
+            <X size={14} />
             <span>Cancel</span>
           </button>
 
           <button
             onClick={handleStopAndDispatch}
-            className="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:opacity-90 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:opacity-90 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
           >
-            <Check size={13} />
+            <Check size={14} />
             <span>Done (Insert / Execute)</span>
           </button>
         </div>

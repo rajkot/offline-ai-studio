@@ -22,6 +22,30 @@
     "directories": {
       "output": "../public/release"
     },
+    "afterPack": "./afterPack.js",
+    "files": [
+      "main.js",
+      "preload.js",
+      "splash.html",
+      "offline.html",
+      "icon.ico",
+      "icon.png"
+    ],
+    "extraResources": [
+      {
+        "from": "../.next/standalone",
+        "to": "server",
+        "filter": [
+          "!**/*.exe",
+          "!public/release/**",
+          "!desktop-app/**"
+        ]
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/*.node"
+    ],
     "win": {
       "target": [
         "nsis",
@@ -77,4 +101,3 @@
     }
   }
 }
-

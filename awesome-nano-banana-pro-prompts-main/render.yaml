@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd website && npm ci && npm run build",
+  "startCommand": "cd website && npm start"
+}

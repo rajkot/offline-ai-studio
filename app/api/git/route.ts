@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+import fs from 'fs';
 
 const execAsync = promisify(exec);
 
@@ -14,6 +15,81 @@ export interface GitHunk {
   newLines: string[];
 }
 
+// Ignore lists for recursive file tree extraction
+const CLONE_IGNORE_DIRS = new Set([
+  '.git', 'node_modules', '.next', 'dist', 'build', '.turbo', '.cache', '.vscode', '.idea', 'cloned_repos'
+]);
+
+const CLONE_IGNORE_EXTS = new Set([
+  'exe', 'dll', 'bin', 'iso', 'zip', 'tar', 'gz', '7z', 'apk',
+  'mp4', 'mov', 'avi', 'mp3', 'wav', 'sqlite', 'db',
+  'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'woff', 'woff2', 'ttf', 'eot'
+]);
+
+function readClonedDirRecursive(
+  dirPath: string,
+  rootDir: string,
+  result: Record<string, string>,
+  maxFiles = 400,
+  depth = 0
+) {
+  if (depth > 12) return;
+  if (Object.keys(result).length >= maxFiles) return;
+  if (!fs.existsSync(dirPath)) return;
+
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (Object.keys(result).length >= maxFiles) break;
+    if (CLONE_IGNORE_DIRS.has(entry.name)) continue;
+
+    const fullPath = path.join(dirPath, entry.name);
+    const relPath = path.relative(rootDir, fullPath).replace(/\\/g, '/');
+
+    if (entry.isDirectory()) {
+      readClonedDirRecursive(fullPath, rootDir, result, maxFiles, depth + 1);
+    } else if (entry.isFile()) {
+      const ext = entry.name.split('.').pop()?.toLowerCase() || '';
+      if (CLONE_IGNORE_EXTS.has(ext)) continue;
+
+      try {
+        const stat = fs.statSync(fullPath);
+        // Only read text files under 2MB
+        if (stat.size <= 2 * 1024 * 1024) {
+          const content = fs.readFileSync(fullPath, 'utf-8');
+          result[relPath] = content;
+        }
+      } catch {}
+    }
+  }
+}
+
+// Parse git log into structured GitCommit array
+async function extractGitCommits(targetDir: string, limit = 10) {
+  try {
+    const cmd = `git -C "${targetDir}" log -n ${limit} --pretty=format:"%H|%h|%an|%ae|%at|%s"`;
+    const { stdout } = await execAsync(cmd, { maxBuffer: 5 * 1024 * 1024 });
+    const lines = stdout.trim().split('\n').filter(Boolean);
+    return lines.map((line) => {
+      const [sha, shortSha, authorName, authorEmail, ts, message] = line.split('|');
+      return {
+        sha: sha || '',
+        shortSha: shortSha || sha?.slice(0, 7) || '',
+        author: {
+          name: authorName || 'Git User',
+          email: authorEmail || 'user@git.local'
+        },
+        timestamp: ts ? parseInt(ts, 10) * 1000 : Date.now(),
+        message: message || 'commit',
+        branch: 'main',
+        parents: []
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
 // Executes git CLI command safely inside workspace directory
 async function runGit(command: string): Promise<{ stdout: string; stderr: string }> {
   const cwd = process.cwd();
@@ -24,6 +100,45 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action') || 'status';
   const filePath = searchParams.get('path');
+
+  // ACTION: List Sibling / Local Git Repositories
+  if (action === 'local-candidates') {
+    try {
+      const parentDir = path.dirname(process.cwd());
+      const candidates: Array<{ name: string; path: string; hasGit: boolean; description?: string }> = [];
+
+      if (fs.existsSync(parentDir)) {
+        const entries = fs.readdirSync(parentDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+
+          const candidatePath = path.join(parentDir, entry.name);
+          const hasGit = fs.existsSync(path.join(candidatePath, '.git'));
+          
+          let description = hasGit ? 'Local Git Repository' : 'Directory';
+          const readmePath = path.join(candidatePath, 'README.md');
+          if (fs.existsSync(readmePath)) {
+            try {
+              const firstLine = fs.readFileSync(readmePath, 'utf-8').split('\n')[0]?.replace(/^#+\s*/, '').trim();
+              if (firstLine) description = firstLine.slice(0, 80);
+            } catch {}
+          }
+
+          candidates.push({
+            name: entry.name,
+            path: candidatePath.replace(/\\/g, '/'),
+            hasGit,
+            description
+          });
+        }
+      }
+
+      return NextResponse.json({ success: true, parentDir: parentDir.replace(/\\/g, '/'), candidates });
+    } catch (err: any) {
+      return NextResponse.json({ success: false, error: err.message || 'Failed to list candidates' }, { status: 500 });
+    }
+  }
 
   // ACTION: Git Repository Status
   if (action === 'status') {
@@ -317,6 +432,101 @@ export async function POST(req: NextRequest) {
         const { stdout } = await runGit('git push origin HEAD');
         return NextResponse.json({ success: true, message: stdout.trim() });
       }
+    }
+
+    // ACTION: Clone or Import Git Repository into Workspace
+    if (action === 'clone') {
+      const { repoUrl, branch, depth = 1, targetName } = body;
+      if (!repoUrl || typeof repoUrl !== 'string' || !repoUrl.trim()) {
+        return NextResponse.json({ success: false, error: 'Repository URL or path is required' }, { status: 400 });
+      }
+
+      const rawUrl = repoUrl.trim();
+      let repoName = targetName?.trim();
+      if (!repoName) {
+        // Extract repo name from URL or path
+        const cleaned = rawUrl.replace(/\/+$/, '').replace(/\\+$/, '');
+        const base = path.basename(cleaned);
+        repoName = base.replace(/\.git$/i, '') || 'cloned-project';
+      }
+      repoName = repoName.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      // Check if rawUrl points to an existing local directory
+      const isLocalPath = fs.existsSync(rawUrl) && fs.statSync(rawUrl).isDirectory();
+
+      const files: Record<string, string> = {};
+      let resolvedDir = '';
+      let branchName = branch?.trim() || 'main';
+      let commits: any[] = [];
+
+      if (isLocalPath) {
+        resolvedDir = path.resolve(rawUrl);
+        // Direct read of local repository
+        readClonedDirRecursive(resolvedDir, resolvedDir, files, 400);
+
+        // Get genuine commit history from local git if .git exists
+        if (fs.existsSync(path.join(resolvedDir, '.git'))) {
+          try {
+            const { stdout: bOut } = await execAsync(`git -C "${resolvedDir}" rev-parse --abbrev-ref HEAD`);
+            if (bOut.trim()) branchName = bOut.trim();
+          } catch {}
+          commits = await extractGitCommits(resolvedDir, 10);
+        }
+      } else {
+        // Remote Git repository clone into internal cloned_repos directory
+        const cloneRoot = path.join(process.cwd(), 'cloned_repos');
+        if (!fs.existsSync(cloneRoot)) {
+          fs.mkdirSync(cloneRoot, { recursive: true });
+        }
+
+        resolvedDir = path.join(cloneRoot, `${repoName}_${Date.now()}`);
+
+        // Construct git clone command
+        const depthFlag = depth ? `--depth ${parseInt(String(depth), 10) || 1}` : '--depth 1';
+        const branchFlag = branch ? `-b "${branch}"` : '';
+        const cloneCmd = `git clone ${depthFlag} ${branchFlag} "${rawUrl}" "${resolvedDir}"`;
+
+        try {
+          await execAsync(cloneCmd, { timeout: 90000, maxBuffer: 15 * 1024 * 1024 });
+        } catch (cloneErr: any) {
+          return NextResponse.json({
+            success: false,
+            error: `Git clone failed: ${cloneErr.message || cloneErr.stderr || 'Network or repository error'}`
+          }, { status: 500 });
+        }
+
+        // Read cloned files
+        readClonedDirRecursive(resolvedDir, resolvedDir, files, 400);
+
+        // Read current branch
+        try {
+          const { stdout: bOut } = await execAsync(`git -C "${resolvedDir}" rev-parse --abbrev-ref HEAD`);
+          if (bOut.trim()) branchName = bOut.trim();
+        } catch {}
+
+        // Read commit log
+        commits = await extractGitCommits(resolvedDir, 10);
+      }
+
+      // Pick primary entry point
+      const fileKeys = Object.keys(files);
+      const primaryFile =
+        fileKeys.find(f => f.toLowerCase() === 'readme.md') ||
+        fileKeys.find(f => f.toLowerCase() === 'index.html') ||
+        fileKeys.find(f => f.toLowerCase() === 'package.json') ||
+        fileKeys.find(f => f.toLowerCase() === 'src/app.tsx' || f.toLowerCase() === 'src/main.tsx' || f.toLowerCase() === 'src/main.ts' || f.toLowerCase() === 'main.py') ||
+        fileKeys[0] || 'README.md';
+
+      return NextResponse.json({
+        success: true,
+        repoName,
+        targetDir: resolvedDir.replace(/\\/g, '/'),
+        branch: branchName,
+        fileCount: fileKeys.length,
+        primaryFile,
+        files,
+        commits
+      });
     }
 
     return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 });

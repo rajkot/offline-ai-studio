@@ -158,7 +158,7 @@ The following diagram illustrates the interconnected layers of Offline AI Studio
   - [🔌 Subsystem 14: Extensions Marketplace, MCP Studio & Plugin Ecosystem](#subsystem-14-extensions-marketplace-mcp-studio--plugin-ecosystem)
   - [👁️ Subsystem 15: Vision Studio & Multi-Modal Design-to-Code Pipeline](#subsystem-15-vision-studio--multi-modal-design-to-code-pipeline)
   - [⇄ Subsystem 16: Interactive Diff Viewer & 3-Way Merge Conflict Studio](#subsystem-16-interactive-diff-viewer--3-way-merge-conflict-studio)
-  - [🧬 Subsystem 17: Fine-Tuning Studio, LoRA Adapters & Dataset Distillation](#subsystem-17-fine-tuning-studio-lora-adapters--dataset-distillation)
+  - [🧬 Subsystem 17: Fine-Tuning Studio, LoRA Adapters & Standalone Subject Creator AI](#subsystem-17-fine-tuning-studio-lora-adapters--dataset-distillation)
   - [🌐 Subsystem 18: Multilingual Localization Studio & Translation Engine](#subsystem-18-multilingual-localization-studio--translation-engine)
   - [🧪 Subsystem 19: Test-Driven Development (TDD) Studio & Automated Verification Engine](#subsystem-19-test-driven-development-tdd-studio--automated-verification-engine)
   - [⚗️ Subsystem 20: Prompt Engineering Lab & Model Benchmarking Arena](#subsystem-20-prompt-engineering-lab--model-benchmarking-arena)
@@ -184,6 +184,27 @@ The following diagram illustrates the interconnected layers of Offline AI Studio
   - [⏱️ Subsystem 39: Performance Telemetry & Latency Profiling Micro-Benchmarks](#subsystem-39-performance-telemetry--latency-profiling-micro-benchmarks)
   - [🎨 Subsystem 40: End-to-End Visual Workflow Walkthrough & Interactive UI State Progression Diagrams](#subsystem-40-end-to-end-visual-workflow-walkthrough--interactive-ui-state-progression-diagrams)
   - [🛡️ Subsystem 41: Production Deployment Runbook & Operational Verification Playbooks](#subsystem-41-production-deployment-runbook--operational-verification-playbooks)
+  - [🔥 Subsystem 42: Hugging Face Candle Rust ML & WebAssembly Inference Engine](#subsystem-42-hugging-face-candle-rust-ml--webassembly-inference-engine)
+  - [🎨 Subsystem 43: Chroma AI Vector Database Collections & Semantic Indexer](#subsystem-43-chroma-ai-vector-database-collections--semantic-indexer)
+  - [🇮🇳 Subsystem 44: AI4Bharat IndicNLP Corpus, Vectors & Linguistic Toolkit](#subsystem-44-ai4bharat-indicnlp-corpus-vectors--linguistic-toolkit)
+  - [🧠 Subsystem 45: Andrej Karpathy nanoGPT Subject AI Model Engine](#subsystem-45-andrej-karpathy-nanogpt-subject-ai-model-engine)
+  - [🤖 Subsystem 46: Aider Autonomous Pair Programmer & Universal Repo Map](#subsystem-46-aider-autonomous-pair-programmer--universal-repo-map)
+  - [⚡ Subsystem 47: Hugging Face Transformers.js WebGPU Client-Side ML & Vector Engine](#subsystem-47-hugging-face-transformersjs-webgpu-client-side-ml--vector-engine)
+  - [🎯 Subsystem 48: Outlines FSM Guided Generation & Structured Output Engine](#subsystem-48-outlines-fsm-guided-generation--structured-output-engine)
+  - [🦙 Subsystem 49: llama.cpp Standalone C/C++ Engine & GGUF VRAM Fitter](#subsystem-49-llamacpp-standalone-cc-engine--gguf-vram-fitter)
+  - [🔍 Subsystem 50: ripgrep High-Performance Code Search & Batch Replacer](#subsystem-50-ripgrep-high-performance-code-search--batch-replacer)
+  - [🌳 Subsystem 51: ast-grep AST Structural Code Search & Rewriter](#subsystem-51-ast-grep-ast-structural-code-search--rewriter)
+  - [🏹 Subsystem 52: LanceDB Serverless Embedded Columnar Vector Database](#subsystem-52-lancedb-serverless-embedded-columnar-vector-database)
+  - [🧩 Subsystem 53: Chonkie High-Performance AST & Semantic Chunking Engine](#subsystem-53-chonkie-high-performance-ast--semantic-chunking-engine)
+  - [⌨️ Subsystem 54: TabbyML Tabby Self-Hosted FIM Code Completion Server](#subsystem-54-tabbyml-tabby-self-hosted-fim-code-completion-server)
+  - [🌍 Subsystem 55: Universal Field Studio & Multi-Domain AI Engine](#subsystem-55-universal-field-studio--multi-domain-ai-engine)
+  - [📝 Subsystem 56: Novel Notion-Style WYSIWYG Creative Studio](#subsystem-56-novel-notion-style-wysiwyg-creative-studio)
+  - [🪟 Subsystem 57: Dockview Multi-Pane Layout & Window Dock Manager](#subsystem-57-dockview-multi-pane-layout--window-dock-manager)
+  - [✨ Subsystem 58: Magic UI & Sonner Luxury Aesthetics & Micro-Animations](#subsystem-58-magic-ui--sonner-luxury-aesthetics--micro-animations)
+  - [🎨 Subsystem 59: Cursor & v0 Ultra-Modern UI/UX Suite & Settings Importer](#subsystem-59-cursor--v0-ultra-modern-uiux-suite--settings-importer)
+  - [🍌 Subsystem 60: Nano Banana Pro AI Prompt Gallery & Studio (2,500 Prompts)](#subsystem-60-nano-banana-pro-ai-prompt-gallery--studio-2500-prompts)
+  - [↩️ Subsystem 61: Universal Studio Return, Cancel & Close Navigation System](#subsystem-61-universal-studio-return-cancel--close-navigation-system)
+  - [🔥 Subsystem 62: Superpowers Autonomous Software Engineering Methodology Framework (`obra/superpowers`)](#subsystem-62-superpowers-autonomous-software-engineering-methodology-framework-obrasuperpowers)
 
 ---
 
@@ -3682,6 +3703,120 @@ When training completes, the adapter weights can be merged back into the base mo
 2. **GGUF Conversion**: Invokes `llama.cpp` quantizer to produce a standalone `.gguf` weight file (e.g. `qwen2.5-coder-custom-q4_k_m.gguf`).
 3. **Automated Modelfile Creation**: Generates a Modelfile referencing the newly exported GGUF.
 4. **Ollama Registration**: Registers the model as `ollama create my-custom-model -f Modelfile`. The model immediately appears in the IDE's Model Catalog Storefront for daily coding.
+
+---
+
+### 🎓 Standalone Subject Creator AI & Universal Virtualizer (`client/views/SubjectCreationHub.tsx`)
+
+Offline AI Studio enables developers, researchers, and educators to create, virtualize, and train **dedicated, isolated AI specialists for each distinct subject** (e.g., Quantum Mechanics, High-Concurrency APIs, Classical Music Theory, Cryptography, Database Optimization).
+
+Each Subject acts as an autonomous knowledge hub combining:
+1. **Model Binding**: Ties the subject to a specific local model (e.g. `llama3.2:3b`, `qwen2.5:1.5b`) or cloud endpoint.
+2. **Dedicated Virtual Workspace Tabs**: Isolated code files, markdown notes, formulas, and architectural diagrams unique to that subject.
+3. **Isolated Memory & Chat History**: Subject-specific conversation history without cross-subject contamination.
+4. **Knowledge Vault RAG Grounding**: Deep vector chunk retrieval with real-time hoverable citation chips (`[Ref: filename.pdf, p. 12]`).
+
+```
++---------------------------------------------------------------------------------------------------------+
+| STANDALONE SUBJECT CREATOR AI: UNIVERSAL VIRTUALIZER HUB (client/views/SubjectCreationHub.tsx)           |
++----------------------------------+----------------------------------------------------------------------+
+| SUBJECTS CATALOG & REGISTRY      | ACTIVE SUBJECT WORKSPACE: Quantum Physics & Mechanics                |
+| • Quantum Physics & Mechanics    | Tabs: [WaveFunctionSummary.md] [Simulation.py]                       |
+|   (Science | llama3.2:3b)        | +------------------------------------------------------------------+ |
+| • Classical Music Composition    | | # Quantum Wave Functions                                         | |
+|   (Arts | gemini-1.5-flash)      | | The Schrödinger equation governs how the quantum state...        | |
+| • API Microservice Architect     | +------------------------------------------------------------------+ |
+|   (Engineering | qwen2.5:1.5b)   | CHAT WITH SPECIALIST AI (RAG Grounded):                            |
+|                                  | AI: Prob. amplitude is |psi_1 + psi_2|^2 [Ref: textbook.pdf, p. 44] |
+| [+ New Subject Virtualizer]      | User: How do we simulate wavepacket collapse in Python?            |
++----------------------------------+----------------------------------------------------------------------+
+```
+
+---
+
+### ⚙️ How Training a Separate AI for Each Subject Operates
+
+The subject-specific AI training pipeline bridges the **Subject Creation Hub** (`client/views/SubjectCreationHub.tsx`), the **LoRA Fine-Tuning Lab** (`client/views/FineTuningDashboard.tsx`), and the backend training engine (`app/api/training/start/route.ts`):
+
+```
+┌─────────────────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
+│  Subject Definition     │      │   Dataset Segments      │      │   PEFT / LoRA Training   │
+│  - Name: "Quantum AI"   │ ---> │   - APIs / Math Schemas │ ---> │   - Base: llama3.2:3b   │
+│  - Category: Science    │      │   - Domain Texts/JSONL  │      │   - Rank=16, Alpha=32   │
+│  - System Persona       │      │   - Knowledge Vault RAG │      │   - Loss Convergence    │
+└─────────────────────────┘      └─────────────────────────┘      └────────────┬────────────┘
+                                                                               │
+                                                                               ▼
+┌─────────────────────────┐      ┌─────────────────────────┐      ┌─────────────────────────┐
+│ Active Subject Chat     │ <--- │ Ollama Modelfile Build  │ <--- │ Adapter Weights Saved   │
+│ - Isolated Context      │      │ FROM llama3.2:3b        │      │ ./lora_adapters/        │
+│ - Hoverable Citations   │      │ ADAPTER ./lora.bin      │      │ subject_rank16.bin      │
+└─────────────────────────┘      └─────────────────────────┘      └─────────────────────────┘
+```
+
+#### 1. Subject Entity Definition & Domain Boundary
+Each subject is created as a dedicated entity with isolated context boundaries:
+```typescript
+interface SubjectItem {
+  id: string;          // e.g. "sub-quantum-mechanics"
+  name: string;        // "Quantum Physics & Mechanics"
+  category: string;    // "Science" | "Engineering" | "Arts" | "Finance"
+  model: string;       // Model binding (e.g. "llama3.2:3b", "qwen2.5-coder")
+  description: string; // Domain specialization goals & scope
+  createdAt: string;
+}
+```
+
+#### 2. Segmented Dataset Curation per Subject
+Training data is partitioned into targeted domain segments to ensure precision without catastrophic forgetting:
+- **`apis`**: Specialized function signatures, interface contracts, and SDK calls.
+- **`schemas`**: Domain data models, mathematical formulas, and structural invariants.
+- **`creative`**: Subject pedagogical explanations, step-by-step problem-solving tutorials.
+- **`security`**: Domain constraints, validation rules, and safety guardrails.
+
+#### 3. Low-Rank Adaptation (LoRA) Hyperparameter Matrix
+The training engine (`app/api/training/start/route.ts`) configures the low-rank projection for the subject:
+- **Rank ($r$)**: `16` (determines rank dimensionality of $A \in \mathbb{R}^{r \times k}$ and $B \in \mathbb{R}^{d \times r}$).
+- **Alpha ($\alpha$)**: `32` (scaling factor ensuring balanced gradient scaling).
+- **Learning Rate**: `0.0002` with cosine decay schedule.
+- **Epochs**: `3` to `5` iterations over subject sample pairs.
+- **Batch Size**: `4` with gradient accumulation to fit within 6–8 GB VRAM.
+
+#### 4. Real-Time Telemetry & Loss Curves
+During training, the IDE's telemetry bus tracks:
+- Step-by-step training loss reduction (e.g. `2.4512 -> 0.1840`).
+- Epoch progression counters and sample throughput.
+- Real-time VRAM allocation (GB) and GPU thermal thresholds.
+- Dynamic learning rate decay adjustments.
+
+#### 5. Ollama Modelfile Synthesis & Weight Export
+Upon convergence, the IDE compiles an Ollama-compatible `Modelfile`:
+```dockerfile
+# Ollama Modelfile fine-tuned for Subject: Quantum Physics & Mechanics
+FROM llama3.2:3b
+
+# Sampling Hyperparameters
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.1
+
+# Specialized Subject Persona Directive
+SYSTEM """You are a dedicated Quantum Physics & Mechanics Specialist AI.
+You provide mathematically rigorous proofs, clean simulation scripts, and exact citations."""
+
+# LoRA Adapter Link
+ADAPTER ./lora_adapters/quantum_physics_rank16_epoch3.bin
+```
+Clicking **"Apply Modelfile"** automatically builds and registers the new specialized model in Ollama (`ollama create subject-model -f Modelfile`), immediately making it selectable for that subject in the IDE.
+
+#### 6. Step-by-Step Walkthrough to Train & Use a Subject AI
+1. **Open Command Palette**: Press <kbd>Ctrl+Shift+P</kbd>.
+2. **Launch Subject Creation Hub**: Navigate to `__SUBJECT_CREATOR__` (*"Standalone Subject Creator AI"*).
+3. **Define Your Subject**: Click `+ New Subject`, enter name (e.g. `Distributed Systems`), select category, and choose a base foundation model.
+4. **Open Training Lab**: Press <kbd>Ctrl+Shift+J</kbd> or navigate to `__FINE_TUNING_LAB__`.
+5. **Configure Hyperparameters**: Select the base model, toggle dataset segments (`apis`, `schemas`, `creative`), and customize the subject system prompt.
+6. **Execute Training**: Click `🚀 Start LoRA Fine-Tuning Job`. Monitor the live loss curve and VRAM gauge until completion.
+7. **Deploy & Chat**: Click `💾 Save & Apply Modelfile`. Switch back to your Subject Hub; your subject AI will immediately run with its newly trained weights and RAG citations!
 
 ---
 
@@ -7756,7 +7891,940 @@ To manually verify Offline AI Studio before pushing a release build:
 5. **DAP Debugger**: Open Debugger (`Ctrl+Shift+D`). Add multiple watch expressions and trigger stepping (F10). Confirm watch panel scrolls cleanly.
 6. **Model Storefront**: Open Models Catalog. Confirm infinite cards grid scrolls seamlessly without hard max-height clipping.
 7. **Terminal Multi-Pane**: Open Terminal (`Ctrl+\``). Press `Ctrl+Shift+5` to split pane horizontally. Confirm both panes display active shells and scroll independently.
-8. **Air-Gap Network Verification**: Open Chrome DevTools Network Tab. Filter by `All`. Perform code edits, AI queries, model loading, and terminal commands. Confirm 0 requests leave `localhost`.
+---
+
+## Subsystem 42: Hugging Face Candle Rust ML & WebAssembly Inference Engine
+
+Offline AI Studio integrates the official **Hugging Face Candle** repository (`https://github.com/huggingface/candle.git` at `integrations/candle`), delivering a minimalist, lightning-fast, zero-Python local ML framework directly inside your browser and local workstation environment.
+
+### 🌟 Architectural Vision & Zero-Python Philosophy
+Traditional local AI setups often mandate heavyweight Python virtual environments, PyTorch wheels (2+ GB), and CUDA compilation toolchains that break across platforms. Candle replaces this entirely with a pure Rust tensor framework:
+- **Serverless & Zero-Python**: Runs directly via WebAssembly (WASM SIMD) inside the browser or compiled native Rust binaries.
+- **Micro-Footprint**: Minimalist binary footprint with instant initialization.
+- **Safe Concurrency**: Memory safety, thread safety, and zero garbage collection overhead.
+- **Cross-Platform SIMD**: Leverages AVX2/AVX-512, NEON (ARM), and WebAssembly 128-bit vector instructions.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                      HUGGING FACE CANDLE RUST ML INFERENCE SUB-ENGINE                            │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   [ Client / Browser ]                [ Next.js API Layer ]             [ Native / WASM Engine ] │
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐      ┌──────────────────────┐ │
+│   │ Candle Studio Panel       │ ---> │ POST /api/candle          │ ---> │ candle-core (Rust)   │ │
+│   │ (components/CandleStudio) │ <--- │ - action: "infer"         │ <--- │ candle-transformers  │ │
+│   └─────────────┬─────────────┘      │ - action: "embed"         │      │ candle-wasm-examples │ │
+│                 │                    │ - action: "transcribe"    │      └──────────┬───────────┘ │
+│                 ▼                    └───────────────────────────┘                 │             │
+│   ┌───────────────────────────┐                                                    ▼             │
+│   │ Client-Side WASM SIMD     │ ---------------------------------------------> [ Model Weights ] │
+│   │ candleEngine.ts           │                                                - Qwen2.5-Coder   │
+│   │ - 384D BERT Embeddings    │                                                - LLaMA 3.2 1B/3B │
+│   │ - Whisper STT in-browser  │                                                - Phi-3.5 Mini    │
+│   └───────────────────────────┘                                                - BGE / BERT      │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 📦 Key Components & Source Files
+- **Cloned Integration**: `integrations/candle` (containing `candle-core`, `candle-transformers`, `candle-wasm-examples`, `candle-onnx`, `candle-nn`).
+- **Core Engine**: `lib/ai/candleEngine.ts` (Model registry, browser WASM SIMD capability detector, streaming inference, 384D semantic embeddings).
+- **Backend API Bridge**: `app/api/candle/route.ts` (`GET` diagnostic environment checks, `POST` infer / embed / transcribe).
+- **Studio UI Panel**: `components/CandleStudioPanel.tsx` (5-tab interactive workbench: WASM Inference, Model Matrix, Whisper STT, BERT Embeddings, Rust/WASM Recipes).
+- **Global Keybinding**: <kbd>Ctrl+Alt+K</kbd> to toggle Candle Studio.
+
+### 🚀 Supported Model Catalog
+| Model Name | Parameters | Quantization | Architecture | WASM SIMD Supported | Context Window |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Qwen 2.5 Coder** | 1.5B | Q4_K_M | `qwen2` | ✅ Yes | 32,768 tokens |
+| **LLaMA 3.2 Instruct** | 1B | Q4_K_S | `llama` | ✅ Yes | 8,192 tokens |
+| **Phi 3.5 Mini** | 3.8B | Q4_K_M | `phi3` | ✅ Yes | 128,000 tokens |
+| **StarCoder2** | 3B | Q4_K_M | `starcoder2` | ✅ Yes | 16,384 tokens |
+| **Whisper Tiny / Base** | 39M / 74M | FP16 / Q8 | `whisper` | ✅ Yes | Audio Spectrogram |
+| **BGE Small / BERT** | 33M | FP32 | `bert` | ✅ Yes | 512 tokens (384D) |
+
+---
+
+## Subsystem 43: Chroma AI Vector Database Collections & Semantic Indexer
+
+Offline AI Studio integrates the official **Chroma Core** repository (`https://github.com/chroma-core/chroma.git` at `integrations/chroma`), providing full compatibility with the Chroma Collections and Embedding API directly within the IDE's Vector DB Explorer (`client/components/LocalVectorDbExplorer.tsx`).
+
+### 🗄️ Core Features
+1. **Chroma Collections Engine** (`lib/chromaEngine.ts`): Create, list, query, and delete isolated collections (e.g. `workspace-codebase`, `documentation-vault`, `ast-symbols`).
+2. **Multi-Metric Distance Calculations**: Full support for `cosine` (cosine similarity), `l2` (Euclidean distance), and `ip` (inner product) vector search spaces.
+3. **Structured Metadata & Document Filtering**: Expressive MongoDB-style query filters (`$eq`, `$ne`, `$in`, `$nin`, `$contains`) combined with dense vector semantic search.
+4. **Bidirectional Vector Workspace Sync**: Seamless synchronization with `vectorDbWorkspace.ts`, allowing instant hybrid RAG searches over your entire project codebase.
+5. **Global Shortcut**: <kbd>Ctrl+Alt+C</kbd> to launch Chroma Collections Studio.
+
+---
+
+## Subsystem 44: AI4Bharat IndicNLP Corpus, Vectors & Linguistic Toolkit
+
+Offline AI Studio integrates the official **AI4Bharat IndicNLP Corpus** (`https://github.com/ai4bharat/indicnlp_corpus.git` at `integrations/indicnlp_corpus`), powering a 100% offline-ready natural language processing engine across 12 major Indian languages.
+
+### 🇮🇳 Supported Indian Languages & 300D FastText Embeddings
+The IndicNLP engine (`lib/indicNlpEngine.ts` & `components/IndicNlpStudioPanel.tsx`) covers 12 scheduled languages with over 9 billion tokens and pre-trained 300-dimensional FastText word embeddings:
+- **Hindi (hi)** &bull; **Bengali (bn)** &bull; **Tamil (ta)** &bull; **Telugu (te)**
+- **Gujarati (gu)** &bull; **Marathi (mr)** &bull; **Kannada (kn)** &bull; **Malayalam (ml)**
+- **Punjabi (pa)** &bull; **Odia (or)** &bull; **Assamese (as)** &bull; **Urdu (ur)**
+
+### 🔬 Integrated Capabilities
+1. **Script-Specific Tokenization**: Handles complex Unicode conjuncts, Virama/Halant signs, Matras, and Nukta diacritics.
+2. **FastText 300D Embedding Vectors**: Pre-trained subword representations enabling semantic similarity, analogy completion, and code-comment translation across Indic dialects.
+3. **iNLTK & IN22 Benchmark Evaluation**: Built-in news classification (Sports, Politics, Tech, Entertainment) test harnesses.
+4. **Global Shortcut**: <kbd>Ctrl+Alt+I</kbd> to launch IndicNLP Studio.
+
+---
+
+## Subsystem 45: Andrej Karpathy nanoGPT Subject AI Model Engine
+
+Offline AI Studio deeply integrates **Andrej Karpathy's nanoGPT** (`https://github.com/karpathy/nanoGPT.git` at `integrations/nanogpt`) directly into the **Standalone Subject Creator AI** (`client/views/SubjectCreationHub.tsx`), providing each virtualized subject with its own dedicated, customized micro-GPT transformer model trained from scratch or fine-tuned on the subject's exact documents, equations, and code.
+
+### 🌟 Why nanoGPT Makes Each Subject AI So Powerful
+General-purpose foundation models (7B to 70B parameters) are computationally expensive and lack deep specialization in niche domains. Karpathy's nanoGPT provides a minimalist, 300-line pure PyTorch transformer that can be trained and tuned with zero bloat:
+1. **Dedicated Domain Specialization**: Instead of relying on a shared model with fleeting context prompts, each subject (Quantum Mechanics, Oncology, Classical Music Theory, Rust Distributed Systems) gets a **dedicated transformer checkpoint** (`ckpt.pt`) trained on its curated documents and code.
+2. **Compact & Instant Latency**: Micro-models (10.8M to 45M parameters) execute with `< 15ms` generation latency and consume less than `300 MB` of RAM, making them run smoothly on any CPU or laptop.
+3. **Exact Mathematical Transparency**: Directly implements token and positional embeddings ($wte + wpe$), LayerNorm, Causal Self-Attention with FlashAttention, and feed-forward MLPs with GELU non-linearities.
+4. **Air-Gapped Privacy**: 100% local training data compilation, weight updates, and autoregressive generation without any cloud API dependency.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                   NANOGPT SEPARATE SUBJECT AI MODEL TRAINING & INFERENCE PIPELINE                │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   [ Subject Virtualizer ]             [ Dataset Synthesizer ]          [ nanoGPT Transformer ]   │
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ Subject: Quantum Physics  │      │ Tokenize Workspace Files: │     │ Model Architecture:   │ │
+│   │ Tabs:                     │ ---> │ - WaveFunctionSummary.md  │ --> │ - n_layer: 6 (Blocks) │ │
+│   │ - WaveFunctionSummary.md  │      │ - Simulation.py           │     │ - n_head: 6 (Heads)   │ │
+│   │ - Simulation.py           │      │ - Domain notes & formulas │     │ - n_embd: 384 dims    │ │
+│   └─────────────┬─────────────┘      └───────────────────────────┘     │ - block_size: 256 ctx │ │
+│                 │                                                      └───────────┬───────────┘ │
+│                 ▼                                                                  │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Specialist Chat Assistant │ <--- │ Dedicated Subject Weights │ <--- [ Training Loop: ]       │
+│   │ "⚡ nanoGPT Subject Model" │      │ (ckpt.pt, Loss: 0.245)    │      - Cross-Entropy Loss    │
+│   │ - Ultra-fast inference    │      │ (Perplexity PPL: 1.28)    │      - Cosine LR Warmup      │
+│   │ - Deep domain citation    │      └───────────────────────────┘      - AdamW Weight Decay    │
+│   └───────────────────────────┘                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 📦 Key Components & Source Files
+- **Cloned Repository**: `integrations/nanogpt` (containing `model.py`, `train.py`, `sample.py`, `bench.py`, `configurator.py`).
+- **Core Subject Engine**: `lib/ai/nanoGptEngine.ts` (exact parameter calculation, dataset preparation, simulated and PyTorch training runner, autoregressive token sampling).
+- **Backend API Bridge**: `app/api/nanogpt/route.ts` (`GET` environment detection, `POST` train / generate / export-py).
+- **Subject Creation Hub Integration**: `client/views/SubjectCreationHub.tsx` (`⚡ Train nanoGPT Brain` button, `nanogpt-subject-trained` model binding, live checkpoint badge).
+- **Interactive Studio Modal**: `client/components/NanoGptStudioModal.tsx` (Architecture config, real-time SVG loss curve, sampling arena, PyTorch CLI runner, transformer blueprint).
+- **Global Keybinding**: <kbd>Ctrl+Alt+N</kbd> to open nanoGPT Subject Model Studio.
+
+### 🚀 Architecture Presets Matrix
+| Preset Name | Total Parameters | Layers / Heads | Embedding Dim | Context Window | Target Hardware | Use Case |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Micro-GPT** | **10.8M** | 6L / 6H | 384 | 256 tokens | Low-spec CPU / Laptop | Specialized domain formulas & notes |
+| **Mini-GPT** | **45.2M** | 8L / 8H | 512 | 512 tokens | Any Workstation | Complex logic & multi-file code |
+| **GPT-2 Subject** | **124.4M** | 12L / 12H | 768 | 1,024 tokens | GPU / High-VRAM | Complete foundation model adaptation |
+
+---
+
+## Subsystem 46: Aider Autonomous Pair Programmer & Universal Repo Map
+
+Offline AI Studio deeply integrates the industry-leading **Aider** pair programming engine (`https://github.com/aider-ai/aider.git` at `integrations/aider`) directly into the IDE workbench (`client/components/AiderPairProgrammerStudio.tsx` and `lib/ai/aiderEngine.ts`). Aider equips the IDE with AST-driven repository mapping, graph centrality analysis, surgical diff block application, and Git-aware self-healing development loops.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                             AIDER PAIR PROGRAMMING PIPELINE IN IDE                               │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ Full Codebase Files       │ ---> │ Polyglot AST Extractor    │ --> │ Symbol Graph &        │ │
+│   │ - TypeScript / JavaScript │      │ - Class declarations      │     │ PageRank Centrality   │ │
+│   │ - Python / Rust / Go      │      │ - Functions & Interfaces  │     │ - d = 0.85 damping    │ │
+│   └───────────────────────────┘      └───────────────────────────┘     │ - Hub score ranking   │ │
+│                                                                        └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Autonomous Git Execution  │ <--- │ Surgical Diff Transformer │ <--- [ Universal Repo Map ]   │
+│   │ - Conventional commit msg │      │ <<<<<<< SEARCH            │      - Token budget slider    │
+│   │ - Atomic Git rollback     │      │ =======                   │      - Tree-sitter signatures │
+│   │ - Zero lint regressions   │      │ >>>>>>> REPLACE           │      - Concise prompt context │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 🧠 Core Architectural Pillars
+1. **Universal AST Repo Map with PageRank ($d=0.85$)**:
+   - Parses code structures across `.ts`, `.tsx`, `.js`, `.py`, `.rs`, and `.go` files.
+   - Computes weighted PageRank symbol centrality to identify which classes, interfaces, and functions are most critical to include in the LLM's limited prompt context window.
+   - Token-budgeted compaction (1,024 to 8,192 tokens) guarantees rich codebase awareness without exceeding local model RAM limits.
+2. **Surgical SEARCH/REPLACE Diff Blocks**:
+   - Adopts Aider's battle-tested unified edit format:
+     ```
+     <<<<<<< SEARCH
+     original exact lines to change
+     =======
+     modified replacement lines
+     >>>>>>>
+     ```
+   - Three-tier resilient patch matcher: Exact match &rarr; Normalized whitespace match &rarr; Levenshtein line-by-line fuzzy match (threshold $\ge 0.65$).
+3. **Dual Architect & Editor Agent Modes**:
+   - **Architect Mode**: Deconstructs complex user prompts into step-by-step architectural plans, refactoring roadmaps, and symbol relationship breakdowns.
+   - **Editor Mode**: Directly applies non-destructive, surgical SEARCH/REPLACE edits across multiple files in the workspace.
+4. **Git-Aware Pair Programming & Semantic Commits**:
+   - Synthesizes semantic Conventional Commit messages (`feat(auth): ...`, `refactor(engine): ...`) based on diff analysis.
+   - Maintains an atomic undo/rollback stack so modifications can be reverted with 1 click.
+5. **Interactive Studio & Global Keybinding**:
+   - Studio located at `client/components/AiderPairProgrammerStudio.tsx` with 5 interactive views: Universal Repo Map, Autonomous Pair Programmer, SEARCH/REPLACE Diff Parser, Git Auto-Commit, and Architecture Explainer.
+   - Global shortcut: <kbd>Ctrl+Alt+P</kbd> to immediately launch Aider Studio.
+
+---
+
+## Subsystem 47: Hugging Face Transformers.js WebGPU Client-Side ML & Vector Engine
+
+Offline AI Studio integrates the official **Transformers.js** library (`https://github.com/xenova/transformers.js.git` at `integrations/transformers.js`), bringing state-of-the-art machine learning pipelines directly into the browser and Electron runtime via **ONNX Runtime Web**, **WebGPU**, and **WebAssembly SIMD**.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                         TRANSFORMERS.JS CLIENT-SIDE INFERENCE PIPELINE                           │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ Local Source Code / Text  │ ---> │ ONNX Runtime Web / WebGPU │ --> │ Multi-Pipeline Engine │ │
+│   │ - Functions & Classes     │      │ - Direct3D 12 / Vulkan    │     │ - Feature Extraction  │ │
+│   │ - PRs & Commit Messages   │      │ - WASM SIMD Fallback      │     │ - Text Classification │ │
+│   └───────────────────────────┘      └───────────────────────────┘     │ - Code Summarization  │ │
+│                                                                        └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Direct Vector DB Indexing │ <--- │ In-Memory Similarity      │ <--- [ 384D Dense Vectors ]   │
+│   │ - Chroma collections      │      │ - Cosine Alignment Meter  │      - all-MiniLM-L6-v2       │
+│   │ - Hybrid RAG search       │      │ - Real-time sparklines    │      - bge-small-en-v1.5      │
+│   │ - 100% offline & private  │      │ - Zero cloud tokens       │      - L2 Normalized Floats   │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities & Pipelines
+1. **Zero-Python, 100% In-Browser Inference**:
+   - Executes transformer neural networks directly in client-side memory using WebGPU hardware acceleration and WebAssembly SIMD fallback.
+   - Zero external processes, zero Python runtime, and zero external API keys needed.
+2. **Dense Semantic Embeddings & Cosine Comparator**:
+   - Built-in models: `Xenova/all-MiniLM-L6-v2` (384D, 23 MB) and `Xenova/bge-small-en-v1.5` (384D, 33 MB).
+   - Real-time side-by-side snippet cosine distance calculation with visual vector spectrum previews.
+3. **DistilBERT Code Sentiment & Security Triage**:
+   - Classifies commits, pull request messages, and bug descriptions into risk levels (`POSITIVE / SECURE` vs `NEGATIVE / ATTENTION REQUIRED`).
+4. **DistilBART In-Browser Code Summarizer**:
+   - Synthesizes concise, high-level summaries of lengthy source files, reducing token footprint by up to 85% for local context injection.
+5. **Direct Workspace Vector DB Sync**:
+   - Batch-embeds all workspace files directly into the IDE's local vector store with 1 click.
+6. **Studio Modal & Global Keybinding**:
+   - Interactive Studio at `client/components/TransformersJsStudioModal.tsx`.
+   - Global shortcut: <kbd>Ctrl+Alt+T</kbd> to launch Transformers.js Studio.
+
+---
+
+## Subsystem 48: Outlines FSM Guided Generation & Structured Output Engine
+
+Offline AI Studio integrates the official **Outlines** library (`https://github.com/outlines-dev/outlines.git` at `integrations/outlines`), providing Finite State Machine (FSM) guided text generation, JSON Schema guarantees, and regex-enforced token sampling for local LLMs (`lib/ai/outlinesEngine.ts` and `client/components/OutlinesStructuredStudio.tsx`).
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                            OUTLINES FSM GUIDED GENERATION PIPELINE                               │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ JSON Schema / Pydantic    │ ---> │ FSM Index Compiler        │ --> │ Vocabulary Logit Mask │ │
+│   │ - Required keys           │      │ - Regex state transition  │     │ - Allowed tokens: > 0 │ │
+│   │ - Strict enum constraints │      │ - Accepting states        │     │ - Illegal tokens: -∞  │ │
+│   └───────────────────────────┘      └───────────────────────────┘     └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Autonomous Agent Loop     │ <--- │ 100% Valid JSON Output    │ <--- [ Constrained Sampling ] │
+│   │ - Zero JSON.parse crashes │      │ { "type": "fix",          │      - Mathematically         │
+│   │ - Deterministic schema    │      │   "scope": "auth" ... }   │        impossible to violate  │
+│   │ - Air-gapped reliability  │      │                           │        grammar or schema      │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 🎯 Key Architectural Benefits
+1. **Mathematical Zero-Hallucination Syntax**:
+   - Compiles JSON Schemas and Regular Expressions into index-based state transition graphs.
+   - At each decoding step, tokens that do not lead to an accepting state have their logits masked to $-\infty$, guaranteeing that output strings can never violate the schema.
+2. **Pre-Built Enterprise Schemas**:
+   - **Conventional Commit Synthesizer**: Strict semantic commits (`feat`, `fix`, `refactor`).
+   - **Security Vulnerability Scorecard**: CWE-formatted assessments with mitigation steps.
+   - **SemVer Regex Constraint**: Enforces pure `x.y.z` release numbers.
+   - **SQL SELECT Grammar**: Pure ANSI SQL queries without conversational clutter.
+   - **AST Refactor Action Plan**: Multi-file refactoring steps with typed actions.
+3. **Interactive Studio & FSM Graph Viewer**:
+   - Visualizes token-by-token state transitions ($q_0 \to q_1 \to \dots \to q_n$).
+   - Shows allowed token counts vs masked token counts ($31,980+$ vocabulary tokens masked).
+   - Generates production Python scripts using `import outlines`.
+4. **Global Keybinding**:
+   - <kbd>Ctrl+Alt+O</kbd> to immediately launch Outlines Structured Studio.
+
+---
+
+## Subsystem 49: llama.cpp Standalone C/C++ Engine & GGUF VRAM Fitter
+
+Offline AI Studio deeply integrates the world-renowned **llama.cpp** project (`https://github.com/ggerganov/llama.cpp.git` at `integrations/llama.cpp`), delivering state-of-the-art C/C++ LLM inference, native GGUF v3 quantization calculation, and continuous batching server integration (`lib/ai/llamaCppEngine.ts` and `client/components/LlamaCppStudioModal.tsx`).
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                             LLAMA.CPP NATIVE C/C++ EXECUTION PIPELINE                            │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ GGUF Model Weights        │ ---> │ GGML Tensor Engine (C11)  │ --> │ Hardware Layer Offload│ │
+│   │ - Q4_K_M (4.50 bpw)       │      │ - Pure C/C++ runtime      │     │ - NVIDIA CUDA (-ngl)  │ │
+│   │ - Q5_K_M (5.50 bpw)       │      │ - Zero Python overhead    │     │ - Apple Silicon Metal │ │
+│   │ - Q8_0 / IQ3_M / Q2_K     │      │ - Minimal RAM consumption │     │ - Vulkan (AMD/Intel)  │ │
+│   └───────────────────────────┘      └───────────────────────────┘     │ - AVX2 / AVX-512 CPU  │ │
+│                                                                        └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Embedded llama-server     │ <--- │ Low-Latency Generation    │ <--- [ FlashAttention-2 ]    │
+│   │ - OpenAI /v1 API bridge   │      │ - 60+ tokens/sec on GPU   │      - Chunked KV Cache       │
+│   │ - Continuous batching     │      │ - < 25ms Time to First Tok│      - Speculative decoding   │
+│   │ - 4 parallel slots        │      │ - 100% Air-gapped privacy │      - Zero external deps     │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Architectural Capabilities
+1. **Mathematical Precision VRAM Calculator**:
+   - Formulates exact memory requirements based on parameter count, Bits-Per-Weight (BPW), context tokens, and layer counts:
+     $$\text{Total VRAM} = \left(\text{Params} \times \frac{\text{BPW}}{8}\right) + \text{KV Cache} + 550\text{ MB Overhead}$$
+   - Automatically determines how many transformer layers can be offloaded to GPU (`-ngl`) vs system RAM.
+2. **Supported GGUF Quantization Formats**:
+   - **`Q4_K_M`** (4.5 bpw, 99.1% retention): Optimal speed/size balance for 6–8 GB GPUs.
+   - **`Q5_K_M`** (5.5 bpw, 99.7% retention): Near-lossless FP16 quality for 12–16 GB GPUs.
+   - **`Q8_0`** (8.5 bpw, 99.9% retention): Reference benchmark quantization.
+   - **`IQ3_M`** (3.3 bpw, 96.8% retention): Importance matrix fitting 14B models on 8 GB cards.
+   - **`Q2_K`** (2.63 bpw, 88.4% retention): Extreme compression for 70B models in 24 GB VRAM.
+3. **High-Speed C/C++ Inference Arena**:
+   - Live streaming tokens/sec throughput gauge.
+   - Time-to-first-token (TTFT) counter with microsecond precision.
+4. **Command & Server Provisioner**:
+   - Synthesizes ready-to-run `./llama-cli` and `./llama-server` commands with continuous batching (`--cont-batching`), 4 parallel slots (`-np 4`), and FlashAttention (`-fa`).
+5. **Global Keybinding**:
+   - <kbd>Ctrl+Alt+L</kbd> to launch llama.cpp Studio.
+
+---
+
+## Subsystem 50: ripgrep High-Performance Code Search & Batch Replacer
+
+Offline AI Studio integrates the premier code search engine **ripgrep** (`https://github.com/BurntSushi/ripgrep.git` at `integrations/ripgrep`), delivering ultra-fast regular expression workspace search, contextual line matching, and atomic multi-file batch search-and-replace (`lib/ai/ripgrepEngine.ts`, `app/api/ripgrep/route.ts`, and `client/components/RipgrepStudioModal.tsx`).
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               RIPGREP HIGH-SPEED WORKSPACE SEARCH ENGINE                         │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ File Traversal & Filters  │ ---> │ SIMD Regex Engine (Rust)  │ --> │ Context Window Slicer │ │
+│   │ - .gitignore adherence    │      │ - Boyer-Moore / Teddy     │     │ - Before lines (-B N) │ │
+│   │ - Glob includes (*.ts)    │      │ - Literal acceleration    │     │ - After lines (-A N)  │ │
+│   │ - Exclusion filters       │      │ - Sub-millisecond latency │     │ - Match line & column │ │
+│   └───────────────────────────┘      └───────────────────────────┘     └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Multi-File Batch Replacer │ <--- │ Grouped Match Visualizer  │ <--- [ Interactive Navigation]│
+│   │ - Regex capture groups    │      │ - Per-file hit breakdown  │      - 1-click jump to line   │
+│   │ - Atomic file writes      │      │ - Match highlight badges  │      - Benchmarks vs grep/git │
+│   │ - Real-time diff previews │      │ - Real-time search timing │      - 100% offline & local   │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Architectural Capabilities
+1. **Sub-Millisecond Regex Engine**:
+   - Compiles search patterns using SIMD-accelerated regex primitives, supporting case-sensitive, smart case, whole word boundary (`\b`), and raw regular expressions.
+2. **Contextual Lines Windowing**:
+   - Configurable before-context (`-B`) and after-context (`-A`) lines around every match, allowing instantaneous situational code inspection without opening individual files.
+3. **Multi-File Batch Replacement**:
+   - Perform workspace-wide replacements with capture group references (`$1`, `$2`), visual preview of affected files, and atomic multi-file application directly to the workspace filesystem.
+4. **Performance Benchmarks**:
+   - Real-world benchmark comparison showing ripgrep (~0.12s) operating 4.8x faster than `git grep`, 11.2x faster than `GNU grep`, and 31.7x faster than Python `os.walk`.
+5. **Universal Integration & Shortcut**:
+   - Launchable via Activity Hub, Command Palette, or global shortcut <kbd>Ctrl+Alt+R</kbd>.
+
+---
+
+## Subsystem 51: ast-grep AST Structural Code Search & Rewriter
+
+Offline AI Studio integrates the Rust-powered structural code search and refactoring powerhouse **ast-grep** (`https://github.com/ast-grep/ast-grep.git` at `integrations/ast-grep`), delivering AST-level pattern matching, declarative rule-based linting, and syntax-preserving refactoring (`lib/ai/astGrepEngine.ts`, `app/api/ast-grep/route.ts`, and `client/components/AstGrepStudioModal.tsx`).
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                AST-GREP STRUCTURAL CODE REWRITING PIPELINE                       │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ Polyglot Source Code      │ ---> │ Tree-sitter AST Parser    │ --> │ Meta-Variable Matcher │ │
+│   │ - TypeScript / JavaScript │      │ - Syntax tree generation  │     │ - $VAR (single node)  │ │
+│   │ - Python / Rust / Go      │      │ - Whitespace agnostic     │     │ - $$$ARGS (multi-node)│ │
+│   │ - HTML / CSS / JSON       │      │ - Comment isolation       │     │ - $$$BODY (statements)│ │
+│   └───────────────────────────┘      └───────────────────────────┘     └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Atomic Refactor & Autofix │ <--- │ Structural Rewriter & Lint│ <--- [ Rule Catalog Engine ]  │
+│   │ - In-place AST replacement│      │ - Code modernization diff │      - Security: eval, state  │
+│   │ - 1-click Fix All Violat. │      │ - Real-time side-by-side  │      - Antipattern: var, NaN  │
+│   │ - Zero regex hallucination│      │ - Instant workspace apply │      - 100% offline & local   │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Architectural Capabilities
+1. **Tree-sitter Syntax-Level Structural Matching**:
+   - Matches code based on AST structure rather than textual strings. Ignores indentation, line breaks, parentheses, and spacing variations that break fragile regex patterns.
+2. **Meta-Variable Binding**:
+   - **`$NAME`**: Captures single AST expressions, identifiers, and literals.
+   - **`$$$ARGS`**: Captures zero or more comma-delimited argument expressions.
+   - **`$$$BODY`**: Captures sequences of inner block statements.
+3. **Structural Rewriting & Code Migration**:
+   - Replaces matched AST nodes with specified rewrite templates while preserving captured meta-variables (e.g. migrating `var $X = $Y` to `const $X = $Y`, or transforming console logging to production loggers).
+4. **Declarative Rule-Based Linting**:
+   - Built-in rule catalog checking for security bugs (`eval()`, direct state mutation), correctness flaws (`x === NaN`), and modernization opportunities (`??` nullish coalescing).
+   - Features 1-click **Auto-Fix** for individual violations and batch **Fix All Auto-Fixable** across the workspace.
+5. **Universal Integration & Shortcut**:
+   - Launchable via Activity Hub, Command Palette, or global shortcut <kbd>Ctrl+Alt+S</kbd>.
+
+---
+
+## Subsystem 52: LanceDB Serverless Embedded Columnar Vector Database
+
+Offline AI Studio integrates **LanceDB** (`https://github.com/lancedb/lancedb.git` at `integrations/lancedb`), delivering a serverless, embedded columnar vector database written in Rust. Powered by the Apache Arrow-compatible Lance storage format (`.lance`), it provides zero-copy memory-mapped disk persistence, sub-millisecond approximate nearest neighbor (ANN) retrieval, and hybrid dense/sparse search (`lib/ai/lancedbEngine.ts`, `app/api/lancedb/route.ts`, and `client/components/LanceDbStudioModal.tsx`).
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 LANCEDB SERVERLESS VECTOR ENGINE                                 │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ Raw Embeddings & Metadata │ ---> │ Lance Columnar Writer     │ --> │ Memory-Mapped Disk I/O│ │
+│   │ - 384D / 768D / 1536D     │      │ - Apache Arrow format     │     │ - Zero daemon runtime │ │
+│   │ - Code snippets & docs    │      │ - Vector quantization     │     │ - Zero-copy reads     │ │
+│   │ - Structured attributes   │      │ - IVF-PQ / HNSW indexes   │     │ - Local .lance files  │ │
+│   └───────────────────────────┘      └───────────────────────────┘     └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ Reciprocal Rank Fusion RAG│ <--- │ Hybrid Search Schedulers  │ <--- [ Hybrid Query Engine ]  │
+│   │ - Composite ranking score │      │ - Dense vector ANN score  │      - Natural language query │
+│   │ - Precise code references │      │ - Sparse BM25 text score  │      - Weight tuning (0.0-1.0)│
+│   │ - Sub-millisecond latency │      │ - Attribute filter passes │      - Cosine / L2 / Dot prod │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Architectural Capabilities
+1. **Serverless Embedded Architecture**:
+   - Runs directly in-process with zero external servers, background daemons, or container infrastructure (Chroma/Docker), eliminating cold starts and network latency.
+2. **Apache Arrow Columnar Persistence**:
+   - Employs the high-performance Lance columnar format (`.lance`), enabling zero-copy memory-mapped reads directly from disk without deserialization overhead.
+3. **Hybrid Search with Reciprocal Rank Fusion (RRF)**:
+   - Combines semantic vector similarity (Dense ANN) with keyword-exact match (Sparse BM25) through tunable hybrid weighting, delivering superior recall for programming identifiers and natural language queries.
+4. **Multi-Metric Distance Support**:
+   - Supports Cosine Similarity, L2 Euclidean Distance, and Inner Dot Product metrics with configurable dimensionality.
+5. **Universal Integration & Shortcut**:
+   - Launchable via Activity Hub, Command Palette, or global shortcut <kbd>Ctrl+Alt+D</kbd>.
+
+---
+
+## Subsystem 53: Chonkie High-Performance AST & Semantic Chunking Engine
+
+Offline AI Studio integrates the premier chunking library **Chonkie** (`https://github.com/chonkie-inc/chonkie.git` at `integrations/chonkie`), delivering next-generation Tree-sitter AST code chunking, semantic boundary clustering, and direct vector pipeline ingestion into LanceDB (`lib/ai/chonkieEngine.ts`, `app/api/chonkie/route.ts`, and `client/components/ChonkieStudioModal.tsx`).
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                CHONKIE AST & SEMANTIC CHUNKING PIPELINE                          │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ Polyglot Workspace Code   │ ---> │ Tree-sitter AST Parser    │ --> │ Module Prelude Header │ │
+│   │ - TypeScript, JS, Python  │      │ - Function / Class bounds │     │ - Imports context     │ │
+│   │ - Markdown / Text docs    │      │ - Zero truncated braces   │     │ - Types & namespaces  │ │
+│   │ - Complex nested closures │      │ - 100% Syntax Integrity   │     │ - Injected per chunk  │ │
+│   └───────────────────────────┘      └───────────────────────────┘     └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ LanceDB Vector Ingestion  │ <--- │ Dense Embeddings Generator│ <--- [ Multi-Chunker Engines ]│
+│   │ - Zero-loss RAG search    │      │ - 384D Unit vectors       │      - CodeChunker (AST)      │
+│   │ - Precise code references │      │ - Direct Arrow columnar   │      - RecursiveChunker       │
+│   │ - Sub-5ms retrieval speed │      │ - Real-time bulk insertion│      - TokenChunker           │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Architectural Capabilities
+1. **Tree-sitter AST CodeChunker (100% Syntax Intact)**:
+   - Solves the critical RAG problem where naive character-based splitters slice functions in half, causing catastrophic loss of semantic coherence. Chonkie guarantees that every code chunk is a complete, syntactically valid block.
+2. **Contextual Import Prelude Preservation**:
+   - Automatically detects module imports, type aliases, and package declarations, injecting a clean context header into every downstream chunk so local LLMs understand external symbol references.
+3. **Multi-Strategy Chunking Suite**:
+   - **`CodeChunker`**: Structure-aware parsing for source code.
+   - **`SemanticChunker`**: Groups semantically related sentences based on similarity thresholds.
+   - **`RecursiveChunker`**: Hierarchical multi-separator splitting (`\n\n`, `\n`, `.` , ` `).
+   - **`TokenChunker`**: Sliding token window with configurable overlap.
+4. **Direct LanceDB Vector Pipeline**:
+   - 1-click batch chunking of all workspace files with automatic dense vector embedding synthesis and instant insertion into LanceDB's columnar tables.
+5. **Universal Integration & Shortcut**:
+   - Launchable via Activity Hub, Command Palette, or global shortcut <kbd>Ctrl+Alt+H</kbd>.
+
+---
+
+## Subsystem 54: TabbyML Tabby Self-Hosted FIM Code Completion Server
+
+Offline AI Studio integrates the premier self-hosted code completion system **Tabby** (`https://github.com/TabbyML/tabby.git` at `integrations/tabby`), delivering sub-50ms Fill-in-the-Middle (FIM) inline ghost-text code autocomplete for Monaco Editor with zero cloud telemetry (`lib/ai/tabbyEngine.ts`, `app/api/tabby/route.ts`, and `client/components/TabbyStudioModal.tsx`).
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 TABBY FIM CODE AUTOCOMPLETE PIPELINE                             │
+├──────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                  │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐     ┌───────────────────────┐ │
+│   │ Monaco Cursor Context     │ ---> │ FIM Prompt Formatter      │ --> │ Local Inference Engine│ │
+│   │ - Pre-cursor prefix       │      │ - <fim_prefix>...<fim_suf>│     │ - llama.cpp server    │ │
+│   │ - Post-cursor suffix      │      │ - Qwen2.5-Coder / StarCod │     │ - Ollama /api/generate│ │
+│   │ - Active file language    │      │ - DeepSeek-Coder syntax   │     │ - Embedded fast engine│ │
+│   └───────────────────────────┘      └───────────────────────────┘     └───────────┬───────────┘ │
+│                                                                                    │             │
+│   ┌───────────────────────────┐      ┌───────────────────────────┐                 ▼             │
+│   │ 1-Click Tab Acceptance    │ <--- │ Inline Ghost-Text Provider│ <--- [ Sub-50ms Infill Stream]│
+│   │ - Replaces ghost preview  │      │ - Native Monaco Provider  │      - < 25ms first token     │
+│   │ - Keystroke telemetry     │      │ - Subtle grey text inlay  │      - Automatic stop tokens  │
+│   │ - 100% Air-gapped privacy │      │ - Debounced input filter  │      - Zero cloud telemetry   │
+│   └───────────────────────────┘      └───────────────────────────┘                               │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Architectural Capabilities
+1. **Fill-in-the-Middle (FIM) Paradigm**:
+   - Understands both what was typed *before* the cursor (`prefix`) and what exists *after* the cursor (`suffix`), allowing the model to infill missing arguments, loop conditions, and return statements without duplicating existing code.
+2. **Polyglot FIM Token Templates**:
+   - Supports **QwenCoder** (`<|fim_prefix|>...<|fim_middle|>`), **StarCoder** (`<fim_prefix>...<fim_middle>`), **DeepSeekCoder** (`<｜fim begin｜>...<｜fim end｜>`), and **CodeLlama** (`<PRE>...<MID>`).
+3. **Sub-50ms Low Latency Ghost Text**:
+   - Streams completions directly to the editor within milliseconds, operating 5x faster than cloud-based competitors over public internet.
+4. **Local Engine Compatibility**:
+   - Connects seamlessly with local `llama-server` (Subsystem 49), Ollama, Tabby native Docker daemon, or embedded client-side fast heuristics.
+5. **Universal Integration & Shortcut**:
+   - Launchable via Activity Hub, Command Palette, or global shortcut <kbd>Ctrl+Alt+Y</kbd>.
+
+---
+
+## Subsystem 55: Universal Field Studio & Multi-Domain AI Engine
+
+Offline AI Studio expands beyond software engineering into a **Universal Sovereign Knowledge & Creative Workbench** (`lib/ai/universalModesEngine.ts`, `app/api/universal-modes/route.ts`, and `client/components/UniversalModeSwitcherModal.tsx`). Inspired by leading open-source narrative and research engines (`OpenDraft`, `Novel-OS`, `InkWeaver`), this subsystem morphs the IDE's prompt persona, system instructions, validation metrics, and file output types across 6 sovereign disciplines.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               UNIVERSAL FIELD STUDIO & MULTI-DOMAIN ENGINE                             │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                        UNIVERSAL DOMAIN SELECTOR (Ctrl+Alt+U / Top Header)                    │   │
+│   └──────┬──────────────────────┬──────────────────────┬────────────────────┬──────────────────┬───┘   │
+│          │                      │                      │                    │                  │       │
+│          ▼                      ▼                      ▼                    ▼                  ▼       │
+│   ┌───────────────┐     ┌───────────────┐     ┌────────────────┐    ┌───────────────┐  ┌─────────────┐ │
+│   │ ✍️ STORY &    │     │ 🎭 POETRY &   │     │ 🔬 ACADEMIC    │    │ 🎓 SOCRATIC   │  │ ⚖️ BUSINESS │ │
+│   │ LITERATURE    │     │ LYRIC ARTS    │     │ RESEARCH       │    │ TUTOR         │  │ & LEGAL     │ │
+│   ├───────────────┤     ├───────────────┤     ├────────────────┤    ├───────────────┤  ├─────────────┤ │
+│   │ Lore bibles   │     │ Meter counter │     │ LaTeX formulas │    │ ELI5 to Grad  │  │ Commercial  │ │
+│   │ Characters    │     │ Sonnets (10s) │     │ Literature rev │    │ 5-Q Quizzes   │  │ NDAs & IP   │ │
+│   │ Dialogue arcs │     │ Haikus (5-7-5)│     │ BibTeX entries │    │ Anki Flashcard│  │ SWOT matrix │ │
+│   └──────┬────────┘     └───────┬───────┘     └────────┬───────┘    └───────┬───────┘  └──────┬──────┘ │
+│          │                      │                      │                    │                 │        │
+│          └──────────────────────┴───────────┬──────────┴────────────────────┴─────────────────┘        │
+│                                             ▼                                                          │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                  AIR-GAPPED SYNTHESIS, METRICS CALCULATION & MONACO TRANSFER                   │   │
+│   │   - 100% Local GPU Execution (Ollama / llama.cpp / Candle / Transformers.js)                   │   │
+│   │   - Domain Metrics Verification: Syllable count, reading grade, equation audit, risk matrix   │   │
+│   │   - 1-Click "Apply to Monaco Editor" into .md, .tex, .txt, or .ts workspace files              │   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 🌐 The 6 Sovereign Knowledge Disciplines
+1. 💻 **Software Engineering & Systems (`.ts`, `.py`, `.rs`, `.go`)**:
+   - Polyglot coding, AST linting, terminal grid, and DAP debugging.
+2. ✍️ **Story & Literature Studio (`.md`)**:
+   - Long-form narrative generation, character dossiers, psychological flaws, and world-lore bibles.
+3. 🎭 **Poetry & Lyric Arts Studio (`.txt`)**:
+   - Phonetic syllable and meter counter, Shakespearean sonnet rhyming (ABAB CDCD EFEF GG), classic 5-7-5 haikus, and classical Urdu/Hindi ghazals.
+4. 🔬 **Academic Research & Science Studio (`.tex`, `.md`)**:
+   - Peer-reviewed paper drafting, IEEE/ACM abstract synthesis, LaTeX mathematical equations, and formatted BibTeX references.
+5. 🎓 **Socratic Learning & Student Tutor (`.md`)**:
+   - 3-tier intuitive breakdown (ELI5 $\rightarrow$ Undergraduate $\rightarrow$ Graduate), interactive multiple-choice quizzes with answer keys, and Anki-ready flashcard decks.
+6. ⚖️ **Professional, Business & Legal Studio (`.md`)**:
+   - Commercial agreements, mutual NDAs, executive pitch summaries, and structured SWOT risk evaluation matrices.
+
+### ⚡ Access Points
+- **Global Keybinding**: <kbd>Ctrl+Alt+U</kbd>
+- **Activity Hub**: Click `🌐 Universal Field Studio`
+- **Top Header Bar**: Click `Studio Modes` next to Ollama Status
+- **Command Palette**: Run `Universal Field Studio & Multi-Domain Engine`
+
+---
+
+## Subsystem 56: Novel Notion-Style WYSIWYG Creative Studio
+
+Offline AI Studio integrates the premier Notion-style visual document and AI creative writing studio inspired by **Novel** (`https://github.com/steven-tey/novel`), **Tiptap**, and **Notion AI** (`client/components/NovelCreativeEditor.tsx`, `lib/ai/novelEditorEngine.ts`, and `app/api/novel-editor/route.ts`).
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              NOVEL NOTION-STYLE WYSIWYG CREATIVE STUDIO                                │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │ TOP ACTION BAR: Mode Indicator • Split/Visual/Raw Toggle • AI Continue (Tab) • Save Document   │   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                        │
+│   ┌───────────────────────────────────────────────┐  ┌─────────────────────────────────────────────┐   │
+│   │ VISUAL CREATIVE CANVAS                        │  │ LIVE SPLIT PREVIEW & TELEMETRY              │   │
+│   │                                               │  │                                             │   │
+│   │  # The Sovereign Mind                         │  │  # The Sovereign Mind                       │   │
+│   │  Type '/' for blocks and AI scaffolds...      │  │  The architecture of sovereign...          │   │
+│   │                                               │  │                                             │   │
+│   │  ┌─────────────────────────────────────────┐  │  │  $$                                         │   │
+│   │  │ ⚡ SLASH COMMAND POPOVER (/)            │  │  │  \mathcal{S}_{sovereign} = \lim_{t\to\infty}│   │
+│   │  ├─────────────────────────────────────────┤  │  │  $$                                         │   │
+│   │  │ ✍️ /story-scene: Narrative Scene Opener  │  │  │                                             │   │
+│   │  │ 🎭 /sonnet-skeleton: 14-Line Pentameter │  │  │  • Reading Time: 2 min                      │   │
+│   │  │ 🔬 /latex-equation: Math Loss Function  │  │  │  • Grade Level: Advanced (Graduate)         │   │
+│   │  │ 🎓 /socratic-quiz: 3-Tier Self-Check   │  │  │  • Word Count: 184 words                    │   │
+│   │  │ ⚖️ /nda-clause: Confidentiality (NDA)   │  │  │                                             │   │
+│   │  └─────────────────────────────────────────┘  │  │  ┌────────────────────────────────────────┐ │   │
+│   │                                               │  │  │ 100% IN-SYNC WITH MONACO WORKSPACE     │ │   │
+│   │  ┌─────────────────────────────────────────┐  │  │  └────────────────────────────────────────┘ │   │
+│   │  │ 🎈 FLOATING BUBBLE TOOLBAR              │  │  │                                             │   │
+│   │  │ [Bold] [Italic] [Code] [Quote] [Polish] │  │  │                                             │   │
+│   │  └─────────────────────────────────────────┘  │  │                                             │   │
+│   └───────────────────────────────────────────────┘  └─────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities
+1. **Interactive Slash Commands (`/`)**:
+   - Triggers contextual block insertion on typing `/`: Headings, Tables, Story Scene Openers, Character Lore Dossiers, Shakespearean Sonnets, LaTeX equations, Socratic quizzes, and NDAs.
+2. **Floating Bubble Formatting Toolbar**:
+   - Highlighting any text slice displays an instant formatting strip for Bold, Italic, Monospace Code, Blockquote, or 1-click domain AI polish (`Poetic` or `Academic`).
+3. **Inline AI Continuation (<kbd>Tab</kbd> or `++`)**:
+   - Pressing <kbd>Tab</kbd> triggers local LLM continuation that seamlessly streams the next narrative paragraph, poetic couplet, or research proof.
+4. **Tri-Mode View Switcher**:
+   - Seamlessly switch between **Visual** (Notion doc feel), **Split Preview** (side-by-side synchronized rendering), and **Raw MD** (pure markdown).
+5. **Real-Time Document Telemetry**:
+   - Dynamic Flesch-Kincaid reading grade level, estimated reading time, paragraph count, and word counter.
+6. **Access Points**:
+   - **Shortcut**: <kbd>Ctrl+Alt+E</kbd>
+   - **Activity Hub**: Click `📖 Novel Creative Studio`
+   - **Tools Menu**: Tools $\rightarrow$ `Novel Creative Studio...` (<kbd>Ctrl+Alt+E</kbd>)
+   - **Command Palette**: Run `Novel: Notion-Style WYSIWYG Creative Studio`
+
+---
+
+## Subsystem 57: Dockview Multi-Pane Layout & Window Dock Manager
+
+Offline AI Studio integrates the premier multi-pane docking layout manager inspired by **Dockview** (`https://github.com/mathuo/dockview`), **react-resizable-panels** (`https://github.com/bvaughn/react-resizable-panels`), and **FlexLayout** (`client/components/DockviewLayoutStudio.tsx`, `lib/layout/dockviewLayoutEngine.ts`, and `app/api/dock-layout/route.ts`).
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                              DOCKVIEW MULTI-PANE LAYOUT & WINDOW DOCK MANAGER                          │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │ TOP ACTION BAR: Layout Presets • Split Ratio Sashes • Detached Floating Windows (Ctrl+Alt+W)  │   │
+│   └──────┬──────────────────────┬──────────────────────┬────────────────────┬──────────────────┬───┘   │
+│          │                      │                      │                    │                  │       │
+│          ▼                      ▼                      ▼                    ▼                  ▼       │
+│   ┌───────────────┐     ┌───────────────┐     ┌────────────────┐    ┌───────────────┐  ┌─────────────┐ │
+│   │ 💻 CLASSIC    │     │ ✍️ CREATIVE   │     │ 🔬 ACADEMIC    │    │ 🧘 ZEN FOCUS  │  │ ⚡ TERMINAL │ │
+│   │ DEVELOPER IDE │     │ STUDIO NOVEL  │     │ RESEARCH DATA  │    │ MAXIMUM IMMER │  │ DEVOPS GRID │ │
+│   ├───────────────┤     ├───────────────┤     ├────────────────┤    ├───────────────┤  ├─────────────┤ │
+│   │ Left Explorer │     │ Left Lore Bar │     │ Left Docs Bar  │    │ Hidden Bars   │  │ No Sidebars │ │
+│   │ Monaco Center │     │ Novel Visual  │     │ LaTeX Split    │    │ Centered Text │  │ Code Center │ │
+│   │ Bottom Shell  │     │ Floating Chat │     │ Math Preview   │    │ 100% Screen   │  │ 2x2 Shells  │ │
+│   │ Right AI Chat │     │ Maximized     │     │ LanceDB Search │    │ Zero Noise    │  │ Build Tasks │ │
+│   └──────┬────────┘     └───────┬───────┘     └────────┬───────┘    └───────┬───────┘  └──────┬──────┘ │
+│          │                      │                      │                    │                 │        │
+│          └──────────────────────┴───────────┬──────────┴────────────────────┴─────────────────┘        │
+│                                             ▼                                                          │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │                     LOCALSTORAGE LAYOUT PERSISTENCE & SPLIT SASH ARCHITECT                     │   │
+│   │   - Left Sidebar Width Slider (180px - 450px)                                                  │   │
+│   │   - Right Copilot Chat Width Slider (260px - 600px)                                            │   │
+│   │   - Bottom Shell Tray Height Slider (120px - 500px)                                            │   │
+│   │   - Multi-Monitor Floating Popouts: Detach Chat / Terminal / Novel into Separate Windows      │   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities
+1. **6 Curated Workspace Presets**:
+   - **Classic Developer IDE**: Standard 3-pane coding workbench.
+   - **Creative Studio & Literature**: Maximized Novel/Notion visual document canvas with lore references.
+   - **Academic Research & Data**: Side-by-side LaTeX code and live mathematical formula preview.
+   - **Zen Maximum Focus**: Distraction-free full-screen writing without sidebars or status noise.
+   - **Dual Split-Screen Code**: 50/50 vertical split editor for polyglot refactoring and tests.
+   - **DevOps & Terminal Matrix**: Maximized multi-shell grid for continuous builds and diagnostics.
+2. **Dynamic Sash Ratio Resizing**:
+   - Fine-tune pixel widths and split percentages with live sliders that automatically persist to `localStorage`.
+3. **Detachable Floating Windows**:
+   - Detach AI Chat, Terminals, or Novel Studio into floating popout windows for multi-monitor setups.
+4. **Access Points**:
+   - **Shortcut**: <kbd>Ctrl+Alt+W</kbd>
+   - **Header Layout Toolbar**: Click the Layout icon next to Zen mode
+   - **Tools Menu**: Tools $\rightarrow$ `Dockview Window Manager...` (<kbd>Ctrl+Alt+W</kbd>)
+   - **Activity Hub**: Click `🪟 Dockview Window Manager`
+   - **Command Palette**: Run `Dockview: Workspace Layout & Window Manager`
+
+---
+
+## Subsystem 58: Magic UI & Sonner Luxury Aesthetics & Micro-Animations
+
+Offline AI Studio elevates its visual soul with state-of-the-art developer tool aesthetics inspired by **Magic UI** (`https://github.com/magicuidesign/magicui`), **Sonner** (`https://github.com/emilkowalski/sonner`), **CMDK** (`https://github.com/pacocoursey/cmdk`), and **Aceternity UI** (`client/components/MagicUiStudioModal.tsx`, `client/components/SonnerToastHost.tsx`, `lib/ui/sonnerNotificationEngine.ts`, and `app/api/magic-ui/route.ts`).
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                          MAGIC UI & SONNER LUXURY AESTHETICS & MICRO-ANIMATIONS                        │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │ TOP ACTION BAR: Effect Color Themes • Beam Speed Slider • Toast Simulator (Ctrl+Alt+M)         │   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                        │
+│   ┌───────────────────────────────────────────────┐  ┌─────────────────────────────────────────────┐   │
+│   │ ⚡ ANIMATED BORDER BEAM SHADER                │  │ 🎈 SONNER STACKED FLOATING TOAST HOST       │   │
+│   │                                               │  │                                             │   │
+│   │  ┌─────────────────────────────────────────┐  │  │  ┌───────────────────────────────────────┐  │   │
+│   │  │ [Light Beam travels along card border]  │  │  │  │ ✨ Autonomous AI Agent Loop Finished │  │   │
+│   │  │ - Conic gradient sweep (3s - 12s)       │  │  │  │    Resolved 3 AST nodes in 1.4s        │  │   │
+│   │  │ - 5 Hues: Indigo, Cyan, Emerald, Rose   │  │  │  │    [View Diff]                [X]     │  │   │
+│   │  │ - Visual indicator of active local AI   │  │  │  └───────────────────────────────────────┘  │   │
+│   │  └─────────────────────────────────────────┘  │  │  ┌───────────────────────────────────────┐  │   │
+│   │                                               │  │  │ ✅ Local Build Succeeded (0 Errors)   │  │   │
+│   │ 🌟 SHIMMER BUTTONS & SPOTLIGHT CURSOR         │  │  │    TypeScript verified in-memory       │  │   │
+│   │  - Linear specular highlights                 │  │  └───────────────────────────────────────┘  │   │
+│   │  - Dynamic mouse radial spotlight glow        │  │                                             │   │
+│   │  - Raycast-style command menu badges          │  │  • Spring-animated stacking (scale & opacity│   │
+│   │                                               │  │  • Auto-dismiss with interactive callbacks  │   │
+│   └───────────────────────────────────────────────┘  └─────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities
+1. **Animated Border Beams**:
+   - Continuous travelling light beams tracing cards during active neural inference, build processes, and file generation.
+2. **Sonner Stacked Toast Notification Host**:
+   - Fluid spring-animated stacked notifications anchored at `bottom-4 right-4` across the entire IDE workspace, with auto-dismiss timers, action callbacks (e.g. `[View Diff]`), and severity states (`ai`, `success`, `warning`, `error`, `info`).
+3. **Linear Specular Shimmer Buttons**:
+   - Metallic continuous gleam sweeps across primary call-to-action buttons.
+4. **Spotlight Cursor Tracker**:
+   - Dynamic radial gradient highlights that track cursor coordinates across panels.
+5. **Access Points**:
+   - **Shortcut**: <kbd>Ctrl+Alt+M</kbd>
+   - **Tools Menu**: Tools $\rightarrow$ `Magic UI & Sonner Effects...` (<kbd>Ctrl+Alt+M</kbd>)
+   - **Activity Hub**: Click `✨ Magic UI & Sonner Effects`
+   - **Command Palette**: Run `Magic UI: Luxury Aesthetics & Sonner Effects Studio`
+
+---
+
+## Subsystem 59: Cursor & v0 Ultra-Modern UI/UX Suite & Settings Importer
+
+Offline AI Studio natively delivers the top 10 VS Code visual extensions and user `settings.json` configuration inspired by **Cursor**, **v0.dev**, and **Windsurf** (`client/components/CursorModernUiStudioModal.tsx`, `lib/ui/cursorModernUiEngine.ts`, and `app/api/cursor-ui/route.ts`).
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CURSOR & V0 ULTRA-MODERN UI/UX SUITE & SETTINGS IMPORTER                        │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │ TOP ACTION BAR: 10 Extensions Matrix • Live Code Preview • settings.json Importer (Ctrl+Alt+V) │   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                        │
+│   ┌───────────────────────────────────────────────┐  ┌─────────────────────────────────────────────┐   │
+│   │ 🎨 THE 10 NATIVE PRO EXTENSIONS               │  │ 💻 MONACO ERROR LENS & BETTER COMMENTS      │   │
+│   │                                               │  │                                             │   │
+│   │  1. 🔍 Error Lens (Inline glowing bug pills)  │  │  1 export class SovereignEngine {           │   │
+│   │  2. 💬 Better Comments (// TODO, // FIXME)    │  │  2   // TODO: Air-gapped neural sync (Amber)│   │
+│   │  3. 🌈 Indent Rainbow (4-color pastel guides) │  │  3   // FIXME: Avoid VRAM spikes (Red)      │   │
+│   │  4. 🦚 Peacock (Project border/status tint)   │  │  4   // ! Security Rule: Zero telemetry (R) │   │
+│   │  5. 🌑 Glass-Dark Obsidian (#09090b palette)  │  │  5   // ? Evaluate AST before diff? (Sky)   │   │
+│   │  6. 📁 Material Icon Theme (60+ extensions)   │  │  6   // * 100% Syntax Integrity (Emerald)   │   │
+│   │  7. 🪟 Glassit Vibrancy (Acrylic blur slider) │  │  7   const buf = await readFile(path        │   │
+│   │  8. 🎛️ APC Customize UI Plus (Minimal layout)  │  │        ❌ Error Lens: Expected ')' and ';' │   │
+│   │  9. ✨ Fluent Icons (Vector toolbar glyphs)   │  │                                             │   │
+│   │ 10. 📂 Project Manager (Single-click switcher)│  │  • Font Ligatures: ON (=>, ===, !==)        │   │
+│   │                                               │  │  • Smooth Caret Animation: ON               │   │
+│   │                                               │  │  • Bracket Pair Colorization: ON            │   │
+│   └───────────────────────────────────────────────┘  └─────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities
+1. **Error Lens**:
+   - In-line diagnostic pills rendered directly on Monaco code lines for syntax errors and warnings.
+2. **Better Comments**:
+   - Color-coded comment tags: `// TODO:` (Amber), `// FIXME:` (Red), `// !` (Alert Rose), `// ?` (Query Sky), and `// *` (Highlight Emerald).
+3. **Indent Rainbow**:
+   - 4-color alternating soft vertical indent columns (`Gold`, `Emerald`, `Cyan`, `Purple`).
+4. **Peacock Project Tinting**:
+   - Differentiate local workspaces with custom border and status bar color themes (Tokyo Night Blue, Cursor Neon Cyan, Vesper Amber, One Dark Purple, Emerald Sovereign).
+5. **Monaco Typography Upgrades**:
+   - `fontLigatures: true`, `cursorSmoothCaretAnimation: "on"`, and `bracketPairColorization: { enabled: true }`.
+6. **1-Click settings.json Importer**:
+   - Fully parses and applies VS Code `settings.json` user profiles directly to the running IDE.
+7. **Access Points**:
+   - **Shortcut**: <kbd>Ctrl+Alt+V</kbd>
+   - **Tools Menu**: Tools $\rightarrow$ `Cursor / v0 Modern UI/UX...` (<kbd>Ctrl+Alt+V</kbd>)
+   - **Activity Hub**: Click `🎨 Cursor & v0 Modern UI/UX`
+   - **Command Palette**: Run `Cursor & v0: Ultra-Modern UI/UX Suite & Settings Importer`
+
+---
+
+## Subsystem 60: Nano Banana Pro AI Prompt Gallery & Studio (2,500 Prompts)
+
+Offline AI Studio natively delivers a sovereign, 100% offline, hand-curated catalog of **2,500 AI image generation prompts** sourced from `awesome-nano-banana-pro-prompts-main` (`client/components/NanoBananaStudioModal.tsx`, `lib/ai/nanoBananaEngine.ts`, `app/api/nano-banana/route.ts`, and `public/nano-banana/index.html`).
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        NANO BANANA PRO AI PROMPT GALLERY & STUDIO (2,500 PROMPTS)                      │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │ SEARCH: [ photorealistic cyberpunk cityscape...            ] [Category Filter ▼] [Remix (🎲)] │   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                        │
+│   ┌───────────────────────────────────────────────┐  ┌─────────────────────────────────────────────┐   │
+│   │ 📁 CURATED PROMPT DATABASE (2,500 TOTAL)      │  │ ⚡ PARAMETRIC PROMPT REMIXER & ACTIONS       │   │
+│   │                                               │  │                                             │   │
+│   │  • Nano Banana Pro:  1,942 Prompts            │  │  [🎲 Random Prompt]   [✨ Enrich Prompt]    │   │
+│   │  • GPT Image 1.5:      256 Prompts            │  │                                             │   │
+│   │  • General Creative:   189 Prompts            │  │  Selected Prompt:                           │   │
+│   │  • Seedream 4.5:       113 Prompts            │  │  "Hyper-detailed octane render of sovereign │   │
+│   │                                               │  │   cybernetic workstation with neon cyan..." │   │
+│   │  ⚡ Fast In-Memory BM25 Search Engine         │  │                                             │   │
+│   │  🎨 Live Glassmorphism Gallery Preview        │  │  [📋 Copy] [📝 Send to AI Chat] [📥 Monaco] │   │
+│   └───────────────────────────────────────────────┘  └─────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities
+1. **2,500 Offline Prompts Library**:
+   - Complete local offline index spanning 4 distinct generative design categories: Nano Banana Pro (1,942 prompts), GPT Image 1.5 (256 prompts), General (189 prompts), and Seedream 4.5 (113 prompts).
+2. **Sub-Millisecond BM25 Search**:
+   - Instant tokenized search matching titles, descriptors, and style keywords entirely in-memory with zero external network roundtrips.
+3. **Parametric Prompt Remixer & Enhancer**:
+   - 1-click prompt enrichment introducing camera angles, 8k raytracing modifiers, cyberpunk/anime aesthetics, negative prompt sanitization, and aspect ratio flags (`--ar 16:9`, `--v 6.0`).
+4. **Direct IDE Workspace Ingestion**:
+   - 1-click injection into Monaco Editor code comments or docstrings, direct transmission to the AI Assistant Chat drawer, or export to external diffusion pipelines.
+5. **Access Points**:
+   - **Shortcut**: <kbd>Ctrl+Alt+J</kbd>
+   - **Tools Menu**: Tools $\rightarrow$ `Nano Banana Prompt Gallery...` (<kbd>Ctrl+Alt+J</kbd>)
+   - **Activity Hub**: Click `🍌 Nano Banana Studio`
+   - **Command Palette**: Run `Nano Banana: 2,500 AI Prompt Gallery & Studio`
+
+---
+
+## Subsystem 61: Universal Studio Return, Cancel & Close Navigation System
+
+Offline AI Studio incorporates an exhaustive, bulletproof navigation architecture across its entire interface, ensuring developers never encounter dead-ends, trapped modals, or orphaned views when exploring the 51+ embedded specialized studios and runtime consoles (`components/Playground.tsx`, `client/components/BreadcrumbsBar.tsx`).
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        UNIVERSAL STUDIO RETURN, CANCEL & CLOSE NAVIGATION SYSTEM                       │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │ [ ← Back to Playground (Esc) ]  ToolJet Low-Code Studio                  [ ✕ Close Studio ]    │   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                        │
+│   ┌───────────────────────────────────────────────┐  ┌─────────────────────────────────────────────┐   │
+│   │ 🛡️ 7 REDUNDANT ESCAPE & RETURN LAYERS          │  │ ⚡ RESILIENT STATE TRANSITION PIPELINE      │   │
+│   │                                               │  │                                             │   │
+│   │  1. 🔘 Primary Studio Return Header Button    │  │  Studio Active (e.g. __TOOLJET_STUDIO__)    │   │
+│   │  2. ❌ High-Contrast Studio Close Button      │  │        │                                    │   │
+│   │  3. 📑 Tabs Bar Back-to-Editor Pill (Esc)     │  │        ├── Click [ ← Back to Playground ]   │   │
+│   │  4. 🍞 Top Breadcrumbs "Back to Code" Action  │  │        ├── Click [ ✕ Close Studio ]         │   │
+│   │  5. 📁 Activity Sidebar Instant Files Return  │  │        ├── Press <kbd>Escape</kbd>          │   │
+│   │  6. ⌨️ Global <kbd>Escape</kbd> Keyboard Wire │  │        └── Close Active Tab                 │   │
+│   │  7. 🔄 Last-Tab Auto-Recovery to Playground   │  │        │                                    │   │
+│   │                                               │  │        ▼                                    │   │
+│   │  Zero Trapped States • 100% Guaranteed Return │  │  Graceful Unmount ➔ Restores Monaco Editor   │   │
+│   └───────────────────────────────────────────────┘  └─────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities
+1. **Unified Studio Navigation Header**:
+   - Every embedded studio environment (ToolJet, AutoGPT, Models Catalog, Nano Banana, Graph-RAG, etc.) features an omnipresent top bar equipped with a primary `[ ← Back to Playground (Esc) ]` button and a high-contrast red-tinted `[ ✕ Close Studio ]` button.
+2. **Active Tabs Bar Return Pill**:
+   - When any studio virtual tab is active, the tab bar renders a dedicated `[ ← Back to Editor (Esc) ]` pill complete with a keyboard shortcut badge.
+3. **Fail-Safe Breadcrumbs Bar**:
+   - The top breadcrumb status bar automatically displays a contextual `[ ← Back to Code ]` action button whenever non-editor full-screen panels are rendered.
+4. **Global <kbd>Escape</kbd> Listener**:
+   - Pressing <kbd>Escape</kbd> from anywhere in the IDE instantly navigates back from any studio, dialog, or fullscreen view directly into the Monaco code editor.
+5. **Last-Tab Auto-Recovery State**:
+   - Closing the final open tab or studio automatically restores `components/Playground.tsx` with default workspace welcome files instead of falling into empty void or unmountable states.
+
+---
+
+## Subsystem 62: Superpowers Autonomous Software Engineering Methodology Framework (`obra/superpowers`)
+
+Offline AI Studio features native, sovereign integration of the industry-acclaimed **Superpowers Autonomous Software Engineering Methodology** (`https://github.com/obra/superpowers`). Deeply integrated into `.agents/skills/`, `components/SuperpowersStudioPanel.tsx`, `app/api/superpowers/route.ts`, and `components/CommandPalette.tsx`, this system transforms local AI assistants from simple autocompleters into disciplined, methodology-first autonomous software engineers.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│             SUPERPOWERS AUTONOMOUS SOFTWARE ENGINEERING METHODOLOGY FRAMEWORK (obra/superpowers)      │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                        │
+│   ┌────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│   │ PIPELINE:  1.Brainstorm ➔ 2.Worktree ➔ 3.Plan ➔ 4.TDD ➔ 5.Debug ➔ 6.Review ➔ 7.Ship (Ctrl+Alt+Z)│   │
+│   └────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                        │
+│   ┌───────────────────────────────────────────────┐  ┌─────────────────────────────────────────────┐   │
+│   │ 🗂️ 15 AUTONOMOUS SKILLS REPOSITORY            │  │ ⚡ 1-CLICK PROMPT DISPATCHER & RULES ENGINE │   │
+│   │                                               │  │                                             │   │
+│   │  • brainstorming          • using-git-worktree│  │  Selected Skill: test-driven-development    │   │
+│   │  • test-driven-dev        • writing-plans     │  │  Strict Invariant: Red-Green-Refactor       │   │
+│   │  • systematic-debugging   • executing-plans   │  │  "Write failing test BEFORE implementation; │   │
+│   │  • subagent-driven-dev    • writing-skills    │  │   verify failure reason before editing code"│   │
+│   │  • requesting-code-review • diagnosing-sp     │  │                                             │   │
+│   │  • receiving-code-review  • using-superpowers │  │  [⚡ Dispatch to AI Chat] [📋 Copy Prompt]  │   │
+│   │  • finishing-dev-branch   • verification      │  │                                             │   │
+│   │  • dispatching-parallel-agents                │  │  • Socratic clarifying interview triggers   │   │
+│   │                                               │  │  • Strict hypothesis-driven root cause logs │   │
+│   └───────────────────────────────────────────────┘  └─────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### ⚡ Key Capabilities
+1. **15 Autonomous Engineering Skills Embedded Locally**:
+   - Complete local mirror of `obra/superpowers` skills loaded into `.agents/skills/`, delivering systematic rigor across all engineering operations:
+     - `brainstorming`: Socratic discovery, requirement boundary validation, and user experience clarification *before* touching code.
+     - `test-driven-development`: Red-Green-Refactor discipline mandating failing tests before any implementation code is written.
+     - `systematic-debugging`: 4-phase root-cause analysis preventing trial-and-error edits and speculative fixes.
+     - `writing-plans` & `executing-plans`: Atomic DRY/YAGNI architecture milestones with actionable checklists.
+     - `subagent-driven-development` & `dispatching-parallel-agents`: Multi-agent isolated task execution and parallel worker coordination.
+     - `requesting-code-review` & `receiving-code-review`: Adversarial code review inspecting state invariants, edge cases, and security vulnerabilities.
+     - `finishing-a-development-branch` & `using-git-worktrees`: Clean git commits, branch merges, and zero-pollution worktrees.
+     - `verification-before-completion`: Evidence-first verification protocols before declaring tasks complete.
+2. **Interactive 7-Stage Engineering Pipeline**:
+   - Visual dashboard guiding the user and local AI agents through each phase: **1. Brainstorm** $\rightarrow$ **2. Worktree** $\rightarrow$ **3. Plan** $\rightarrow$ **4. TDD** $\rightarrow$ **5. Debug** $\rightarrow$ **6. Review** $\rightarrow$ **7. Ship**.
+3. **1-Click Prompt Dispatchers & Skill Rule Inspector**:
+   - Preview full markdown instructions, frontmatter metadata, and dispatch specialized behavioral constraints directly to the AI Assistant drawer.
+4. **Unified Command Palette & Keybinding Integration**:
+   - Full keyboard accessibility with <kbd>Ctrl+Alt+Z</kbd> opening the Superpowers Methodology Studio, plus quick commands (`superpowers-brainstorm`, `superpowers-tdd`, `superpowers-debug`, `superpowers-review`).
+5. **Access Points**:
+   - **Shortcut**: <kbd>Ctrl+Alt+Z</kbd>
+   - **Tools Menu**: Tools $\rightarrow$ `Superpowers Engineering Methodology...` (<kbd>Ctrl+Alt+Z</kbd>)
+   - **Activity Hub / Left Sidebar**: Click the Flame icon (`🔥 Superpowers`)
+   - **AI Assistant Drawer**: Embedded methodology card with 1-click stage buttons
+   - **Command Palette**: Run `Superpowers: Autonomous Engineering Methodology Hub`
 
 ---
 

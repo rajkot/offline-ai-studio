@@ -1,28 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Offline AI Studio - Disconnected</title>
+  <title>Offline AI Studio - Server Engine</title>
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      background: radial-gradient(circle at center, #0e1324 0%, #05070f 100%);
+      background: radial-gradient(circle at 50% 30%, #111827 0%, #080c16 60%, #03050a 100%);
       color: #cbd5e1;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
+      padding: 24px;
       text-align: center;
     }
     .container {
-      max-width: 500px;
+      max-width: 560px;
+      width: 100%;
       padding: 40px;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(99, 102, 241, 0.2);
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(239, 68, 68, 0.25);
       border-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7),
+                  0 0 30px -10px rgba(239, 68, 68, 0.2);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+    }
+    .pulse {
+      width: 8px;
+      height: 8px;
+      background-color: #f87171;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.7);
+      animation: pulse 1.6s infinite;
     }
     h1 {
       color: #ffffff;
@@ -36,28 +68,60 @@
       color: #94a3b8;
       margin-bottom: 24px;
     }
-    .status {
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      font-size: 11px;
-      font-weight: bold;
-      text-transform: uppercase;
-      padding: 6px 14px;
-      border-radius: 100px;
-      margin-bottom: 24px;
     }
-    .pulse {
-      width: 8px;
-      height: 8px;
-      background-color: #f87171;
-      border-radius: 50%;
-      box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.7);
-      animation: pulse 1.6s infinite;
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
     }
+    .btn-secondary {
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      box-shadow: none;
+    }
+    .btn-secondary:hover {
+      background: rgba(51, 65, 85, 0.8);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    .tip-box {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(51, 65, 85, 0.4);
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: left;
+      line-height: 1.5;
+    }
+    .tip-box strong {
+      color: #e2e8f0;
+    }
+    .retry-countdown {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
     @keyframes pulse {
       0% {
         transform: scale(0.95);
@@ -72,33 +136,62 @@
         box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
       }
     }
-    .btn {
-      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-      color: white;
-      border: none;
-      padding: 12px 28px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 13px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
-      transition: all 0.2s ease;
-    }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="status">
       <div class="pulse"></div>
-      Offline Mode Active
+      Server Engine Starting / Disconnected
     </div>
     <h1>Offline AI Studio Desktop</h1>
-    <p>We couldn't connect to the local server running at port 3000. Please ensure the dev server or local production port is active on your host system, then hit reconnect.</p>
-    <button class="btn" onclick="window.location.reload()">Retry Connection</button>
+    <p>The local backend server is initializing or was not detected on port 3000. Offline AI Studio automatically manages its local background engine.</p>
+    
+    <div class="actions">
+      <button class="btn" id="retryBtn" onclick="handleRetry()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        Restart & Connect
+      </button>
+      <button class="btn btn-secondary" onclick="openDevTools()">
+        Debug Console
+      </button>
+    </div>
+
+    <div class="tip-box">
+      <strong>Automatic Recovery:</strong> The desktop app has spawned the standalone engine. If this is the first boot, dependencies and local caches may take 5–10 seconds to warm up.
+    </div>
+
+    <div class="retry-countdown" id="countdown">Auto-reconnecting in 4s...</div>
   </div>
+
+  <script>
+    let secondsLeft = 4;
+    const countdownEl = document.getElementById('countdown');
+
+    function handleRetry() {
+      if (window.electronAPI && window.electronAPI.retryEngine) {
+        window.electronAPI.retryEngine();
+      } else {
+        window.location.reload();
+      }
+    }
+
+    function openDevTools() {
+      if (window.electronAPI && window.electronAPI.openDevTools) {
+        window.electronAPI.openDevTools();
+      }
+    }
+
+    const timer = setInterval(() => {
+      secondsLeft--;
+      if (countdownEl) {
+        countdownEl.textContent = `Auto-reconnecting in ${secondsLeft}s...`;
+      }
+      if (secondsLeft <= 0) {
+        clearInterval(timer);
+        handleRetry();
+      }
+    }, 1000);
+  </script>
 </body>
 </html>

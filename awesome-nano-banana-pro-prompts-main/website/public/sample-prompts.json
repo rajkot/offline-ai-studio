@@ -1,0 +1,114 @@
+{
+  "prompts": [
+    {
+      "id": 1,
+      "title": "Wide quote card with portrait and Chinese/English customization",
+      "description": "Create a beautiful quote card with a portrait image and customizable text",
+      "content": "Create a wide quote card (landscape, 1200x600px) with a beautiful portrait photo on the left side. Add a quote in the center with the author name below. Support both Chinese and English text.",
+      "category": "Profile / Avatar",
+      "style": "Photography",
+      "author": "John Doe",
+      "image": "https://images.unsplash.com/photo-1516321318423-f06f70d504f0?w=400&h=300&fit=crop",
+      "featured": true
+    },
+    {
+      "id": 2,
+      "title": "Professional Product Photography",
+      "description": "Product photo with studio lighting and clean white background",
+      "content": "Generate a professional product photo with studio lighting, clean white background, and high-quality details. Perfect for e-commerce.",
+      "category": "E-commerce Main Image",
+      "style": "Photography",
+      "author": "Jane Smith",
+      "image": "https://images.unsplash.com/photo-1505228395891-9a51e7e86e81?w=400&h=300&fit=crop",
+      "featured": false
+    },
+    {
+      "id": 3,
+      "title": "Anime Character Portrait",
+      "description": "Detailed anime character design with vibrant colors",
+      "content": "Create a detailed anime character portrait with vibrant colors, expressive eyes, and dynamic hair. Use anime art style.",
+      "category": "Character",
+      "style": "Anime / Manga",
+      "author": "Artist Name",
+      "image": "https://images.unsplash.com/photo-1578926078328-123456789?w=400&h=300&fit=crop",
+      "featured": true
+    },
+    {
+      "id": 4,
+      "title": "Minimalist Poster Design",
+      "description": "Clean and modern poster with minimal elements",
+      "content": "Design a minimalist poster with clean typography, limited color palette, and plenty of white space.",
+      "category": "Poster / Flyer",
+      "style": "Minimalism",
+      "author": "Designer Pro",
+      "image": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=300&fit=crop",
+      "featured": false
+    },
+    {
+      "id": 5,
+      "title": "3D Rendered Product",
+      "description": "Realistic 3D rendering with lighting and shadows",
+      "content": "Create a high-quality 3D render of a product with realistic lighting, reflections, and shadows.",
+      "category": "Product Marketing",
+      "style": "3D Render",
+      "author": "3D Artist",
+      "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+      "featured": true
+    },
+    {
+      "id": 6,
+      "title": "Landscape Nature Scene",
+      "description": "Beautiful natural landscape with mountains and trees",
+      "content": "Generate a stunning landscape photograph with mountains, trees, and clear sky. Natural lighting and vibrant colors.",
+      "category": "Landscape / Nature",
+      "style": "Photography",
+      "author": "Nature Photographer",
+      "image": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
+      "featured": false
+    },
+    {
+      "id": 7,
+      "title": "Social Media Post Template",
+      "description": "Eye-catching Instagram or Facebook post design",
+      "content": "Create a social media post (1080x1080px) with vibrant colors, engaging text, and modern design elements.",
+      "category": "Social Media Post",
+      "style": "Illustration",
+      "author": "Social Media Designer",
+      "image": "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=300&fit=crop",
+      "featured": true
+    },
+    {
+      "id": 8,
+      "title": "Cyberpunk City Scene",
+      "description": "Futuristic city with neon lights and sci-fi elements",
+      "content": "Illustrate a cyberpunk city scene with neon lights, flying vehicles, and futuristic architecture. Sci-fi style.",
+      "category": "Abstract / Background",
+      "style": "Cyberpunk / Sci-Fi",
+      "author": "Sci-Fi Artist",
+      "image": "https://images.unsplash.com/photo-1559056199-641a0ac8b3f4?w=400&h=300&fit=crop",
+      "featured": false
+    },
+    {
+      "id": 9,
+      "title": "YouTube Thumbnail Design",
+      "description": "Attention-grabbing thumbnail for video content",
+      "content": "Design a YouTube thumbnail (1280x720px) with bold text, contrasting colors, and eye-catching elements.",
+      "category": "YouTube Thumbnail",
+      "style": "Illustration",
+      "author": "Content Creator",
+      "image": "https://images.unsplash.com/photo-1611339555312-e607c04352fa?w=400&h=300&fit=crop",
+      "featured": true
+    },
+    {
+      "id": 10,
+      "title": "Watercolor Painting",
+      "description": "Artistic watercolor painting with soft colors",
+      "content": "Create a beautiful watercolor painting with soft colors, flowing brushstrokes, and artistic composition.",
+      "category": "Landscape / Nature",
+      "style": "Watercolor",
+      "author": "Artist",
+      "image": "https://images.unsplash.com/photo-1563682352-b83d59852b13?w=400&h=300&fit=crop",
+      "featured": false
+    }
+  ]
+}

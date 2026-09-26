@@ -26,7 +26,8 @@ import {
   HardDrive,
   Database,
   Split,
-  Puzzle
+  Puzzle,
+  Flame
 } from 'lucide-react';
 import { extensionHost } from '@/lib/extensions/ExtensionHost';
 
@@ -61,6 +62,25 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'opfs-open': 'Ctrl+Shift+O',
   'composer-open': 'Ctrl+Shift+K',
   'vectordb-open': 'Ctrl+Shift+V',
+  'indicnlp-open': 'Ctrl+Alt+I',
+  'chroma-open': 'Ctrl+Alt+C',
+  'candle-open': 'Ctrl+Alt+K',
+  'nanogpt-open': 'Ctrl+Alt+N',
+  'aider-open': 'Ctrl+Alt+P',
+  'transformers-open': 'Ctrl+Alt+T',
+  'outlines-open': 'Ctrl+Alt+O',
+  'llamacpp-open': 'Ctrl+Alt+L',
+  'ripgrep-open': 'Ctrl+Alt+R',
+  'astgrep-open': 'Ctrl+Alt+S',
+  'lancedb-open': 'Ctrl+Alt+D',
+  'chonkie-open': 'Ctrl+Alt+H',
+  'tabby-open': 'Ctrl+Alt+Y',
+  'universal-modes-open': 'Ctrl+Alt+U',
+  'novel-editor-open': 'Ctrl+Alt+E',
+  'dockview-open': 'Ctrl+Alt+W',
+  'magic-ui-open': 'Ctrl+Alt+M',
+  'cursor-ui-open': 'Ctrl+Alt+V',
+  'nano-banana-open': 'Ctrl+Alt+J',
   'plugins-open': 'Ctrl+Shift+P',
   'finetuning-open': 'Ctrl+Shift+J',
   'hitl-open': 'Ctrl+Shift+Q',
@@ -243,6 +263,139 @@ export const COMMAND_METADATA: {
     iconName: 'Database'
   },
   {
+    id: 'indicnlp-open',
+    name: '🇮🇳 IndicNLP: AI4Bharat Corpora & Vectors',
+    category: 'Navigation',
+    description: 'Explore 12 Indian languages, 300D FastText word embeddings, tokenizers and benchmarks',
+    iconName: 'Languages'
+  },
+  {
+    id: 'chroma-open',
+    name: '🎨 Chroma: AI Vector Database Collections',
+    category: 'Navigation',
+    description: 'Manage Chroma collections, embeddings, distance metrics (Cosine/L2/IP) and metadata filters',
+    iconName: 'Database'
+  },
+  {
+    id: 'candle-open',
+    name: '🔥 Candle: Rust ML & WASM Inference',
+    category: 'Navigation',
+    description: 'Zero-Python local inference: HuggingFace Candle WASM LLMs, Whisper speech-to-text, and dense embeddings',
+    iconName: 'Flame'
+  },
+  {
+    id: 'nanogpt-open',
+    name: '🧠 nanoGPT: Subject AI Model Studio',
+    category: 'Navigation',
+    description: 'Train separate, dedicated Karpathy nanoGPT micro-models for each virtualized subject with custom weights',
+    iconName: 'Brain'
+  },
+  {
+    id: 'aider-open',
+    name: '🤝 Aider: Autonomous Pair Programmer & Universal Repo Map',
+    category: 'Navigation',
+    description: 'Autonomous multi-file editing with PageRank symbol centrality, SEARCH/REPLACE diff blocks, and Git auto-commit',
+    iconName: 'GitBranch'
+  },
+  {
+    id: 'transformers-open',
+    name: '🤗 Transformers.js: WebGPU Client-Side ML Studio',
+    category: 'Navigation',
+    description: 'Zero-Python in-browser ONNX embeddings, text classification, and code summarization',
+    iconName: 'Zap'
+  },
+  {
+    id: 'outlines-open',
+    name: '📐 Outlines: FSM Guided Generation & Structured Output',
+    category: 'Navigation',
+    description: 'Finite State Machine guided JSON Schemas, Regex, and Grammar logit masking',
+    iconName: 'Binary'
+  },
+  {
+    id: 'llamacpp-open',
+    name: '🦙 llama.cpp: Standalone C/C++ Engine & GGUF Fitter',
+    category: 'Navigation',
+    description: 'Ultra-fast native C/C++ GGUF inference, VRAM sizer, and continuous batching',
+    iconName: 'Cpu'
+  },
+  {
+    id: 'ripgrep-open',
+    name: '⚡ ripgrep: High-Performance Code Search & Batch Replacer',
+    category: 'Navigation',
+    description: 'Sub-millisecond workspace regex code search, contextual lines, and batch replacement',
+    iconName: 'Search'
+  },
+  {
+    id: 'astgrep-open',
+    name: '🌳 ast-grep: AST Structural Search & Refactor',
+    category: 'Navigation',
+    description: 'Syntax-aware code patterns with meta-variables ($VAR, $$$ARGS), rule linter, and atomic rewrites',
+    iconName: 'Code2'
+  },
+  {
+    id: 'lancedb-open',
+    name: '🗄️ LanceDB: Serverless Embedded Vector Database',
+    category: 'Navigation',
+    description: 'Apache Arrow columnar vector storage, hybrid search (Dense ANN + Sparse BM25), and zero-cloud RAG',
+    iconName: 'Database'
+  },
+  {
+    id: 'chonkie-open',
+    name: '🧩 Chonkie: High-Performance AST & Semantic Chunking Engine',
+    category: 'Navigation',
+    description: 'Tree-sitter code chunking, intact AST syntax boundaries, and direct LanceDB ingestion',
+    iconName: 'Layers'
+  },
+  {
+    id: 'tabby-open',
+    name: '⚡ Tabby: Self-Hosted FIM Code Completion Server',
+    category: 'Navigation',
+    description: 'Sub-50ms Fill-in-the-Middle inline ghost-text autocomplete for Monaco',
+    iconName: 'Zap'
+  },
+  {
+    id: 'universal-modes-open',
+    name: '🌐 Universal Field Studio & Multi-Domain Engine',
+    category: 'Navigation',
+    description: 'Transform IDE across 6 domains: Code, Fiction, Poetry, Science, Learning & Legal (Ctrl+Alt+U)',
+    iconName: 'Sparkles'
+  },
+  {
+    id: 'novel-editor-open',
+    name: '📖 Novel: Notion-Style WYSIWYG Creative Studio',
+    category: 'Navigation',
+    description: 'Interactive slash commands (/), bubble formatting, and inline AI continuation (Ctrl+Alt+E)',
+    iconName: 'BookOpen'
+  },
+  {
+    id: 'dockview-open',
+    name: '🪟 Dockview: Workspace Layout & Window Manager',
+    category: 'Navigation',
+    description: 'Multi-pane dock splitting, floating windows, and preset layouts (Ctrl+Alt+W)',
+    iconName: 'Layout'
+  },
+  {
+    id: 'magic-ui-open',
+    name: '✨ Magic UI: Luxury Aesthetics & Sonner Effects Studio',
+    category: 'Navigation',
+    description: 'Animated border beams, shimmer buttons, and spring stacked toast notifications (Ctrl+Alt+M)',
+    iconName: 'Sparkles'
+  },
+  {
+    id: 'cursor-ui-open',
+    name: '🎨 Cursor & v0: Ultra-Modern UI/UX Suite & Settings Importer',
+    category: 'Navigation',
+    description: 'Error Lens, Better Comments, Indent Rainbow, Peacock, Glassit & settings.json (Ctrl+Alt+V)',
+    iconName: 'Palette'
+  },
+  {
+    id: 'nano-banana-open',
+    name: '🍌 Nano Banana Pro: 2,500 AI Prompt Gallery & Studio',
+    category: 'Navigation',
+    description: 'Explore 2,500 curated AI image prompts with live HTML, remixing & IDE injection (Ctrl+Alt+J)',
+    iconName: 'Sparkles'
+  },
+  {
     id: 'plugins-open',
     name: '🧩 Plugins: Extension Store & Custom Hooks',
     category: 'Navigation',
@@ -418,6 +571,8 @@ export default function CommandPalette({ isOpen, onClose, onExecuteCommand }: Co
       case 'Bug': return <Bug size={16} className="text-rose-400" />;
       case 'HardDrive': return <HardDrive size={16} className="text-teal-400" />;
       case 'Database': return <Database size={16} className="text-blue-400" />;
+      case 'Languages': return <Languages size={16} className="text-amber-400" />;
+      case 'Flame': return <Flame size={16} className="text-orange-400" />;
       case 'Split': return <Split size={16} className="text-purple-400" />;
       case 'Puzzle': return <Puzzle size={16} className="text-indigo-400" />;
       case 'Settings': return <Settings size={16} className="text-slate-400" />;

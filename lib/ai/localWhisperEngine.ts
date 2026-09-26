@@ -274,23 +274,61 @@ class LocalWhisperEngine {
       this.audioContext = null;
     }
 
-    // If speech recognition was silent, synthesize fallback for microphone test
+    // If speech recognition was silent, only provide sample prompt if not canceled
     let finalTranscript = (this.state.transcript + ' ' + this.state.interimTranscript).trim();
-    if (!finalTranscript) {
-      finalTranscript = 'Refactor this function to be async and add try-catch error handling';
-    }
 
     this.state.transcript = finalTranscript;
     this.state.interimTranscript = '';
-    this.state.detectedIntent = this.analyzeVoiceIntent(finalTranscript);
+    this.state.detectedIntent = finalTranscript ? this.analyzeVoiceIntent(finalTranscript) : null;
     this.state.isTranscribing = false;
     this.notify();
 
-    if (this.onTextStreamCallback) {
+    if (this.onTextStreamCallback && finalTranscript) {
       this.onTextStreamCallback(finalTranscript, true);
     }
 
     return finalTranscript;
+  }
+
+  /**
+   * Cancel and discard recording immediately, resetting all state
+   */
+  public cancelRecording(): void {
+    this.state.isRecording = false;
+    this.state.isTranscribing = false;
+    this.state.transcript = '';
+    this.state.interimTranscript = '';
+    this.state.detectedIntent = null;
+    this.state.error = null;
+    this.state.waveformData = [];
+
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    if (this.speechRecognition) {
+      try {
+        this.speechRecognition.abort();
+      } catch (e) {}
+      this.speechRecognition = null;
+    }
+
+    if (this.mediaStream) {
+      try {
+        this.mediaStream.getTracks().forEach((track) => track.stop());
+      } catch (e) {}
+      this.mediaStream = null;
+    }
+
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      try {
+        this.audioContext.close();
+      } catch (e) {}
+      this.audioContext = null;
+    }
+
+    this.notify();
   }
 
   /**
