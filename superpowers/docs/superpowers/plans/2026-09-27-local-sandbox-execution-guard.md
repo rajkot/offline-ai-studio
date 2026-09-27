@@ -23,24 +23,24 @@
 ## Tasks
 
 ### Task 1: Core Sandbox Execution Guard (`lib/sandbox/isolatedExecutionGuard.ts`)
-- [ ] Write `scripts/test-sandbox-engine.js` asserting execution, timeout enforcement, prototype isolation, and command filtering.
-- [ ] Implement `lib/sandbox/isolatedExecutionGuard.ts` with `vm.createContext`, locked prototypes, console capture, and safety scanner.
-- [ ] Run test suite with `npx tsx scripts/test-sandbox-engine.js` and verify all tests pass.
-- [ ] Commit `feat(sandbox): implement isolated MicroVM execution guard and command safety policy scanner`.
+- [x] Write `scripts/test-sandbox-engine.js` asserting execution, timeout enforcement, prototype isolation, and command filtering.
+- [x] Implement `lib/sandbox/isolatedExecutionGuard.ts` with `vm.createContext`, locked prototypes, console capture, and safety scanner.
+- [x] Run test suite with `npx tsx scripts/test-sandbox-engine.js` and verify all tests pass.
+- [x] Commit `feat(sandbox): implement isolated MicroVM execution guard and command safety policy scanner`.
 
 ### Task 2: Sandbox API Routes (`app/api/sandbox/*`)
-- [ ] Implement `app/api/sandbox/execute/route.ts`.
-- [ ] Implement `app/api/sandbox/inspect-command/route.ts`.
-- [ ] Implement `app/api/sandbox/status/route.ts`.
-- [ ] Create `scripts/test-sandbox-routes.js` and test all routes with HTTP assertions.
-- [ ] Commit `feat(sandbox): wire sandbox API routes for code execution, command inspection, and status`.
+- [x] Implement `app/api/sandbox/execute/route.ts`.
+- [x] Implement `app/api/sandbox/inspect-command/route.ts`.
+- [x] Implement `app/api/sandbox/status/route.ts`.
+- [x] Create `scripts/test-sandbox-routes.js` and test all routes with HTTP assertions.
+- [x] Commit `feat(sandbox): wire sandbox API routes for code execution, command inspection, and status`.
 
 ### Task 3: Interactive Sandbox Studio UI (`client/components/IsolatedSandboxModal.tsx`)
-- [ ] Build `client/components/IsolatedSandboxModal.tsx` with live code runner, memory meters, console output viewer, and command inspector.
-- [ ] Wire modal into `components/Playground.tsx` with shortcut `Ctrl+Alt+S` and Header button.
-- [ ] Commit `feat(ui): add IsolatedSandboxModal with live resource quotas and command safety inspector`.
+- [x] Build `client/components/IsolatedSandboxModal.tsx` with live code runner, memory meters, console output viewer, and command inspector.
+- [x] Wire modal into `components/Playground.tsx` with shortcut `Ctrl+Alt+S` and Header button.
+- [x] Commit `feat(ui): add IsolatedSandboxModal with live resource quotas and command safety inspector`.
 
 ### Task 4: End-to-End Verification & Release Notes Documentation
-- [ ] Verify Next.js dev server compiles all routes and components cleanly with 0 errors.
-- [ ] Update `RELEASE_NOTES_v1.0.0.md` with Step 5 feature details (Item #34).
-- [ ] Commit `feat(sandbox): complete Step 5 local sandbox and MicroVM execution isolation`.
+- [x] Verify Next.js dev server compiles all routes and components cleanly with 0 errors.
+- [x] Update `RELEASE_NOTES_v1.0.0.md` with Step 5 feature details (Item #34).
+- [x] Commit `feat(sandbox): complete Step 5 local sandbox and MicroVM execution isolation`.

@@ -69,4 +69,9 @@ All packages below are **full standalone distributions (~218 MB each)** containi
     - **Real-Time SGD Loss & Perplexity Curves**: Live SVG canvas chart tracking step-by-step loss reduction, perplexity ($e^{\text{loss}}$), cosine learning rate annealing, and peak VRAM allocation.
     - **Ollama Modelfile Compiler & PEFT Exporter**: Synthesizes standard Hugging Face PEFT `adapter_config.json` and Ollama `Modelfile` definitions with 1-click "Save & Register Modelfile" in the workspace.
     - **Side-by-Side Inference Evaluator**: Dual split view testing prompt completions before vs. after LoRA adapter application to verify domain-specific learning without catastrophic forgetting.
+34. **Local Sandbox & MicroVM Execution Isolation (Step 5)**: Secure in-memory execution guard and destructive command heuristic scanner (`lib/sandbox/isolatedExecutionGuard.ts`, `app/api/sandbox/`, `client/components/IsolatedSandboxModal.tsx`). Protects developer host environments from rogue scripts, CPU-locking infinite loops, and destructive shell commands during autonomous agent coding loops:
+    - **Isolated MicroVM Context**: Executes arbitrary JavaScript/TypeScript in a sealed Node `vm` context with locked globals, prototype pollution defense, and neutralized process escape vectors.
+    - **Strict Resource Quotas & Circuit Breakers**: Automatically aborts CPU-locking loops with configurable timeouts (default: 3000ms), tracks memory heap allocation with a 256MB cap, and intercepts stdout/stderr logs.
+    - **Command Safety Policy Scanner**: Analyzes shell commands before execution and blocks destructive commands (`rm -rf /`, `rmdir /s /q C:\`, `del /f /s /q *.*`, `dd if=`, fork bombs, raw disk writes) with risk scoring and safe alternative suggestions.
+    - **Interactive Sandbox Modal**: Visual runner with live telemetry, memory delta meters, console logs, command inspector, and global hotkey `Ctrl+Alt+S`.
 
