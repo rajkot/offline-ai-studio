@@ -48,6 +48,11 @@ import McpStudioPanel from '@/client/components/McpStudioPanel';
 import SubjectCreationHub from '@/client/views/SubjectCreationHub';
 import NanoGptStudioModal from '@/client/components/NanoGptStudioModal';
 import AiderPairProgrammerStudio from '@/client/components/AiderPairProgrammerStudio';
+import RepomixStudioModal from '@/client/components/RepomixStudioModal';
+import UiTarsStudioModal from '@/client/components/UiTarsStudioModal';
+import ClineRooStudioModal from '@/client/components/ClineRooStudioModal';
+import VoidStudioModal from '@/client/components/VoidStudioModal';
+import SmartMacroStudio from '@/client/components/SmartMacroStudio';
 import TransformersJsStudioModal from '@/client/components/TransformersJsStudioModal';
 import OutlinesStructuredStudio from '@/client/components/OutlinesStructuredStudio';
 import LlamaCppStudioModal from '@/client/components/LlamaCppStudioModal';
@@ -408,6 +413,11 @@ export default function Playground({
   const [isRagComposerOpen, setIsRagComposerOpen] = useState(false);
   const [isDockerSandboxOpen, setIsDockerSandboxOpen] = useState(false);
   const [isNanoGptModalOpen, setIsNanoGptModalOpen] = useState(false);
+  const [isSmartMacroOpen, setIsSmartMacroOpen] = useState(false);
+  const [isRepomixOpen, setIsRepomixOpen] = useState(false);
+  const [isUiTarsOpen, setIsUiTarsOpen] = useState(false);
+  const [isClineOpen, setIsClineOpen] = useState(false);
+  const [isVoidOpen, setIsVoidOpen] = useState(false);
 
   // LAN Pair Programming, Semantic Search & GGUF Quantizer State
   const [isLanCollabOpen, setIsLanCollabOpen] = useState(false);
@@ -2315,6 +2325,26 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'aider-studio':
       case 'aider-open':
         handleSelectFile('__AIDER_STUDIO__');
+        break;
+      case 'smart-macro-studio':
+      case 'smart-macro-open':
+        setIsSmartMacroOpen(true);
+        break;
+      case 'repomix-studio':
+      case 'repomix-open':
+        setIsRepomixOpen(true);
+        break;
+      case 'uitars-studio':
+      case 'uitars-open':
+        setIsUiTarsOpen(true);
+        break;
+      case 'cline-studio':
+      case 'cline-open':
+        setIsClineOpen(true);
+        break;
+      case 'void-studio':
+      case 'void-open':
+        setIsVoidOpen(true);
         break;
       case 'transformers-studio':
       case 'transformers-open':
@@ -4376,6 +4406,67 @@ export default function ExtractedVisionUI() {
 
           {/* Online AI Hub & Model Connection Widget */}
           <OnlineAiStatusBar onOpenHub={() => setIsOnlineAiHubOpen(true)} />
+
+          {/* 5 Open Source Innovations Quick Menu / Studio Switcher */}
+          <div className="relative hidden xl:block">
+            <button
+              onClick={() => setActiveMenuDropdown(activeMenuDropdown === 'innovations' ? null : 'innovations')}
+              className={`flex items-center gap-1.5 px-2 py-0.5 bg-gradient-to-r from-violet-950/80 to-indigo-950/80 hover:from-violet-900 hover:to-indigo-900 border border-violet-700/60 rounded text-[11px] text-violet-200 transition-all h-7 cursor-pointer ${
+                activeMenuDropdown === 'innovations' ? 'ring-2 ring-violet-500 text-white' : ''
+              }`}
+              title="Open-Source AI Innovations (Smart Macro, Repomix, Aider, UI-TARS, Cline, Void)"
+            >
+              <Cpu size={12} className="text-violet-400" />
+              <span>Innovations</span>
+              <ChevronDown size={11} className="text-violet-400" />
+            </button>
+            {activeMenuDropdown === 'innovations' && (
+              <div className="absolute top-full right-0 mt-1 w-64 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <button
+                  onClick={() => { setIsSmartMacroOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>⚡</span> Smart Macro Studio</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+M</span>
+                </button>
+                <button
+                  onClick={() => { setIsRepomixOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>📦</span> Repomix Context Packer</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+X</span>
+                </button>
+                <button
+                  onClick={() => { handleSelectFile('__AIDER_STUDIO__'); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>🌳</span> Aider Tree-Sitter Map</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+P</span>
+                </button>
+                <button
+                  onClick={() => { setIsUiTarsOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>🎯</span> UI-TARS Computer-Use</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+A</span>
+                </button>
+                <button
+                  onClick={() => { setIsClineOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>🤖</span> Cline & Roo Protocol</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+C</span>
+                </button>
+                <button
+                  onClick={() => { setIsVoidOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>⚡</span> Void Fast Apply Diff</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+V</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Universal Field Studio Quick Switcher */}
           <button
@@ -8471,6 +8562,39 @@ export default function ExtractedVisionUI() {
         onClose={() => setIsNanoGptModalOpen(false)}
         initialSubjectId="sub-1"
         initialSubjectName="Quantum Physics & Mechanics"
+      />
+
+      {/* Smart Macro Studio — zero-coordinate semantic automation */}
+      <SmartMacroStudio
+        isOpen={isSmartMacroOpen}
+        onClose={() => setIsSmartMacroOpen(false)}
+      />
+
+      {/* Repomix Codebase Context Packer */}
+      <RepomixStudioModal
+        isOpen={isRepomixOpen}
+        onClose={() => setIsRepomixOpen(false)}
+        workspaceFiles={parsedFiles}
+      />
+
+      {/* UI-TARS Computer-Use GUI Agent */}
+      <UiTarsStudioModal
+        isOpen={isUiTarsOpen}
+        onClose={() => setIsUiTarsOpen(false)}
+      />
+
+      {/* Cline & Roo Code Autonomous Agent Protocol */}
+      <ClineRooStudioModal
+        isOpen={isClineOpen}
+        onClose={() => setIsClineOpen(false)}
+      />
+
+      {/* Void Editor Fast Apply Diff & Ghost Text Studio */}
+      <VoidStudioModal
+        isOpen={isVoidOpen}
+        onClose={() => setIsVoidOpen(false)}
+        workspaceFiles={parsedFiles}
+        onApplyToFile={(filePath, content) => handleUpdateFile(filePath, content)}
       />
 
       {/* LAN Pair Programming — zero-cloud P2P collaboration */}

@@ -91,6 +91,11 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'eslint-fix-all': 'Ctrl+.',
   'extensions-studio-open': 'Ctrl+Shift+X',
   'theme-picker': 'Ctrl+K Ctrl+T',
+  'smart-macro-open': 'Ctrl+Shift+M',
+  'repomix-open': 'Ctrl+Alt+X',
+  'uitars-open': 'Ctrl+Alt+A',
+  'cline-open': 'Ctrl+Alt+C',
+  'void-open': 'Ctrl+Alt+V',
   'settings-open': 'Ctrl+,'
 };
 
@@ -478,6 +483,41 @@ export const COMMAND_METADATA: {
     category: 'Settings',
     description: 'Open general settings, security shields, desktop release builder, and keybindings matrix',
     iconName: 'Settings'
+  },
+  {
+    id: 'smart-macro-open',
+    name: '⚡ Smart Macro: Zero-Coordinate Form & CRM Automation',
+    category: 'Navigation',
+    description: 'DOM inspector, NanoJev semantic element ranking, and editable .macro.json (Ctrl+Shift+M)',
+    iconName: 'Zap'
+  },
+  {
+    id: 'repomix-open',
+    name: '📦 Repomix: Codebase Context Packer & Secret Shield',
+    category: 'Navigation',
+    description: 'Serialize 400+ files to XML/Markdown/JSON with automated API secret redaction (Ctrl+Alt+X)',
+    iconName: 'Package'
+  },
+  {
+    id: 'uitars-open',
+    name: '🎯 UI-TARS: Computer-Use Vision GUI Agent Studio',
+    category: 'Navigation',
+    description: 'ByteDance UI-TARS normalized vision-action coordinate controller & safety heuristics (Ctrl+Alt+A)',
+    iconName: 'Eye'
+  },
+  {
+    id: 'cline-open',
+    name: '🤖 Cline & Roo Code: Autonomous Plan-and-Act Protocol',
+    category: 'Navigation',
+    description: 'Dynamic modes (Code, Architect, Ask, Debug, Test), XML tool calls, and HITL permission gates (Ctrl+Alt+C)',
+    iconName: 'Layers'
+  },
+  {
+    id: 'void-open',
+    name: '⚡ Void Editor: Fast Apply Diff Hunks & Ghost Text',
+    category: 'Navigation',
+    description: 'Streaming Myers/LCS speculative diff hunks and Monaco predictive ghost text autocomplete (Ctrl+Alt+V)',
+    iconName: 'Split'
   }
 ];
 
