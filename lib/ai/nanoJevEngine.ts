@@ -88,6 +88,7 @@ export class NanoJevEngine {
    * Resolves possible directories where NanoJev weights or cloned repository reside.
    */
   public getPossibleModelPaths(): string[] {
+    const pathModule = getNodePath();
     if (!pathModule) return [];
     const cwd = typeof process !== 'undefined' ? process.cwd() : '';
     return [
@@ -103,6 +104,7 @@ export class NanoJevEngine {
    * Determines if local weights or checkpoint directory exists and contains files.
    */
   public isInstalled(): boolean {
+    const fsModule = getNodeFs();
     if (!fsModule) return false;
     const paths = this.getPossibleModelPaths();
     for (const p of paths) {
@@ -120,6 +122,7 @@ export class NanoJevEngine {
    * Retrieves the active local model path, or null if not yet downloaded.
    */
   public getActiveModelPath(): string | null {
+    const fsModule = getNodeFs();
     if (!fsModule) return null;
     const paths = this.getPossibleModelPaths();
     for (const p of paths) {
