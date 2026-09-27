@@ -23,24 +23,24 @@
 ## Tasks
 
 ### Task 1: Core Multimodal Voice & Vision Engine (`lib/ai/multimodalVoiceAgentEngine.ts`)
-- [ ] Write `scripts/test-multimodal-engine.js` asserting voice intent parsing, voice-to-code synthesis, and vision-to-code output.
-- [ ] Implement `lib/ai/multimodalVoiceAgentEngine.ts` with local Ollama / Online AI query bridges and deterministic offline fallback.
-- [ ] Run test suite with `npx tsx scripts/test-multimodal-engine.js` and verify all tests pass.
-- [ ] Commit `feat(multimodal): implement voice intent parser, voice-to-code synthesizer, and vision layout engine`.
+- [x] Write `scripts/test-multimodal-engine.js` asserting voice intent parsing, voice-to-code synthesis, and vision-to-code output.
+- [x] Implement `lib/ai/multimodalVoiceAgentEngine.ts` with local Ollama / Online AI query bridges and deterministic offline fallback.
+- [x] Run test suite with `npx tsx scripts/test-multimodal-engine.js` and verify all tests pass.
+- [x] Commit `feat(multimodal): implement voice intent parser, voice-to-code synthesizer, and vision layout engine`.
 
 ### Task 2: Multimodal Backend API Routes (`app/api/multimodal/*`)
-- [ ] Implement `app/api/multimodal/voice-command/route.ts`.
-- [ ] Implement `app/api/multimodal/vision-to-code/route.ts`.
-- [ ] Implement `app/api/multimodal/status/route.ts`.
-- [ ] Create `scripts/test-multimodal-routes.js` and test all routes with HTTP assertions.
-- [ ] Commit `feat(multimodal): wire multimodal API routes for voice commands, vision synthesis, and telemetry`.
+- [x] Implement `app/api/multimodal/voice-command/route.ts`.
+- [x] Implement `app/api/multimodal/vision-to-code/route.ts`.
+- [x] Implement `app/api/multimodal/status/route.ts`.
+- [x] Create `scripts/test-multimodal-routes.js` and test all routes with HTTP assertions.
+- [x] Commit `feat(multimodal): wire multimodal API routes for voice commands, vision synthesis, and telemetry`.
 
 ### Task 3: Interactive UI Studio Enhancements (`VoiceToCodeOverlay.tsx` & `VisionStudio.tsx`)
-- [ ] Update `client/components/VoiceToCodeOverlay.tsx` with "⚡ Build with Autonomous Agent" button and live build status.
-- [ ] Update `client/components/VisionStudio.tsx` to support local multimodal generation and 1-click sandbox testing.
-- [ ] Commit `feat(ui): upgrade VoiceToCodeOverlay and VisionStudio with autonomous multimodal build actions`.
+- [x] Update `client/components/VoiceToCodeOverlay.tsx` with "⚡ Build with Autonomous Agent" button and live build status.
+- [x] Update `client/components/VisionStudio.tsx` to support local multimodal generation and 1-click sandbox testing.
+- [x] Commit `feat(ui): upgrade VoiceToCodeOverlay and VisionStudio with autonomous multimodal build actions`.
 
 ### Task 4: End-to-End Verification & Release Notes Documentation
-- [ ] Verify Next.js dev server compiles all routes and components cleanly with 0 errors.
-- [ ] Update `RELEASE_NOTES_v1.0.0.md` with Step 6 feature details (Item #35).
-- [ ] Commit `feat(multimodal): complete Step 6 voice-driven multimodal autonomous AI builder`.
+- [x] Verify Next.js dev server compiles all routes and components cleanly with 0 errors.
+- [x] Update `RELEASE_NOTES_v1.0.0.md` with Step 6 feature details (Item #35).
+- [x] Commit `feat(multimodal): complete Step 6 voice-driven multimodal autonomous AI builder`.
