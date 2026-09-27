@@ -18,9 +18,11 @@ import {
   AlertCircle,
   Eye,
   Sliders,
-  Zap
+  Zap,
+  Package
 } from 'lucide-react';
 import SmartMacroStudio from './SmartMacroStudio';
+import RepomixStudioModal from './RepomixStudioModal';
 import {
   livePreviewEngine,
   MirroredConsoleLog,
@@ -49,6 +51,7 @@ export default function LiveWebviewSplitPane({
   const [consoleLogs, setConsoleLogs] = useState<MirroredConsoleLog[]>([]);
   const [isConsoleDrawerOpen, setIsConsoleDrawerOpen] = useState(false);
   const [isMacroStudioOpen, setIsMacroStudioOpen] = useState(false);
+  const [isRepomixOpen, setIsRepomixOpen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -185,6 +188,16 @@ export default function LiveWebviewSplitPane({
             <span className="hidden sm:inline">Macro Studio</span>
           </button>
 
+          {/* Repomix Context Packer Trigger Button */}
+          <button
+            onClick={() => setIsRepomixOpen(true)}
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer bg-gradient-to-r from-amber-600/90 to-orange-600/90 hover:from-amber-500 hover:to-orange-500 text-white shadow-md shadow-amber-500/20"
+            title="Open Repomix Codebase Context Packer (Pack Repo for AI)"
+          >
+            <Package size={12} className="text-amber-200" />
+            <span className="hidden sm:inline">Repomix</span>
+          </button>
+
           <button
             onClick={handleReload}
             className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -313,6 +326,12 @@ export default function LiveWebviewSplitPane({
       <SmartMacroStudio
         isOpen={isMacroStudioOpen}
         onClose={() => setIsMacroStudioOpen(false)}
+      />
+
+      <RepomixStudioModal
+        isOpen={isRepomixOpen}
+        onClose={() => setIsRepomixOpen(false)}
+        workspaceFiles={files}
       />
     </div>
   );
