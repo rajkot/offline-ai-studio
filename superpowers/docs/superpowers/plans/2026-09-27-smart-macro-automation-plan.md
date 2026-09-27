@@ -39,24 +39,24 @@
   - `smartMacroEngine.matchElementWithNanoJev(targetIntent: string, candidates: DOMElementCandidate[]): Promise<{ bestCandidate: DOMElementCandidate; confidence: number }>`
   - `smartMacroEngine.executeMacro(macro: SmartMacroDefinition, onProgress?: (event: MacroProgressEvent) => void): Promise<{ success: boolean; totalProcessed: number; errors: string[] }>`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 Create `scripts/test-smart-macro-engine.js` checking:
   - Variable substitution: `{{csv.name}}` -> `"Rajesh Patel"`
   - Candidate encoding & NanoJev matching: Given 3 candidates (`Phone`, `Email`, `Submit`), intent `"Customer Phone"` returns `Phone` with confidence > 0.85
   - Validation: Empty macro or invalid target URL rejects cleanly.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 Run: `node scripts/test-smart-macro-engine.js`
 Expected: FAIL with "Cannot find module '../lib/automation/smartMacroEngine'"
 
-- [ ] **Step 3: Implement `SmartMacroEngine` in `lib/automation/smartMacroEngine.ts`**
+- [x] **Step 3: Implement `SmartMacroEngine` in `lib/automation/smartMacroEngine.ts`**
 Implement element extraction, candidate formatting, NanoJev logit integration, and batch row processing.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 Run: `node scripts/test-smart-macro-engine.js`
 Expected: PASS with 100% assertions green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add lib/automation/smartMacroEngine.ts scripts/test-smart-macro-engine.js
 git commit -m "feat(automation): implement SmartMacroEngine with NanoJev semantic element matching"
@@ -77,21 +77,21 @@ git commit -m "feat(automation): implement SmartMacroEngine with NanoJev semanti
   - `POST /api/automation/macro`: Handles actions `inspect` (extract page candidates), `execute` (SSE stream batch execution), and `save`
   - `GET /api/automation/macro/templates`: Returns ready-to-use template macros (CRM Lead Entry, Google Forms, Product Inventory)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 Create `scripts/test-macro-api.js` testing GET templates and POST inspect endpoints via HTTP requests to `http://localhost:3000`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 Run: `node scripts/test-macro-api.js`
 Expected: FAIL with 404 Not Found.
 
-- [ ] **Step 3: Implement API routes in `app/api/automation/macro/`**
+- [x] **Step 3: Implement API routes in `app/api/automation/macro/`**
 Implement Next.js App Router route handlers with proper CORS, error boundaries, and SSE streaming responses.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 Run: `node scripts/test-macro-api.js`
 Expected: PASS with 200 OK and valid JSON templates.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add app/api/automation/macro/route.ts app/api/automation/macro/templates/route.ts scripts/test-macro-api.js
 git commit -m "feat(api): add smart macro automation endpoints and template catalog"
@@ -111,20 +111,20 @@ git commit -m "feat(api): add smart macro automation endpoints and template cata
   - `<SmartMacroStudio initialMacro={...} onClose={...} />` component
   - Split view: Left pane with URL bar, CSV upload/mapping, Step timeline, and live execution progress; Right pane with embedded Monaco editor for `.macro.json`
 
-- [ ] **Step 1: Write component structure with TypeScript interfaces**
+- [x] **Step 1: Write component structure with TypeScript interfaces**
 Define state management for active macro, parsed CSV rows, live execution status, and Monaco editor two-way synchronization.
 
-- [ ] **Step 2: Implement visual runner and controls**
+- [x] **Step 2: Implement visual runner and controls**
 Add target URL inspection, step drag/add/remove, variable bindings, and real-time execution console.
 
-- [ ] **Step 3: Implement Monaco code synchronization**
+- [x] **Step 3: Implement Monaco code synchronization**
 Ensure typing in Monaco updates the visual step list, and modifying steps visually updates the Monaco JSON buffer.
 
-- [ ] **Step 4: Verify TypeScript compilation**
+- [x] **Step 4: Verify TypeScript compilation**
 Run: `npx tsc --noEmit`
 Expected: No type errors in `client/components/SmartMacroStudio.tsx`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add client/components/SmartMacroStudio.tsx
 git commit -m "feat(ui): add SmartMacroStudio side-by-side visual runner and Monaco editor"
@@ -142,20 +142,20 @@ git commit -m "feat(ui): add SmartMacroStudio side-by-side visual runner and Mon
 - Consumes: `SmartMacroStudio` from `client/components/SmartMacroStudio.tsx`
 - Produces: Seamless tab switching or split pane trigger in Offline AI Studio.
 
-- [ ] **Step 1: Write E2E test script `scripts/test-smart-macro-e2e.js`**
+- [x] **Step 1: Write E2E test script `scripts/test-smart-macro-e2e.js`**
 Launches a mock local HTML contact/lead form, executes a 2-record macro batch through `SmartMacroEngine`, and confirms values were submitted.
 
-- [ ] **Step 2: Run test to verify it fails before wiring**
+- [x] **Step 2: Run test to verify it fails before wiring**
 Run: `node scripts/test-smart-macro-e2e.js`
 
-- [ ] **Step 3: Integrate Smart Macro Studio button into IDE header/workbench**
+- [x] **Step 3: Integrate Smart Macro Studio button into IDE header/workbench**
 Add macro studio toggle button with Sparkles icon into workbench navigation.
 
-- [ ] **Step 4: Run E2E test to verify it passes**
+- [x] **Step 4: Run E2E test to verify it passes**
 Run: `node scripts/test-smart-macro-e2e.js`
 Expected: PASS - Form autofill and submit successfully verified.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add client/components/LiveWebviewSplitPane.tsx scripts/test-smart-macro-e2e.js
 git commit -m "feat(studio): integrate Smart Macro Studio into IDE workbench with E2E verification"
