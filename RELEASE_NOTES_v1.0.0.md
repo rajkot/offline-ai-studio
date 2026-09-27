@@ -85,3 +85,9 @@ All packages below are **full standalone distributions (~218 MB each)** containi
     - **Editable `.macro.json` Schema**: Standardized, human-readable macro definitions with dynamic variable binding (`{{csv.field}}`), customizable step timeouts, optional fallbacks, and multi-record batch processing.
     - **Side-by-Side Visual Studio Panel**: Built a dedicated IDE studio panel (`client/components/SmartMacroStudio.tsx`) featuring real-time DOM element detection, a visual step timeline, a CSV dataset previewer, an embedded two-way synced Monaco JSON editor, and a live execution event console.
     - **Starter Template Catalog**: Bundled out-of-the-box automation templates for Zoho/Salesforce CRM Lead Entry, Google Forms Survey Submitter, and E-Commerce Inventory Updaters accessible via `GET /api/automation/macro/templates`.
+37. **Repomix Codebase Context Packer (yamadashy/repomix Integration)**: Deep integration of the leading open-source codebase packer (`integrations/repomix`, `lib/ai/repomixEngine.ts`, `app/api/repomix/pack/`, `client/components/RepomixStudioModal.tsx`):
+    - **Native In-Memory Serializer**: High-speed, zero-dependency repository serialization supporting XML (Claude/Anthropic format), Markdown (Ollama/Llama format), and structured JSON.
+    - **Security Secret Shield**: High-precision regex detection scrubbing OpenAI, Anthropic, GitHub, AWS, and Stripe API keys with automatic `[REDACTED_SECRET]` substitution to protect developer credentials.
+    - **Token Estimator & Budget Truncator**: Computes token usage across 400+ files with user-configurable limits (32k, 64k, 128k, 200k) to prevent LLM context overflows.
+    - **Visual Studio Modal (`RepomixStudioModal.tsx`)**: Dedicated modal with live syntax preview, telemetry cards (files, tokens, size, secrets redacted), and 1-click clipboard/file export (`repomix-output.xml`).
+
