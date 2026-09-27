@@ -168,6 +168,8 @@ function buildContextWindow(chunks: RagChunk[], maxTokens = 6000): string {
 
 /* ─── Main route ────────────────────────────────────────────────────────── */
 
+import { codeKnowledgeGraphEngine } from '@/lib/ast/codeKnowledgeGraphEngine';
+
 export async function POST(req: NextRequest) {
   try {
     const body: RagGenerateRequest = await req.json();
@@ -179,10 +181,26 @@ export async function POST(req: NextRequest) {
     const contextWindow = buildContextWindow(retrievedChunks, maxContextTokens);
     const fileListStr = workspaceFiles.map(f => f.path).join(', ');
 
-    const ragPreamble = `You are a Principal Software Architect and Cascade / Composer Multi-File Agent.
-You have access to the following workspace context, retrieved via semantic search:
+    // Generate deterministic code knowledge graph context
+    let deterministicGraphSection = '';
+    try {
+      const filesDict: Record<string, string> = {};
+      workspaceFiles.forEach(f => { filesDict[f.path] = f.content; });
+      codeKnowledgeGraphEngine.indexWorkspace(filesDict);
 
-${contextWindow}
+      const relevantPaths = Array.from(new Set(retrievedChunks.map(c => c.filePath)));
+      const graphRagSummaries = relevantPaths.slice(0, 3).map(p => codeKnowledgeGraphEngine.getGraphRAGContext(p)).filter(Boolean);
+      if (graphRagSummaries.length > 0) {
+        deterministicGraphSection = `\n\n--- DETERMINISTIC CODE KNOWLEDGE GRAPH (CALLERS, INTERFACES, DEPENDENCIES) ---\n${graphRagSummaries.join('\n\n')}\n--- END CODE GRAPH ---`;
+      }
+    } catch (e) {
+      console.warn('[rag-generate] Code graph indexing skipped:', e);
+    }
+
+    const ragPreamble = `You are a Principal Software Architect and Cascade / Composer Multi-File Agent.
+You have access to the following workspace context, retrieved via semantic search and deterministic AST graph:
+
+${contextWindow}${deterministicGraphSection}
 
 All workspace files: ${fileListStr}
 

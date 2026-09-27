@@ -13,6 +13,7 @@
 
 import { generateOllamaText, checkOllamaHealth, listOllamaModels, selectBestOllamaModel } from './ollamaClient';
 import { generateWithOnlineAi } from './onlineAiEngine';
+import { codeKnowledgeGraphEngine } from '@/lib/ast/codeKnowledgeGraphEngine';
 
 export type AgentPermissionMode = 'full_autonomous' | 'guarded';
 
@@ -470,10 +471,19 @@ Provide a high-level concise 2-sentence plan of the code modifications needed to
       this.state.phase = 'coding';
       this.notify();
 
+      let graphContext = '';
+      try {
+        codeKnowledgeGraphEngine.indexWorkspace(this.currentFiles);
+        graphContext = codeKnowledgeGraphEngine.getGraphRAGContext(this.state.activeFile);
+      } catch (e) {
+        console.warn('[AutonomousAgent] Graph context indexing skipped:', e);
+      }
+
       const codingPrompt = `You are Devin/Claude Code. Write the corrected, complete implementation for file "${this.state.activeFile}".
 Goal: "${this.state.prompt}"
 Previous Errors (if any): "${this.state.errorSummary || 'Initial implementation'}"
 
+${graphContext ? `\nCode Knowledge Graph (Callers, Imported Interfaces & Contracts):\n${graphContext}\n` : ''}
 Active File Code:
 \`\`\`
 ${activeContent}
