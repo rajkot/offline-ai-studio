@@ -17,8 +17,10 @@ import {
   ChevronUp,
   AlertCircle,
   Eye,
-  Sliders
+  Sliders,
+  Zap
 } from 'lucide-react';
+import SmartMacroStudio from './SmartMacroStudio';
 import {
   livePreviewEngine,
   MirroredConsoleLog,
@@ -46,6 +48,7 @@ export default function LiveWebviewSplitPane({
   const [isInspectorActive, setIsInspectorActive] = useState(false);
   const [consoleLogs, setConsoleLogs] = useState<MirroredConsoleLog[]>([]);
   const [isConsoleDrawerOpen, setIsConsoleDrawerOpen] = useState(false);
+  const [isMacroStudioOpen, setIsMacroStudioOpen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -172,6 +175,16 @@ export default function LiveWebviewSplitPane({
             <span>Inspect</span>
           </button>
 
+          {/* Smart Macro Studio Trigger Button */}
+          <button
+            onClick={() => setIsMacroStudioOpen(true)}
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer bg-gradient-to-r from-cyan-600/90 to-indigo-600/90 hover:from-cyan-500 hover:to-indigo-500 text-white shadow-md shadow-cyan-500/20"
+            title="Open Smart Macro Studio (Zero-Coordinate Form & CRM Automation)"
+          >
+            <Zap size={12} className="text-amber-300 animate-pulse" />
+            <span className="hidden sm:inline">Macro Studio</span>
+          </button>
+
           <button
             onClick={handleReload}
             className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -296,6 +309,11 @@ export default function LiveWebviewSplitPane({
           </div>
         )}
       </div>
+
+      <SmartMacroStudio
+        isOpen={isMacroStudioOpen}
+        onClose={() => setIsMacroStudioOpen(false)}
+      />
     </div>
   );
 }
