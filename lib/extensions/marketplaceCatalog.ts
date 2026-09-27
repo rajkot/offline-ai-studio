@@ -610,5 +610,34 @@ export const OFFLINE_EXTENSIONS_CATALOG: VscodeMarketplaceItem[] = [
     rating: 4.6,
     verified: true,
     tags: ['ai', 'local', 'tabnine'],
+  },
+  {
+    id: 'tianyucodings.nanojev-decision-engine',
+    name: 'nanojev-decision-engine',
+    displayName: 'NanoJev — Fast Parallel Decision Engine',
+    publisher: 'tianyucodings',
+    publisherDisplayName: 'TianyuCodings',
+    version: '1.0.0',
+    description: 'High-speed parallel decision model (Qwen3-0.6B backbone) evaluating tools, states, and safety in a single forward pass without autoregressive token generation latency.',
+    category: 'AI & Cloud',
+    downloads: '1.8M',
+    rating: 4.95,
+    verified: true,
+    repository: 'https://github.com/TianyuCodings/NanoJev',
+    tags: ['ai', 'decision-engine', 'parallel-logits', 'agent-control', 'qwen3'],
+    manifest: {
+      name: 'nanojev-decision-engine',
+      displayName: 'NanoJev — Fast Parallel Decision Engine',
+      publisher: 'tianyucodings',
+      version: '1.0.0',
+      contributes: {
+        commands: [
+          { command: 'nanojev.evaluateDecision', title: 'Evaluate Fast Parallel Decision', category: 'NanoJev' },
+          { command: 'nanojev.installModel', title: 'Auto-Download NanoJev Weights', category: 'NanoJev' },
+          { command: 'nanojev.status', title: 'Check NanoJev Decision Status', category: 'NanoJev' }
+        ]
+      }
+    }
   }
 ];
+

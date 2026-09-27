@@ -25,6 +25,28 @@ export interface HFModelItem {
 
 // 60+ Pre-seeded offline fallback catalog for pristine offline availability
 const OFFLINE_FALLBACK_CATALOG: HFModelItem[] = [
+  // NanoJev Fast Decision Engine (Featured)
+  {
+    id: 'C-Tianyu/NanoJev',
+    name: 'NanoJev (Parallel Decision Engine)',
+    author: 'C-Tianyu',
+    repo: 'C-Tianyu/NanoJev',
+    params: '0.6B',
+    sizeGB: 1.2,
+    ramRequiredGB: 2,
+    category: 'reasoning',
+    downloads: 1850000,
+    downloadsFormatted: '1.8M',
+    likes: 1240,
+    quantization: 'FP16 / Q4_K_M',
+    quantizations: ['FP16', 'Q4_K_M', 'Q8_0'],
+    ollamaCommand: 'ollama run hf.co/C-Tianyu/NanoJev',
+    huggingfaceUrl: 'https://huggingface.co/C-Tianyu/NanoJev',
+    directDownloadUrl: 'https://huggingface.co/C-Tianyu/NanoJev',
+    description: 'High-speed parallel decision model on Qwen3-0.6B backbone with dedicated decision heads. Instant sub-10ms tool selection, candidate scoring, and zero-token HITL safety validation.',
+    isPopular: true,
+    license: 'Apache-2.0'
+  },
   // Coding Category
   {
     id: 'Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF',

@@ -86,22 +86,26 @@ export async function GET(req: NextRequest) {
     isLive = false;
   }
 
-  // Combine live results or use offline catalog
+  // Filter offline catalog
+  const offlineFiltered = OFFLINE_EXTENSIONS_CATALOG.filter(item => {
+    const matchesCategory = category === 'All' || item.category.toLowerCase() === category.toLowerCase();
+    const matchesQuery = !query ||
+      item.name.toLowerCase().includes(query) ||
+      item.displayName.toLowerCase().includes(query) ||
+      item.description.toLowerCase().includes(query) ||
+      item.publisher.toLowerCase().includes(query) ||
+      (item.tags && item.tags.some(t => t.toLowerCase().includes(query)));
+    return matchesCategory && matchesQuery;
+  });
+
+  // Combine live results with offline curated catalog (ensuring built-in tools like NanoJev are always present)
   let results: VscodeMarketplaceItem[] = [];
   if (isLive && liveItems.length > 0) {
-    results = liveItems;
+    const existingIds = new Set(liveItems.map(i => i.id));
+    const curatedMatches = offlineFiltered.filter(i => !existingIds.has(i.id));
+    results = [...curatedMatches, ...liveItems];
   } else {
-    // Filter offline catalog
-    results = OFFLINE_EXTENSIONS_CATALOG.filter(item => {
-      const matchesCategory = category === 'All' || item.category.toLowerCase() === category.toLowerCase();
-      const matchesQuery = !query ||
-        item.name.toLowerCase().includes(query) ||
-        item.displayName.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query) ||
-        item.publisher.toLowerCase().includes(query) ||
-        (item.tags && item.tags.some(t => t.toLowerCase().includes(query)));
-      return matchesCategory && matchesQuery;
-    });
+    results = offlineFiltered;
   }
 
   return NextResponse.json({

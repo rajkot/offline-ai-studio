@@ -220,6 +220,34 @@ export default function ModelCatalogStorefront() {
   const handleStartDownload = async (model: HFModelItem) => {
     if (activeDownloadId) return;
 
+    // Fast-path automated pipeline downloader for NanoJev
+    if (model.id === 'C-Tianyu/NanoJev' || (model.name && model.name.toLowerCase().includes('nanojev'))) {
+      setActiveDownloadId(model.id);
+      setDownloadProgress(15);
+      setDownloadStatusText('Starting NanoJev automated download pipeline...');
+      setDownloadSpeed('CLI Stream');
+      setDownloadEta('PowerShell background task');
+
+      try {
+        const nanoRes = await fetch('/api/pipeline/nanojev/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const nanoData = await nanoRes.json();
+        if (nanoData && nanoData.ok) {
+          setDownloadProgress(100);
+          setDownloadStatusText('NanoJev automated download initiated in background!');
+          setTimeout(() => {
+            setActiveDownloadId(null);
+            refreshInstalledModels();
+          }, 2500);
+          return;
+        }
+      } catch (err) {
+        console.error('NanoJev download error:', err);
+      }
+    }
+
     setActiveDownloadId(model.id);
     setDownloadProgress(0);
     setDownloadStatusText(`Initiating pull for ${model.name}...`);
