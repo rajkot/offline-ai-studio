@@ -27,13 +27,13 @@
 **Files:**
 - Directory: `integrations/repomix`
 
-- [ ] **Step 1: Clone `yamadashy/repomix` with depth 1**
+- [x] **Step 1: Clone `yamadashy/repomix` with depth 1**
 Run: `git clone --depth 1 https://github.com/yamadashy/repomix.git integrations/repomix`
 
-- [ ] **Step 2: Verify cloned integration files**
+- [x] **Step 2: Verify cloned integration files**
 Check `integrations/repomix/package.json` exists.
 
-- [ ] **Step 3: Commit integration tracking**
+- [x] **Step 3: Commit integration tracking**
 ```bash
 git add integrations/repomix
 git commit -m "feat(integrations): clone official yamadashy/repomix repository"
@@ -47,21 +47,21 @@ git commit -m "feat(integrations): clone official yamadashy/repomix repository"
 - Create: `lib/ai/repomixEngine.ts`
 - Test: `scripts/test-repomix-engine.js`
 
-- [ ] **Step 1: Write failing unit test `scripts/test-repomix-engine.js`**
+- [x] **Step 1: Write failing unit test `scripts/test-repomix-engine.js`**
 Tests XML, Markdown, JSON packing, secret redaction (`sk-ant-1234567890abcdef`), and token budgeting.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 Run: `node scripts/test-repomix-engine.js`
 Expected: FAIL with "Cannot find module"
 
-- [ ] **Step 3: Implement `RepomixEngine` in `lib/ai/repomixEngine.ts`**
+- [x] **Step 3: Implement `RepomixEngine` in `lib/ai/repomixEngine.ts`**
 Implement serializers, regex secret detection, and BPE token counter.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 Run: `npx tsx scripts/test-repomix-engine.js`
 Expected: PASS with 100% assertions green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add lib/ai/repomixEngine.ts scripts/test-repomix-engine.js
 git commit -m "feat(repomix): implement in-memory repomix engine with secret redaction"
@@ -75,21 +75,21 @@ git commit -m "feat(repomix): implement in-memory repomix engine with secret red
 - Create: `app/api/repomix/pack/route.ts`
 - Test: `scripts/test-repomix-api.js`
 
-- [ ] **Step 1: Write failing test `scripts/test-repomix-api.js`**
+- [x] **Step 1: Write failing test `scripts/test-repomix-api.js`**
 Tests POST `/api/repomix/pack` returning valid packed output and metrics.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 Run: `node scripts/test-repomix-api.js`
 Expected: FAIL with 404.
 
-- [ ] **Step 3: Implement route in `app/api/repomix/pack/route.ts`**
+- [x] **Step 3: Implement route in `app/api/repomix/pack/route.ts`**
 Loads project files via `localFileSystemEngine` and serializes through `repomixEngine`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 Run: `node scripts/test-repomix-api.js`
 Expected: PASS with 200 OK and valid packed context.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 ```bash
 git add app/api/repomix/pack/route.ts scripts/test-repomix-api.js
 git commit -m "feat(api): implement repomix pack endpoint"
@@ -103,17 +103,17 @@ git commit -m "feat(api): implement repomix pack endpoint"
 - Create: `client/components/RepomixStudioModal.tsx`
 - Modify: `client/components/LiveWebviewSplitPane.tsx` (add Repomix launch button)
 
-- [ ] **Step 1: Implement `RepomixStudioModal.tsx`**
+- [x] **Step 1: Implement `RepomixStudioModal.tsx`**
 Add format toggle, token budget selector, live telemetry cards, syntax viewer, and copy/download buttons.
 
-- [ ] **Step 2: Wire into workbench navigation**
+- [x] **Step 2: Wire into workbench navigation**
 Add "📦 Repomix Packer" button to toolbar.
 
-- [ ] **Step 3: Verify TypeScript compilation**
+- [x] **Step 3: Verify TypeScript compilation**
 Run: `npx tsx scripts/test-repomix-engine.js && node scripts/test-repomix-api.js`
 Expected: All tests pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 ```bash
 git add client/components/RepomixStudioModal.tsx client/components/LiveWebviewSplitPane.tsx
 git commit -m "feat(ui): add RepomixStudioModal with live telemetry and context export"
