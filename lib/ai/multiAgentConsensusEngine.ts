@@ -38,6 +38,7 @@ export interface SwarmConsensus {
   agents: SwarmAgentState[];
   consensusCode?: string;
   specSummary?: string;
+  debateLog?: Array<{ agent: string; avatar: string; message: string; timestamp: string }>;
 }
 
 export class MultiAgentConsensusEngine {
@@ -57,7 +58,10 @@ export class MultiAgentConsensusEngine {
       totalTokens: 0,
       iteration: 0,
       maxIterations: 4,
-      agents: this.getInitialAgents()
+      agents: this.getInitialAgents(),
+      consensusCode: '',
+      specSummary: '',
+      debateLog: []
     };
   }
 
@@ -204,6 +208,7 @@ export class MultiAgentConsensusEngine {
     let specSummary = '';
     let previousCritique = '';
     let totalTokens = 0;
+    const debateLog: Array<{ agent: string; avatar: string; message: string; timestamp: string }> = [];
 
     this.currentConsensus = {
       overallVerdict: '🚀 Triad Initiated: Architect formulating formal specification...',
@@ -212,7 +217,8 @@ export class MultiAgentConsensusEngine {
       totalTokens: 0,
       iteration: 1,
       maxIterations,
-      agents
+      agents,
+      debateLog
     };
     this.notify();
 
@@ -266,6 +272,12 @@ Keep response structured and under 200 words.`;
       archAgent.score = 0.95;
       archAgent.vote = 'approved';
       archAgent.lastLog = `Defined specification with ${specSummary.split('\n').length} structural invariants.`;
+      debateLog.push({
+        agent: 'Architect',
+        avatar: '🏗️',
+        message: `Architectural specification formulated with ${specSummary.split('\n').length} structural invariants.`,
+        timestamp: new Date().toLocaleTimeString()
+      });
       this.notify();
 
       // ───────────────────────────────────────────────────────────────────────
@@ -323,6 +335,12 @@ Return ONLY the raw, production-ready code. Do not wrap in markdown or conversat
         coderAgent.score = 0.92;
         coderAgent.vote = 'approved';
         coderAgent.lastLog = `Emitted ${proposedCode.split('\n').length} lines of validated code.`;
+        debateLog.push({
+          agent: 'Implementer',
+          avatar: '💻',
+          message: `Synthesized ${proposedCode.split('\n').length} lines of code for ${params.activeFile}.`,
+          timestamp: new Date().toLocaleTimeString()
+        });
         this.notify();
 
         // 2B. Adversarial Reviewer Agent inspects for subtle edge-case flaws
@@ -395,6 +413,14 @@ REASON: <why code is sound>`;
         reviewerAgent.score = 0.94;
         reviewerAgent.critique = undefined;
         reviewerAgent.lastLog = 'Verified all invariant boundaries. Zero regressions found.';
+        debateLog.push({
+          agent: 'Adversarial Reviewer',
+          avatar: '🔍',
+          message: isApproved 
+            ? 'Verified all boundary invariants and null checks. Zero regressions found.' 
+            : `Adversarial edge-case flagged: ${critique.slice(0, 100)}`,
+          timestamp: new Date().toLocaleTimeString()
+        });
         this.notify();
 
         // 2C. Security Auditor Agent scans for safety vulnerabilities
@@ -412,6 +438,12 @@ REASON: <why code is sound>`;
         auditorAgent.lastLog = auditCheck.message;
         auditorAgent.tokensUsed = 120;
         totalTokens += auditorAgent.tokensUsed;
+        debateLog.push({
+          agent: 'Security Auditor',
+          avatar: '🛡️',
+          message: auditCheck.message,
+          timestamp: new Date().toLocaleTimeString()
+        });
         this.notify();
 
         // 2D. Calculate Final Consensus
@@ -422,6 +454,7 @@ REASON: <why code is sound>`;
         this.currentConsensus.totalTokens = totalTokens;
         this.currentConsensus.consensusCode = proposedCode;
         this.currentConsensus.specSummary = specSummary;
+        this.currentConsensus.debateLog = debateLog;
         this.currentConsensus.status = finalScore >= 80 ? 'agreed' : 'debating';
         this.currentConsensus.overallVerdict = `🟢 Consensus Reached (${finalScore}%) across Architect, Coder, Reviewer & Auditor in ${Date.now() - startTime}ms.`;
         this.notify();
