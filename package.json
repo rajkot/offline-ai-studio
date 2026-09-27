@@ -34,6 +34,7 @@
     "motion": "^12.23.24",
     "next": "^15.4.9",
     "node-pty": "^1.1.0",
+    "playwright-core": "^1.63.0",
     "postcss": "^8.4.38",
     "prettier": "^3.9.6",
     "react": "^19.2.1",
