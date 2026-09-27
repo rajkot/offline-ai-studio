@@ -20,11 +20,13 @@ import {
   Sliders,
   Zap,
   Package,
-  GitBranch
+  GitBranch,
+  Crosshair
 } from 'lucide-react';
 import SmartMacroStudio from './SmartMacroStudio';
 import RepomixStudioModal from './RepomixStudioModal';
 import AiderPairProgrammerStudio from './AiderPairProgrammerStudio';
+import UiTarsStudioModal from './UiTarsStudioModal';
 import {
   livePreviewEngine,
   MirroredConsoleLog,
@@ -55,6 +57,7 @@ export default function LiveWebviewSplitPane({
   const [isMacroStudioOpen, setIsMacroStudioOpen] = useState(false);
   const [isRepomixOpen, setIsRepomixOpen] = useState(false);
   const [isAiderOpen, setIsAiderOpen] = useState(false);
+  const [isUiTarsOpen, setIsUiTarsOpen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -211,6 +214,16 @@ export default function LiveWebviewSplitPane({
             <span className="hidden sm:inline">Aider Map</span>
           </button>
 
+          {/* UI-TARS Computer-Use Agent Button */}
+          <button
+            onClick={() => setIsUiTarsOpen(true)}
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer bg-gradient-to-r from-violet-600/90 to-fuchsia-600/90 hover:from-violet-500 hover:to-fuchsia-500 text-white shadow-md shadow-violet-500/20"
+            title="Open UI-TARS Computer-Use GUI Agent (Vision-Action Controller)"
+          >
+            <Crosshair size={12} className="text-fuchsia-200 animate-spin" style={{ animationDuration: '6s' }} />
+            <span className="hidden sm:inline">UI-TARS</span>
+          </button>
+
           <button
             onClick={handleReload}
             className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -361,6 +374,11 @@ export default function LiveWebviewSplitPane({
           </div>
         </div>
       )}
+
+      <UiTarsStudioModal
+        isOpen={isUiTarsOpen}
+        onClose={() => setIsUiTarsOpen(false)}
+      />
     </div>
   );
 }

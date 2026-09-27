@@ -90,4 +90,14 @@ All packages below are **full standalone distributions (~218 MB each)** containi
     - **Security Secret Shield**: High-precision regex detection scrubbing OpenAI, Anthropic, GitHub, AWS, and Stripe API keys with automatic `[REDACTED_SECRET]` substitution to protect developer credentials.
     - **Token Estimator & Budget Truncator**: Computes token usage across 400+ files with user-configurable limits (32k, 64k, 128k, 200k) to prevent LLM context overflows.
     - **Visual Studio Modal (`RepomixStudioModal.tsx`)**: Dedicated modal with live syntax preview, telemetry cards (files, tokens, size, secrets redacted), and 1-click clipboard/file export (`repomix-output.xml`).
+38. **Aider Tree-Sitter Repo-Map & Code Graph (paul-gauthier/aider Integration)**: State-of-the-art semantic repository mapping and conflict-free diff application (`integrations/aider`, `lib/ai/aiderEngine.ts`, `client/components/AiderPairProgrammerStudio.tsx`):
+    - **PageRank Symbol Importance Graph**: Constructs an in-memory AST reference graph ($d=0.85$, 20 iterations) computing centrality scores across classes, functions, and interfaces to fit relevant context into token budgets.
+    - **Token-Budget Compact Map Serializer**: Emits concise file-tree outlines with symbol signatures formatted specifically for LLM context windows (1k, 2k, 4k, 8k tokens).
+    - **Aider Search/Replace Block Parser & Applier**: Parses standard `<<<<<<< SEARCH ... ======= ... >>>>>>>` git-style diff blocks and executes fuzzy-tolerant line matching to apply changes cleanly to workspace files.
+    - **Interactive Pair Programmer Studio (`AiderPairProgrammerStudio.tsx`)**: 5-tab IDE studio with PageRank Ranker, Compact Repo-Map generator, Search/Replace Diff Applier, Git Commit Message Synthesizer, and Live Pair Programmer chat.
+39. **UI-TARS Computer-Use GUI Agent (bytedance/ui-tars Integration)**: SOTA multimodal vision-action computer use controller for offline desktop & web automation (`integrations/ui-tars`, `lib/ai/uiTarsEngine.ts`, `app/api/automation/ui-tars/`, `client/components/UiTarsStudioModal.tsx`):
+    - **Normalized Vision-Action Parser**: Parses UI-TARS thought-action protocols into typed actions (`click`, `type`, `hotkey`, `scroll`, `drag`, `finished`) with 0–1000 normalized coordinate mapping to real screen resolutions.
+    - **Destructive OS Command Safety Policy**: Hard-coded heuristics blocking dangerous key sequences (`alt+f4`, `ctrl+alt+del`) and terminal commands (`format`, `rm -rf /`, `del /f /s /q`) before dispatching actions.
+    - **Live REST API (`/api/automation/ui-tars`)**: Supports action parsing, action execution simulation, prompt construction with visual crosshairs, and screenshot capture.
+    - **Visual GUI Agent Modal (`UiTarsStudioModal.tsx`)**: Real-time crosshair visualization at target coordinates, step-by-step audit history, simulation mode, and 1-click execution.
 
