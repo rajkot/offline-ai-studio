@@ -21,27 +21,27 @@
 ## Tasks
 
 ### Task 1: Core LoRA Engine & Automated Test Suite (`lib/ai/loraFineTuningEngine.ts`)
-- [ ] Write `scripts/test-lora-engine.js` asserting dataset harvesting, training convergence, and Modelfile synthesis.
-- [ ] Implement `lib/ai/loraFineTuningEngine.ts` with AST harvester, numerical training telemetry generator, Modelfile compiler, and PEFT adapter config generator.
-- [ ] Run test suite with `npx tsx scripts/test-lora-engine.js` and verify all tests pass.
-- [ ] Commit `feat(finetune): implement core LoRA/QLoRA fine-tuning and dataset synthesis engine`.
+- [x] Write `scripts/test-lora-engine.js` asserting dataset harvesting, training convergence, and Modelfile synthesis.
+- [x] Implement `lib/ai/loraFineTuningEngine.ts` with AST harvester, numerical training telemetry generator, Modelfile compiler, and PEFT adapter config generator.
+- [x] Run test suite with `npx tsx scripts/test-lora-engine.js` and verify all tests pass.
+- [x] Commit `feat(finetune): implement core LoRA/QLoRA fine-tuning and dataset synthesis engine`.
 
 ### Task 2: Training Backend API Routes (`app/api/training/*`)
-- [ ] Implement `app/api/training/dataset/route.ts` for automated dataset harvesting and JSONL retrieval.
-- [ ] Update `app/api/training/start/route.ts` to utilize `loraFineTuningEngine` for live telemetry, loss curves, and Modelfile generation.
-- [ ] Implement `app/api/training/evaluate/route.ts` for side-by-side prompt output testing.
-- [ ] Create `scripts/test-training-routes.js` and test all routes with HTTP assertions.
-- [ ] Commit `feat(finetune): wire fine-tuning API routes for dataset harvesting, training, and evaluation`.
+- [x] Implement `app/api/training/dataset/route.ts` for automated dataset harvesting and JSONL retrieval.
+- [x] Update `app/api/training/start/route.ts` to utilize `loraFineTuningEngine` for live telemetry, loss curves, and Modelfile generation.
+- [x] Implement `app/api/training/evaluate/route.ts` for side-by-side prompt output testing.
+- [x] Create `scripts/test-training-routes.js` and test all routes with HTTP assertions.
+- [x] Commit `feat(finetune): wire fine-tuning API routes for dataset harvesting, training, and evaluation`.
 
 ### Task 3: Interactive UI Studio Enhancement (`client/views/FineTuningDashboard.tsx`)
-- [ ] Add 4-Tab workflow navigation: `Dataset Studio`, `LoRA / QLoRA Config`, `Training Telemetry & Curves`, and `Side-by-Side Evaluator`.
-- [ ] Connect AST dataset auto-harvest button to `/api/training/dataset`.
-- [ ] Render live interactive SVG loss and perplexity curve with moving average.
-- [ ] Connect Side-by-Side Evaluator to `/api/training/evaluate`.
-- [ ] Add 1-click "Export & Apply Modelfile to Workspace / Ollama" action.
-- [ ] Commit `feat(ui): upgrade FineTuningDashboard with dataset harvester, SVG loss curves, and side-by-side evaluator`.
+- [x] Add 4-Tab workflow navigation: `Dataset Studio`, `LoRA / QLoRA Config`, `Training Telemetry & Curves`, and `Side-by-Side Evaluator`.
+- [x] Connect AST dataset auto-harvest button to `/api/training/dataset`.
+- [x] Render live interactive SVG loss and perplexity curve with moving average.
+- [x] Connect Side-by-Side Evaluator to `/api/training/evaluate`.
+- [x] Add 1-click "Export & Apply Modelfile to Workspace / Ollama" action.
+- [x] Commit `feat(ui): upgrade FineTuningDashboard with dataset harvester, SVG loss curves, and side-by-side evaluator`.
 
 ### Task 4: End-to-End Verification & Release Notes Documentation
-- [ ] Verify Next.js dev server compiles all routes and components cleanly with 0 errors.
-- [ ] Update `RELEASE_NOTES_v1.0.0.md` with Step 4 feature details (Item #33).
-- [ ] Commit `feat(finetune): complete Step 4 LoRA fine-tuning and adapter studio`.
+- [x] Verify Next.js dev server compiles all routes and components cleanly with 0 errors.
+- [x] Update `RELEASE_NOTES_v1.0.0.md` with Step 4 feature details (Item #33).
+- [x] Commit `feat(finetune): complete Step 4 LoRA fine-tuning and adapter studio`.

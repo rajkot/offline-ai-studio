@@ -63,4 +63,10 @@ All packages below are **full standalone distributions (~218 MB each)** containi
     - **Security Auditor Agent (🛡️)**: Audits the AST for dangerous `eval()`, dynamic `Function()`, prototype pollution, and DOM injection vectors.
     - **Consensus Voting Protocol**: Computes weighted quorum confidence scores (Target $\ge 80\%$) and orchestrates iterative refactoring loops with 100% offline fallback.
     - **Interactive Swarm Studio**: Enhanced `components/SwarmTrackerPanel.tsx` with live feature prompt inputs, 1-click "Launch Triad Debate", real-time chronological debate timelines, consensus code viewer, and direct 1-click "Apply Consensus Code to Editor".
+33. **LoRA & QLoRA Local Adapter Fine-Tuning Studio (Step 4)**: 100% offline, air-gapped domain adaptation engine (`lib/ai/loraFineTuningEngine.ts`, `app/api/training/`, `client/views/FineTuningDashboard.tsx`). Empowers the IDE to act as an autonomous AI Model Builder by fine-tuning local open-weights models (`qwen2.5-coder:1.5b`, `llama3.2:3b`, `phi-3.5:mini`) directly on workspace code:
+    - **AST Dataset Harvester**: Automatically harvests classes, interfaces, and functions from local workspace files into standard Alpaca/ShareGPT instruction-response JSONL datasets.
+    - **LoRA / QLoRA Hyperparameter Matrix**: Configurable Rank ($r \in [4, 64]$), Alpha ($\alpha \in [8, 128]$), Dropout, and Quantization (4-bit QLoRA NF4 for &lt;6 GB VRAM, 8-bit int8, 16-bit BF16) with target linear projections (`q_proj`, `v_proj`, `k_proj`, `o_proj`).
+    - **Real-Time SGD Loss & Perplexity Curves**: Live SVG canvas chart tracking step-by-step loss reduction, perplexity ($e^{\text{loss}}$), cosine learning rate annealing, and peak VRAM allocation.
+    - **Ollama Modelfile Compiler & PEFT Exporter**: Synthesizes standard Hugging Face PEFT `adapter_config.json` and Ollama `Modelfile` definitions with 1-click "Save & Register Modelfile" in the workspace.
+    - **Side-by-Side Inference Evaluator**: Dual split view testing prompt completions before vs. after LoRA adapter application to verify domain-specific learning without catastrophic forgetting.
 
