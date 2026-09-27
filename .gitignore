@@ -31,5 +31,8 @@ public/release/
 public/*.exe
 tsconfig.tsbuildinfo
 integrations/
+# Browser Temp Profiles
+.edge_tmp/
+.chrome_tmp/
 
 

@@ -318,6 +318,68 @@ class AutonomousAgentEngine {
   }
 
   /**
+   * Executes a headless browser visual & runtime console audit via /api/pipeline/browser-inspect.
+   */
+  public async auditBrowserUrl(url: string = 'http://127.0.0.1:3000'): Promise<{
+    success: boolean;
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+    durationMs: number;
+    screenshotBase64?: string;
+  }> {
+    const startTime = Date.now();
+    try {
+      const res = await fetch('/api/pipeline/browser-inspect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, captureScreenshot: true }),
+      });
+
+      const durationMs = Date.now() - startTime;
+      if (!res.ok) {
+        const errText = await res.text().catch(() => `HTTP ${res.status}`);
+        return {
+          success: false,
+          exitCode: 1,
+          stdout: '',
+          stderr: `Browser Audit Failed: ${errText}`,
+          durationMs,
+        };
+      }
+
+      const data = await res.json();
+      const hasErrors = Array.isArray(data.errors) && data.errors.length > 0;
+      const stdout = [
+        `🌐 Local Headless Browser Audit for ${data.url || url} (${data.browserChannel || 'native'}):`,
+        `DOM Elements: ${data.domSummary?.totalElements || 'N/A'}, Interactive: ${data.domSummary?.interactiveElements || 'N/A'}, Forms: ${data.domSummary?.forms || 'N/A'}`,
+        `Console logs captured: ${data.consoleLogs?.length || 0}`,
+        ...(data.warnings && data.warnings.length > 0 ? [`Warnings (${data.warnings.length}):\n${data.warnings.join('\n')}`] : []),
+        ...(data.consoleLogs && data.consoleLogs.length > 0 ? [`Console Stream:\n${data.consoleLogs.map((c: any) => `[${c.type}] ${c.text}`).join('\n')}`] : [])
+      ].join('\n');
+
+      const stderr = hasErrors ? data.errors.join('\n') : '';
+
+      return {
+        success: !hasErrors,
+        exitCode: hasErrors ? 1 : 0,
+        stdout,
+        stderr,
+        durationMs,
+        screenshotBase64: data.screenshotBase64,
+      };
+    } catch (e: any) {
+      return {
+        success: false,
+        exitCode: 1,
+        stdout: '',
+        stderr: `Local browser agent network error: ${e?.message || e}`,
+        durationMs: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
    * Start Autonomous Loop
    */
   public async startSession(params: {
@@ -471,8 +533,18 @@ Return ONLY the raw source code of the file. Do not wrap in conversational chit-
         return;
       }
 
-      this.addLog('testing', `Executing verification command: \`${this.state.testCommand}\`...`, 'command');
-      const testResult = await this.executeTerminalCommand(this.state.testCommand);
+      const isBrowserAudit = this.state.testCommand.startsWith('browser') || this.state.testCommand.startsWith('http');
+      this.addLog(
+        'testing',
+        isBrowserAudit
+          ? `Launching headless browser audit on: \`${this.state.testCommand}\`...`
+          : `Executing verification command: \`${this.state.testCommand}\`...`,
+        'command'
+      );
+
+      const testResult = isBrowserAudit
+        ? await this.auditBrowserUrl(this.state.testCommand.startsWith('http') ? this.state.testCommand : 'http://127.0.0.1:3000')
+        : await this.executeTerminalCommand(this.state.testCommand);
       this.state.lastExitCode = testResult.exitCode;
 
       // Save iteration checkpoint

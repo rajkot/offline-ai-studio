@@ -269,15 +269,19 @@ export default function AutonomousAgentModal({
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-indigo-300 font-mono focus:outline-none focus:border-indigo-500 disabled:opacity-50"
               />
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {['npm test', 'npx tsc --noEmit', 'node test.js'].map((cmd) => (
+                {['npm test', 'npx tsc --noEmit', 'node test.js', 'browser:audit'].map((cmd) => (
                   <button
                     key={cmd}
                     type="button"
-                    onClick={() => setTestCommand(cmd)}
+                    onClick={() => setTestCommand(cmd === 'browser:audit' ? 'browser:audit' : cmd)}
                     disabled={state.isActive}
-                    className="text-[10px] font-mono px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700/60"
+                    className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                      cmd === 'browser:audit'
+                        ? 'bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border-emerald-700/60'
+                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700/60'
+                    }`}
                   >
-                    {cmd}
+                    {cmd === 'browser:audit' ? '🌐 browser:audit' : cmd}
                   </button>
                 ))}
               </div>

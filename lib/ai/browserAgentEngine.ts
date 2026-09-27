@@ -231,10 +231,16 @@ export class BrowserAgentEngine {
       // Capture screenshot if requested
       let screenshotBase64: string | undefined;
       if (shouldCaptureScreenshot) {
-        screenshotBase64 = await page.screenshot({
-          encoding: 'base64',
+        const rawScreenshot = await page.screenshot({
           fullPage: Boolean(options.fullPage)
         });
+        if (rawScreenshot) {
+          screenshotBase64 = Buffer.isBuffer(rawScreenshot)
+            ? rawScreenshot.toString('base64')
+            : typeof rawScreenshot === 'string'
+              ? rawScreenshot
+              : Buffer.from(rawScreenshot as any).toString('base64');
+        }
       }
 
       await browser.close();

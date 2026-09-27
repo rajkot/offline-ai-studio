@@ -78,6 +78,7 @@ import AutonomousAgentModal from '@/client/components/AutonomousAgentModal';
 import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
+import BrowserInspectorModal from '@/client/components/BrowserInspectorModal';
 import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
 import GitHunkPopover from '@/client/components/GitHunkPopover';
 import InlineAiDiffTransformer from '@/client/components/InlineAiDiffTransformer';
@@ -399,6 +400,7 @@ export default function Playground({
   // Built-in Database Studio & Live Split-Screen Webview State
   const [isDatabaseStudioOpen, setIsDatabaseStudioOpen] = useState(false);
   const [isLivePreviewOpen, setIsLivePreviewOpen] = useState(false);
+  const [isBrowserInspectorOpen, setIsBrowserInspectorOpen] = useState(false);
 
   // Multi-File RAG Composer & Docker Sandbox State
   const [isRagComposerOpen, setIsRagComposerOpen] = useState(false);
@@ -2494,6 +2496,10 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'theme-picker':
         setIsThemePickerOpen(true);
         break;
+      case 'browser-inspect-open':
+      case 'browser-inspector':
+        setIsBrowserInspectorOpen(true);
+        break;
       case 'models-catalog':
         handleSelectFile('__MODELS_CATALOG__');
         break;
@@ -2712,6 +2718,13 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       if ((e.key === 'J' || e.key === 'j') && (e.ctrlKey || e.metaKey) && e.altKey) {
         e.preventDefault();
         handleSelectFile('__NANO_BANANA_STUDIO__');
+        return;
+      }
+
+      // Ctrl+Alt+B: Local Headless Browser Inspector & Visual Self-Correction Agent
+      if ((e.key === 'B' || e.key === 'b') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        setIsBrowserInspectorOpen(prev => !prev);
         return;
       }
 
@@ -5996,6 +6009,13 @@ export default function ExtractedVisionUI() {
               >
                 <Grid2X2 size={13} />
               </button>
+              <button
+                onClick={() => setIsBrowserInspectorOpen(true)}
+                title="Open Headless Browser Inspector & Visual Agent (Ctrl+Alt+B)"
+                className="p-1 text-zinc-400 hover:text-emerald-400 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+              >
+                <Globe size={13} />
+              </button>
             </div>
 
             {/* Touch-Friendly Right Sidebar Toggle (PWA Adaptive) */}
@@ -8352,6 +8372,20 @@ export default function ExtractedVisionUI() {
         activeFile={selectedFile || ''}
         allFiles={parsedFiles}
         onApplyFileUpdate={handleUpdateFile}
+      />
+
+      {/* Local Headless Browser Agent & Visual Self-Correction Modal */}
+      <BrowserInspectorModal
+        isOpen={isBrowserInspectorOpen}
+        onClose={() => setIsBrowserInspectorOpen(false)}
+        defaultUrl="http://127.0.0.1:3000"
+        onApplyFix={(filePath, fix) => {
+          if (parsedFiles[filePath] !== undefined) {
+            handleUpdateFile(filePath, fix);
+            setDiskToastMessage(`✨ Applied visual auto-fix to ${filePath}`);
+            setTimeout(() => setDiskToastMessage(null), 3000);
+          }
+        }}
       />
 
       {/* WebGPU Zero-Install Local Inference Studio */}
