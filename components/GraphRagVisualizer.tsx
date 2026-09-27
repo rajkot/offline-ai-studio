@@ -22,13 +22,29 @@ import {
   Filter
 } from 'lucide-react';
 
+export type SymbolKind =
+  | 'file'
+  | 'class'
+  | 'interface'
+  | 'type'
+  | 'function'
+  | 'method'
+  | 'variable'
+  | 'component'
+  | 'enum';
+
 export interface GraphNode {
   id: string;
   label: string;
-  type: 'file' | 'class' | 'function' | 'variable';
+  name?: string;
+  type: SymbolKind;
   filePath: string;
   line: number;
-  description: string;
+  endLine?: number;
+  character?: number;
+  signature?: string;
+  docstring?: string;
+  description?: string;
   x?: number;
   y?: number;
 }
@@ -38,7 +54,8 @@ export interface GraphEdge {
   source: string;
   target: string;
   label?: string;
-  type: 'imports' | 'calls' | 'defines' | 'inherits';
+  type: 'imports' | 'calls' | 'defines' | 'inherits' | 'renders';
+  line?: number;
 }
 
 interface GraphStats {
@@ -50,9 +67,10 @@ interface GraphStats {
 
 interface GraphRagVisualizerProps {
   onOpenFile?: (filePath: string, line?: number) => void;
+  workspaceFiles?: Record<string, string>;
 }
 
-export default function GraphRagVisualizer({ onOpenFile }: GraphRagVisualizerProps) {
+export default function GraphRagVisualizer({ onOpenFile, workspaceFiles }: GraphRagVisualizerProps) {
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [stats, setStats] = useState<GraphStats>({
@@ -66,7 +84,7 @@ export default function GraphRagVisualizer({ onOpenFile }: GraphRagVisualizerPro
   const [matchedIds, setMatchedIds] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [filterType, setFilterType] = useState<'all' | 'file' | 'class' | 'function' | 'variable'>('all');
+  const [filterType, setFilterType] = useState<string>('all');
 
   // Pan & Zoom
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
@@ -83,7 +101,7 @@ export default function GraphRagVisualizer({ onOpenFile }: GraphRagVisualizerPro
       const res = await fetch('/api/rag/semantic-graph-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query, files: workspaceFiles })
       });
       if (res.ok) {
         const data = await res.json();
@@ -272,6 +290,21 @@ export default function GraphRagVisualizer({ onOpenFile }: GraphRagVisualizerPro
           bgClass: 'bg-amber-500/20 text-amber-400 border-amber-500',
           badgeClass: 'bg-amber-950/80 text-amber-300 border-amber-700'
         };
+      case 'component':
+        return {
+          fill: '#ec4899',
+          border: '#be185d',
+          bgClass: 'bg-pink-500/20 text-pink-400 border-pink-500',
+          badgeClass: 'bg-pink-950/80 text-pink-300 border-pink-700'
+        };
+      case 'interface':
+      case 'type':
+        return {
+          fill: '#06b6d4',
+          border: '#0e7490',
+          bgClass: 'bg-cyan-500/20 text-cyan-400 border-cyan-500',
+          badgeClass: 'bg-cyan-950/80 text-cyan-300 border-cyan-700'
+        };
       default:
         return {
           fill: '#64748b',
@@ -286,8 +319,14 @@ export default function GraphRagVisualizer({ onOpenFile }: GraphRagVisualizerPro
     switch (type) {
       case 'file': return <FileCode size={13} className="text-blue-400" />;
       case 'class': return <Box size={13} className="text-purple-400" />;
-      case 'function': return <Code2 size={13} className="text-emerald-400" />;
-      case 'variable': return <Key size={13} className="text-amber-400" />;
+      case 'component': return <Layers size={13} className="text-pink-400" />;
+      case 'interface':
+      case 'type': return <Code2 size={13} className="text-cyan-400" />;
+      case 'function':
+      case 'method': return <Code2 size={13} className="text-emerald-400" />;
+      case 'variable':
+      case 'enum': return <Key size={13} className="text-amber-400" />;
+      default: return <Code2 size={13} className="text-slate-400" />;
     }
   };
 
@@ -434,6 +473,33 @@ export default function GraphRagVisualizer({ onOpenFile }: GraphRagVisualizerPro
             Semantic Search
           </button>
         </form>
+
+        {/* Symbol Category Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider mr-1">Filter:</span>
+          {[
+            { id: 'all', label: 'All Symbols' },
+            { id: 'file', label: 'Files' },
+            { id: 'class', label: 'Classes' },
+            { id: 'interface', label: 'Interfaces' },
+            { id: 'function', label: 'Functions' },
+            { id: 'component', label: 'Components' },
+            { id: 'variable', label: 'Variables' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFilterType(tab.id)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer shrink-0 ${
+                filterType === tab.id
+                  ? 'bg-indigo-600 text-white font-bold shadow'
+                  : 'bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Main Canvas & Inspector View */}

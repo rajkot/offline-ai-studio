@@ -6241,7 +6241,13 @@ export default function ExtractedVisionUI() {
               <ReleaseHubDashboard />
             ) : selectedFile === '__GRAPH_RAG__' ? (
               <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800">
-                <GraphRagVisualizer onOpenFile={(filePath) => handleSelectFile(filePath)} />
+                <GraphRagVisualizer
+                  onOpenFile={(filePath, line) => {
+                    handleSelectFile(filePath);
+                    if (line) handleJumpToLine(line);
+                  }}
+                  workspaceFiles={parsedFiles}
+                />
               </div>
             ) : selectedFile === '__SWARM_TRACKER__' ? (
               <div className="flex-1 flex flex-col rounded-xl overflow-hidden border border-slate-800">
