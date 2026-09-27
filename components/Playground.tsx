@@ -79,6 +79,7 @@ import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
 import BrowserInspectorModal from '@/client/components/BrowserInspectorModal';
+import IsolatedSandboxModal from '@/client/components/IsolatedSandboxModal';
 import LiveWebviewSplitPane from '@/client/components/LiveWebviewSplitPane';
 import GitHunkPopover from '@/client/components/GitHunkPopover';
 import InlineAiDiffTransformer from '@/client/components/InlineAiDiffTransformer';
@@ -401,6 +402,7 @@ export default function Playground({
   const [isDatabaseStudioOpen, setIsDatabaseStudioOpen] = useState(false);
   const [isLivePreviewOpen, setIsLivePreviewOpen] = useState(false);
   const [isBrowserInspectorOpen, setIsBrowserInspectorOpen] = useState(false);
+  const [isIsolatedSandboxOpen, setIsIsolatedSandboxOpen] = useState(false);
 
   // Multi-File RAG Composer & Docker Sandbox State
   const [isRagComposerOpen, setIsRagComposerOpen] = useState(false);
@@ -769,6 +771,8 @@ export default function Playground({
     setIsTasksLauncherOpen(false);
     setIsInlineAiOpen(false);
     setIsLivePreviewOpen(false);
+    setIsBrowserInspectorOpen(false);
+    setIsIsolatedSandboxOpen(false);
     setIsVimExPromptOpen(false);
     setActiveAuditMessageId(null);
     setActiveBreakpointToEdit(null);
@@ -2725,6 +2729,13 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       if ((e.key === 'B' || e.key === 'b') && (e.ctrlKey || e.metaKey) && e.altKey) {
         e.preventDefault();
         setIsBrowserInspectorOpen(prev => !prev);
+        return;
+      }
+
+      // Ctrl+Alt+S: Local Sandbox & MicroVM Execution Guard
+      if ((e.key === 'S' || e.key === 's') && (e.ctrlKey || e.metaKey) && e.altKey) {
+        e.preventDefault();
+        setIsIsolatedSandboxOpen(prev => !prev);
         return;
       }
 
@@ -6016,6 +6027,13 @@ export default function ExtractedVisionUI() {
               >
                 <Globe size={13} />
               </button>
+              <button
+                onClick={() => setIsIsolatedSandboxOpen(true)}
+                title="Open Local Sandbox & MicroVM Execution Guard (Ctrl+Alt+S)"
+                className="p-1 text-zinc-400 hover:text-cyan-400 hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+              >
+                <ShieldCheck size={13} />
+              </button>
             </div>
 
             {/* Touch-Friendly Right Sidebar Toggle (PWA Adaptive) */}
@@ -8392,6 +8410,13 @@ export default function ExtractedVisionUI() {
             setTimeout(() => setDiskToastMessage(null), 3000);
           }
         }}
+      />
+
+      {/* Local Sandbox & MicroVM Execution Guard Modal */}
+      <IsolatedSandboxModal
+        isOpen={isIsolatedSandboxOpen}
+        onClose={() => setIsIsolatedSandboxOpen(false)}
+        initialCode={selectedFile && parsedFiles[selectedFile] ? parsedFiles[selectedFile].slice(0, 800) : undefined}
       />
 
       {/* WebGPU Zero-Install Local Inference Studio */}
