@@ -106,4 +106,10 @@ All packages below are **full standalone distributions (~218 MB each)** containi
     - **Robust XML Tool Protocol Parser**: Parses `<read_file>`, `<write_to_file>`, `<replace_in_file>`, `<execute_command>`, `<list_files>`, and `<use_mcp_tool>` supporting both inner-tag and inline-attribute syntaxes.
     - **Fine-Grained Human-in-the-Loop Permissions**: Configurable auto-approval matrix for read operations, file writes, shell commands, browser navigations, and MCP tools, with hard-coded dangerous command filters.
     - **Interactive Studio Modal (`ClineRooStudioModal.tsx`)**: Dynamic mode switcher, goal executor, live execution timeline, pending HITL approval cards with 1-click Approve/Reject, and live system prompt viewer.
+41. **Void Editor Fast Apply & Ghost Text Inline Diff Engine (voideditor/void Integration)**: Open-source Cursor alternative architecture for streaming speculative diff application and inline predictive autocomplete (`integrations/void`, `lib/ai/voidFastApplyEngine.ts`, `app/api/void/`, `client/components/VoidStudioModal.tsx`, `client/components/InlineAiDiffTransformer.tsx`):
+    - **Myers / LCS Diff Hunk Engine**: Dynamic programming algorithm computing minimal structured hunks (`@@ -oldStart,oldCount +newStart,newCount @@`) with surrounding context line preservation.
+    - **Speculative Fast Apply (0-Conflict)**: Replaces slow, whole-file LLM generations with surgical hunk application directly into workspace files, yielding 10x–100x acceleration and avoiding merge collisions.
+    - **Standard Unified Git Diff Formatter**: Emits standard patch syntax with addition/deletion telemetry for easy git-staging and peer review.
+    - **Predictive Ghost Text Inline Autocomplete**: Extracts candidate suffixes with hotkey controls: full ghost acceptance via `Tab`, word-by-word token acceptance via `Ctrl+Right`, and dismissal via `Esc`.
+    - **Void Studio Modal (`VoidStudioModal.tsx`)**: Dedicated IDE panel with workspace file picker, real-time hunk diff computation, 1-click file patcher, and interactive Monaco ghost text simulation playground.
 

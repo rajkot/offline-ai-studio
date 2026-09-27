@@ -218,6 +218,9 @@ Return just the raw clean code.`;
             <span className="px-1.5 py-0.5 bg-indigo-950/80 text-indigo-300 border border-indigo-700/60 rounded text-[10px] font-mono">
               Ctrl+K
             </span>
+            <span className="px-1.5 py-0.5 bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 rounded text-[10px] font-mono">
+              Void Fast Apply
+            </span>
             {selectionRange && (
               <span className="text-[10px] text-zinc-400 font-mono font-normal">
                 {filePath} • Lines {selectionRange.startLine}-{selectionRange.endLine}
@@ -437,6 +440,15 @@ Return just the raw clean code.`;
                 >
                   <X size={13} />
                   Reject (Esc)
+                </button>
+
+                <button
+                  onClick={() => onAccept(transformedCode)}
+                  className="px-3 py-1.5 bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white text-xs font-semibold rounded-lg shadow-md shadow-cyan-900/30 transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95"
+                  title="Void Editor Speculative Fast Apply Hunk Dispatcher"
+                >
+                  <Zap size={13} className="text-amber-300" />
+                  <span>Void Fast Apply</span>
                 </button>
 
                 <button

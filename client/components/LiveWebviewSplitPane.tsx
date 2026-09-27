@@ -22,13 +22,15 @@ import {
   Package,
   GitBranch,
   Crosshair,
-  Bot
+  Bot,
+  Split
 } from 'lucide-react';
 import SmartMacroStudio from './SmartMacroStudio';
 import RepomixStudioModal from './RepomixStudioModal';
 import AiderPairProgrammerStudio from './AiderPairProgrammerStudio';
 import UiTarsStudioModal from './UiTarsStudioModal';
 import ClineRooStudioModal from './ClineRooStudioModal';
+import VoidStudioModal from './VoidStudioModal';
 import {
   livePreviewEngine,
   MirroredConsoleLog,
@@ -61,6 +63,7 @@ export default function LiveWebviewSplitPane({
   const [isAiderOpen, setIsAiderOpen] = useState(false);
   const [isUiTarsOpen, setIsUiTarsOpen] = useState(false);
   const [isClineOpen, setIsClineOpen] = useState(false);
+  const [isVoidOpen, setIsVoidOpen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -237,6 +240,16 @@ export default function LiveWebviewSplitPane({
             <span className="hidden sm:inline">Cline / Roo</span>
           </button>
 
+          {/* Void Editor Fast Apply Studio Button */}
+          <button
+            onClick={() => setIsVoidOpen(true)}
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer bg-gradient-to-r from-sky-600/90 to-cyan-600/90 hover:from-sky-500 hover:to-cyan-500 text-white shadow-md shadow-sky-500/20"
+            title="Open Void Editor Fast Apply & Ghost Text Studio"
+          >
+            <Split size={12} className="text-cyan-200" />
+            <span className="hidden sm:inline">Void Apply</span>
+          </button>
+
           <button
             onClick={handleReload}
             className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -396,6 +409,12 @@ export default function LiveWebviewSplitPane({
       <ClineRooStudioModal
         isOpen={isClineOpen}
         onClose={() => setIsClineOpen(false)}
+      />
+
+      <VoidStudioModal
+        isOpen={isVoidOpen}
+        onClose={() => setIsVoidOpen(false)}
+        workspaceFiles={files}
       />
     </div>
   );
