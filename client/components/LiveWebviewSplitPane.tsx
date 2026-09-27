@@ -21,12 +21,14 @@ import {
   Zap,
   Package,
   GitBranch,
-  Crosshair
+  Crosshair,
+  Bot
 } from 'lucide-react';
 import SmartMacroStudio from './SmartMacroStudio';
 import RepomixStudioModal from './RepomixStudioModal';
 import AiderPairProgrammerStudio from './AiderPairProgrammerStudio';
 import UiTarsStudioModal from './UiTarsStudioModal';
+import ClineRooStudioModal from './ClineRooStudioModal';
 import {
   livePreviewEngine,
   MirroredConsoleLog,
@@ -58,6 +60,7 @@ export default function LiveWebviewSplitPane({
   const [isRepomixOpen, setIsRepomixOpen] = useState(false);
   const [isAiderOpen, setIsAiderOpen] = useState(false);
   const [isUiTarsOpen, setIsUiTarsOpen] = useState(false);
+  const [isClineOpen, setIsClineOpen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -224,6 +227,16 @@ export default function LiveWebviewSplitPane({
             <span className="hidden sm:inline">UI-TARS</span>
           </button>
 
+          {/* Cline & Roo Code Autonomous Agent Button */}
+          <button
+            onClick={() => setIsClineOpen(true)}
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer bg-gradient-to-r from-blue-600/90 to-indigo-600/90 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/20"
+            title="Open Cline & Roo Code Autonomous Plan-and-Act Agent"
+          >
+            <Bot size={12} className="text-blue-200" />
+            <span className="hidden sm:inline">Cline / Roo</span>
+          </button>
+
           <button
             onClick={handleReload}
             className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -378,6 +391,11 @@ export default function LiveWebviewSplitPane({
       <UiTarsStudioModal
         isOpen={isUiTarsOpen}
         onClose={() => setIsUiTarsOpen(false)}
+      />
+
+      <ClineRooStudioModal
+        isOpen={isClineOpen}
+        onClose={() => setIsClineOpen(false)}
       />
     </div>
   );

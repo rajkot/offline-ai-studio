@@ -100,4 +100,10 @@ All packages below are **full standalone distributions (~218 MB each)** containi
     - **Destructive OS Command Safety Policy**: Hard-coded heuristics blocking dangerous key sequences (`alt+f4`, `ctrl+alt+del`) and terminal commands (`format`, `rm -rf /`, `del /f /s /q`) before dispatching actions.
     - **Live REST API (`/api/automation/ui-tars`)**: Supports action parsing, action execution simulation, prompt construction with visual crosshairs, and screenshot capture.
     - **Visual GUI Agent Modal (`UiTarsStudioModal.tsx`)**: Real-time crosshair visualization at target coordinates, step-by-step audit history, simulation mode, and 1-click execution.
+40. **Cline & Roo Code Autonomous Agent Protocol (cline/cline & Roo-Code Integration)**: SOTA autonomous plan-and-act multi-turn loop with dynamic modes, XML tool calling, and human-in-the-loop permission gates (`integrations/cline`, `lib/ai/clineProtocolEngine.ts`, `app/api/cline/`, `client/components/ClineRooStudioModal.tsx`):
+    - **Dynamic Modes System**: Pre-configured system prompts and tool constraints for Code (💻 full-stack engineer), Architect (🏛️ high-level design, prohibited from unauthorized file mutations), Ask (❓ Q&A), Debug (🐛 root-cause isolation), and Test (🧪 automated coverage).
+    - **Dual-Phase Plan-and-Act Protocol**: Autonomous execution loop dividing complex objectives into sequential milestones, dynamically invoking tools and presenting human confirmation dialogs for destructive operations.
+    - **Robust XML Tool Protocol Parser**: Parses `<read_file>`, `<write_to_file>`, `<replace_in_file>`, `<execute_command>`, `<list_files>`, and `<use_mcp_tool>` supporting both inner-tag and inline-attribute syntaxes.
+    - **Fine-Grained Human-in-the-Loop Permissions**: Configurable auto-approval matrix for read operations, file writes, shell commands, browser navigations, and MCP tools, with hard-coded dangerous command filters.
+    - **Interactive Studio Modal (`ClineRooStudioModal.tsx`)**: Dynamic mode switcher, goal executor, live execution timeline, pending HITL approval cards with 1-click Approve/Reject, and live system prompt viewer.
 
