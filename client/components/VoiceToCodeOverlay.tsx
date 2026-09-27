@@ -13,7 +13,9 @@ import {
   MessageSquare,
   Check,
   X,
-  GripHorizontal
+  GripHorizontal,
+  Zap,
+  RefreshCw
 } from 'lucide-react';
 import {
   localWhisperEngine,
@@ -135,6 +137,61 @@ export default function VoiceToCodeOverlay({
 
     localWhisperEngine.cancelRecording();
     if (onClose) onClose();
+  };
+
+  const [isAgentBuilding, setIsAgentBuilding] = useState(false);
+  const [agentBuildStatus, setAgentBuildStatus] = useState<string | null>(null);
+
+  const handleAutonomousBuild = async () => {
+    let textToUse = whisperState.transcript;
+    if (whisperState.isRecording) {
+      const finalTranscript = await localWhisperEngine.stopRecording();
+      if (finalTranscript) textToUse = finalTranscript;
+    }
+    if (!textToUse || textToUse.trim().length === 0) {
+      textToUse = whisperState.interimTranscript;
+    }
+    if (!textToUse || textToUse.trim().length === 0) {
+      setAgentBuildStatus('Please speak a command or prompt first');
+      setTimeout(() => setAgentBuildStatus(null), 3000);
+      return;
+    }
+
+    try {
+      setIsAgentBuilding(true);
+      setAgentBuildStatus('⚡ Local Agent Synthesizing Component...');
+      const resp = await fetch('/api/multimodal/voice-command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: textToUse,
+          activeFile: 'components/VoiceComponent.tsx'
+        })
+      });
+      const data = await resp.json();
+      if (data.success && data.synthesizedCode) {
+        setAgentBuildStatus(`✓ Built ${data.intent?.targetComponent || 'Component'}! Inserting...`);
+        if (onInsertToEditor) {
+          onInsertToEditor(data.synthesizedCode);
+        } else if (onSendToComposer) {
+          onSendToComposer(data.synthesizedCode);
+        } else if (onSendToAgent) {
+          onSendToAgent(data.synthesizedCode);
+        }
+        setTimeout(() => {
+          localWhisperEngine.cancelRecording();
+          if (onClose) onClose();
+        }, 1200);
+      } else {
+        setAgentBuildStatus(data.error || 'Failed to synthesize from voice command');
+        setTimeout(() => setAgentBuildStatus(null), 3500);
+      }
+    } catch (err: any) {
+      setAgentBuildStatus(`Error: ${err.message}`);
+      setTimeout(() => setAgentBuildStatus(null), 3500);
+    } finally {
+      setIsAgentBuilding(false);
+    }
   };
 
   const handleCancel = () => {
@@ -284,6 +341,14 @@ export default function VoiceToCodeOverlay({
           </div>
         )}
 
+        {/* Build Status Alert */}
+        {agentBuildStatus && (
+          <div className="px-3 py-1.5 rounded-lg bg-indigo-950/80 border border-indigo-700/60 text-xs text-indigo-300 flex items-center gap-2 animate-in fade-in duration-150">
+            {isAgentBuilding ? <RefreshCw size={13} className="animate-spin text-amber-400" /> : <Sparkles size={13} className="text-pink-400" />}
+            <span className="font-mono">{agentBuildStatus}</span>
+          </div>
+        )}
+
         {/* Bottom Actions */}
         <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
           <button
@@ -294,13 +359,25 @@ export default function VoiceToCodeOverlay({
             <span>Cancel</span>
           </button>
 
-          <button
-            onClick={handleStopAndDispatch}
-            className="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:opacity-90 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
-          >
-            <Check size={14} />
-            <span>Done (Insert / Execute)</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAutonomousBuild}
+              disabled={isAgentBuilding}
+              className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 via-rose-500 to-pink-600 hover:opacity-90 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all border border-amber-400/30"
+              title="Autonomous Multimodal Builder: Synthesize React component code directly from voice transcript"
+            >
+              {isAgentBuilding ? <RefreshCw size={13} className="animate-spin" /> : <Zap size={13} />}
+              <span>{isAgentBuilding ? 'Synthesizing...' : '⚡ Autonomous Build'}</span>
+            </button>
+
+            <button
+              onClick={handleStopAndDispatch}
+              className="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-pink-600 hover:opacity-90 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+            >
+              <Check size={14} />
+              <span>Done</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

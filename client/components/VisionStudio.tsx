@@ -320,13 +320,34 @@ export default function VisionStudio({
     // Step 3: Extracting structural code blocks
     await new Promise(r => setTimeout(r, 700));
 
-    // Match preset or synthesize custom code
+    // Match preset or synthesize custom code via autonomous multimodal engine
     const matchedPreset = PRESET_MOCKUPS.find(p => p.previewSvg === attachedImage);
-    if (matchedPreset) {
-      setGeneratedCode(matchedPreset.code);
-    } else {
-      // Default generated UI template if custom upload
-      setGeneratedCode(`import React from 'react';
+    let synthesizedOutput = '';
+
+    try {
+      const resp = await fetch('/api/multimodal/vision-to-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: attachedImage,
+          componentName: matchedPreset ? matchedPreset.name.replace(/[^a-zA-Z0-9]/g, '') : 'CustomVisionComponent',
+          layoutType: matchedPreset ? matchedPreset.id : 'dashboard',
+          visualSpec: `Synthesized with ${selectedModel} model`
+        })
+      });
+      const data = await resp.json();
+      if (data.success && data.synthesizedCode) {
+        synthesizedOutput = data.synthesizedCode;
+      }
+    } catch (e) {
+      // Graceful fallback to client templates
+    }
+
+    if (!synthesizedOutput) {
+      if (matchedPreset) {
+        synthesizedOutput = matchedPreset.code;
+      } else {
+        synthesizedOutput = `import React from 'react';
 import { Sparkles, CheckCircle, ArrowRight, Shield } from 'lucide-react';
 
 export default function CustomVisionComponent() {
@@ -367,8 +388,11 @@ export default function CustomVisionComponent() {
       </div>
     </div>
   );
-}`);
+}`;
+      }
     }
+
+    setGeneratedCode(synthesizedOutput);
 
     setProcessingStep(4);
     setIsProcessing(false);
