@@ -19,10 +19,12 @@ import {
   Eye,
   Sliders,
   Zap,
-  Package
+  Package,
+  GitBranch
 } from 'lucide-react';
 import SmartMacroStudio from './SmartMacroStudio';
 import RepomixStudioModal from './RepomixStudioModal';
+import AiderPairProgrammerStudio from './AiderPairProgrammerStudio';
 import {
   livePreviewEngine,
   MirroredConsoleLog,
@@ -52,6 +54,7 @@ export default function LiveWebviewSplitPane({
   const [isConsoleDrawerOpen, setIsConsoleDrawerOpen] = useState(false);
   const [isMacroStudioOpen, setIsMacroStudioOpen] = useState(false);
   const [isRepomixOpen, setIsRepomixOpen] = useState(false);
+  const [isAiderOpen, setIsAiderOpen] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -198,6 +201,16 @@ export default function LiveWebviewSplitPane({
             <span className="hidden sm:inline">Repomix</span>
           </button>
 
+          {/* Aider Tree-Sitter Repo-Map Trigger Button */}
+          <button
+            onClick={() => setIsAiderOpen(true)}
+            className="px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer bg-gradient-to-r from-emerald-600/90 to-teal-600/90 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20"
+            title="Open Aider Tree-Sitter Repo-Map & Pair Programmer"
+          >
+            <GitBranch size={12} className="text-emerald-200" />
+            <span className="hidden sm:inline">Aider Map</span>
+          </button>
+
           <button
             onClick={handleReload}
             className="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
@@ -333,6 +346,21 @@ export default function LiveWebviewSplitPane({
         onClose={() => setIsRepomixOpen(false)}
         workspaceFiles={files}
       />
+
+      {isAiderOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-6xl h-[90vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden relative">
+            <button
+              onClick={() => setIsAiderOpen(false)}
+              className="absolute top-4 right-4 z-50 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/80 transition"
+              title="Close Aider Studio"
+            >
+              <X size={18} />
+            </button>
+            <AiderPairProgrammerStudio workspaceFiles={files} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
