@@ -9,8 +9,23 @@
  * in a single forward pass by reading logits directly without autoregressive text generation latency.
  */
 
-import fs from 'fs';
-import path from 'path';
+function getNodeFs(): any {
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    try {
+      return eval('require')('fs');
+    } catch {}
+  }
+  return null;
+}
+
+function getNodePath(): any {
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    try {
+      return eval('require')('path');
+    } catch {}
+  }
+  return null;
+}
 
 export interface NanoJevStatus {
   installed: boolean;
@@ -73,13 +88,14 @@ export class NanoJevEngine {
    * Resolves possible directories where NanoJev weights or cloned repository reside.
    */
   public getPossibleModelPaths(): string[] {
-    const cwd = process.cwd();
+    if (!pathModule) return [];
+    const cwd = typeof process !== 'undefined' ? process.cwd() : '';
     return [
-      path.join(cwd, 'models', 'nanojev'),
-      path.join(cwd, 'models', 'NanoJev'),
-      path.join(cwd, 'integrations', 'nanojev'),
-      path.join(cwd, 'integrations', 'NanoJev'),
-      path.join(cwd, 'public', 'models', 'nanojev')
+      pathModule.join(cwd, 'models', 'nanojev'),
+      pathModule.join(cwd, 'models', 'NanoJev'),
+      pathModule.join(cwd, 'integrations', 'nanojev'),
+      pathModule.join(cwd, 'integrations', 'NanoJev'),
+      pathModule.join(cwd, 'public', 'models', 'nanojev')
     ];
   }
 
@@ -87,12 +103,13 @@ export class NanoJevEngine {
    * Determines if local weights or checkpoint directory exists and contains files.
    */
   public isInstalled(): boolean {
+    if (!fsModule) return false;
     const paths = this.getPossibleModelPaths();
     for (const p of paths) {
-      if (fs.existsSync(p)) {
+      if (fsModule.existsSync(p)) {
         try {
-          const files = fs.readdirSync(p);
-          if (files.length > 0) return true;
+          const files = fsModule.readdirSync(p);
+          if (files && files.length > 0) return true;
         } catch {}
       }
     }
@@ -103,12 +120,13 @@ export class NanoJevEngine {
    * Retrieves the active local model path, or null if not yet downloaded.
    */
   public getActiveModelPath(): string | null {
+    if (!fsModule) return null;
     const paths = this.getPossibleModelPaths();
     for (const p of paths) {
-      if (fs.existsSync(p)) {
+      if (fsModule.existsSync(p)) {
         try {
-          const files = fs.readdirSync(p);
-          if (files.length > 0) return p;
+          const files = fsModule.readdirSync(p);
+          if (files && files.length > 0) return p;
         } catch {}
       }
     }

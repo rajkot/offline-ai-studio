@@ -6,8 +6,23 @@
  * or Google Chrome installations via playwright-core.
  */
 
-import fs from 'fs';
-import path from 'path';
+function getNodeFs(): any {
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    try {
+      return eval('require')('fs');
+    } catch {}
+  }
+  return null;
+}
+
+function getNodePath(): any {
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    try {
+      return eval('require')('path');
+    } catch {}
+  }
+  return null;
+}
 
 export interface BrowserConsoleMessage {
   type: 'log' | 'warn' | 'error' | 'info';
@@ -68,12 +83,15 @@ export class BrowserAgentEngine {
       }
     ];
 
-    for (const group of candidates) {
-      for (const p of group.paths) {
-        if (fs.existsSync(p)) {
-          this.preferredChannel = group.channel;
-          this.knownBinaryPath = p;
-          return { available: true, channel: group.channel, binaryPath: p };
+    const fs = getNodeFs();
+    if (fs) {
+      for (const group of candidates) {
+        for (const p of group.paths) {
+          if (fs.existsSync(p)) {
+            this.preferredChannel = group.channel;
+            this.knownBinaryPath = p;
+            return { available: true, channel: group.channel, binaryPath: p };
+          }
         }
       }
     }
