@@ -505,6 +505,33 @@ The storefront includes an automated benchmarking tool ([`components/BenchmarkPa
 
 ---
 
+### ⚡ NanoJev Parallel Decision Engine & Real-Time Pipeline Integration
+
+Integrated directly into Offline AI Studio's agent tool orchestration layer, **NanoJev** (by TianyuCodings & C-Tianyu) provides parallel decision-making capabilities using a lightweight **Qwen3-0.6B** backbone with dedicated decision heads:
+
+- **Source Code**: [TianyuCodings/NanoJev](https://github.com/TianyuCodings/NanoJev)
+- **Model Checkpoints**: [C-Tianyu/NanoJev on Hugging Face](https://huggingface.co/C-Tianyu/NanoJev)
+- **Engine Implementation**: [`lib/ai/nanoJevEngine.ts`](file:///e:/offilne%20ide/offline-ai-ide%20%281%29/lib/ai/nanoJevEngine.ts)
+- **Pipeline API Route**: [`app/api/pipeline/nanojev/route.ts`](file:///e:/offilne%20ide/offline-ai-ide%20%281%29/app/api/pipeline/nanojev/route.ts)
+- **Marketplace Entry**: `tianyucodings.nanojev-decision-engine` under `AI & Cloud` in [`lib/extensions/marketplaceCatalog.ts`](file:///e:/offilne%20ide/offline-ai-ide%20%281%29/lib/extensions/marketplaceCatalog.ts)
+- **Model Storefront Entry**: `C-Tianyu/NanoJev` in [`app/api/models/huggingface/route.ts`](file:///e:/offilne%20ide/offline-ai-ide%20%281%29/app/api/models/huggingface/route.ts)
+
+#### How NanoJev Operates in the IDE:
+1. **Zero-Token Latency Decisions**: Instead of slow autoregressive text generation, NanoJev evaluates candidate tool selections and state transitions in a single forward pass by reading logits directly (typical latency: `<2ms`).
+2. **Predictive HITL Safety**: Classifies actions into safe, medium, or high-risk categories before prompting human approval modals.
+3. **Automated Download & Setup**:
+   ```powershell
+   # Automated IDE Setup Script
+   npm run setup:nanojev
+
+   # Direct CLI commands
+   winget install git-xet
+   powershell -ExecutionPolicy ByPass -c "irm https://hf.co/cli/install.ps1 | iex"
+   hf download C-Tianyu/NanoJev --local-dir models/nanojev
+   ```
+
+---
+
 ## 🌐 Subsystem 2: Universal Online AI & Browser Auth
 
 When developers transition from air-gapped coding to connected environments, Offline AI Studio transforms into an omni-channel cloud AI powerhouse. The Online AI subsystem eliminates the manual hassle of managing divergent SDKs, API keys, endpoints, and billing dashboards.

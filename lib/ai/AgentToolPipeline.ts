@@ -7,6 +7,7 @@
  */
 
 import { mcpHub, McpTool, McpCallToolResult } from '../mcp/McpClient';
+import { nanoJevEngine } from './nanoJevEngine';
 
 // ---------------------------------------------------------------------------
 // Gemini OpenAPI & Function Declaration Types
@@ -605,6 +606,16 @@ export class AgentToolPipeline {
       thought: 'Processing direct architectural query.',
       text: `I am ready to perform tool operations across your files, Git repository, SQLite database, and network endpoints using the connected MCP Hub. Ask me to read, write, or search any assets!`
     };
+  }
+
+  /**
+   * Fast-path parallel candidate tool scoring via NanoJev forward pass.
+   */
+  public async rankCandidatesWithNanoJev(
+    userState: string,
+    toolCandidates: string[]
+  ) {
+    return await nanoJevEngine.evaluateDecisions(userState, toolCandidates);
   }
 }
 
