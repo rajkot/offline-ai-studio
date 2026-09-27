@@ -23,5 +23,13 @@ if exist "%ROOT_DIR%public\release\win-unpacked\OfflineAIStudio.exe" (
     exit /b 0
 )
 
+:: Auto-initialize NanoJev Decision Pipeline if models directory is missing
+if not exist "%ROOT_DIR%models\nanojev" (
+    if "%~2"=="--setup-models" (
+        call "%ROOT_DIR%scripts\install-nanojev.bat"
+    )
+)
+
 start "" "http://127.0.0.1:3000/?folder=%TARGET_DIR%"
 exit /b 0
+

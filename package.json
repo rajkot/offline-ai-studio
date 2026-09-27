@@ -12,6 +12,7 @@
     "build:mac": "node scripts/build-standalone-exe.js --mac",
     "start": "next start -p 3000",
     "postinstall": "node scripts/patch-next.js",
+    "setup:nanojev": "powershell -ExecutionPolicy Bypass -File scripts/install-nanojev.ps1",
     "lint": "eslint ."
   },
   "dependencies": {
