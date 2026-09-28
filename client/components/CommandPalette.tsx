@@ -97,6 +97,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'cline-open': 'Ctrl+Alt+C',
   'void-open': 'Ctrl+Alt+V',
   'agency-agents-open': 'Ctrl+Shift+Z',
+  'ruflo-swarm-open': 'Ctrl+Alt+F',
   'awesome-llm-apps-open': 'Ctrl+Alt+L',
   'jev-ultrafast-open': 'Ctrl+Alt+J',
   'open-code-review-open': 'Ctrl+Shift+R',
@@ -114,7 +115,7 @@ export const COMMAND_METADATA: {
   {
     id: 'ruflo-swarm-open',
     name: '🛸 Ruflo Multi-Agent Swarm: Orchestrator & Adaptive Vector Memory',
-    category: 'Swarm',
+    category: 'Navigation',
     description: 'Autonomous multi-agent swarms with HNSW vector memory, consensus gates, and task DAGs (Ctrl+Alt+F)',
     iconName: 'Users'
   },
