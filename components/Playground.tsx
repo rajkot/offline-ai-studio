@@ -88,6 +88,7 @@ import { OpenJarvisStudioModal } from '@/client/components/OpenJarvisStudioModal
 import { AwesomeLlmAppsStudioModal } from '@/client/components/AwesomeLlmAppsStudioModal';
 import { JevUltraFastStudioModal } from '@/client/components/JevUltraFastStudioModal';
 import { OpenCodeReviewStudioModal } from '@/client/components/OpenCodeReviewStudioModal';
+import { RufloSwarmStudioModal } from '@/client/components/RufloSwarmStudioModal';
 import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
@@ -434,6 +435,7 @@ export default function Playground({
   const [isAwesomeLlmAppsStudioOpen, setIsAwesomeLlmAppsStudioOpen] = useState(false);
   const [isJevStudioOpen, setIsJevStudioOpen] = useState(false);
   const [isOpenCodeReviewOpen, setIsOpenCodeReviewOpen] = useState(false);
+  const [isRufloSwarmOpen, setIsRufloSwarmOpen] = useState(false);
   const [selectedAgencyAgentForAutonomous, setSelectedAgencyAgentForAutonomous] = useState('engineering-senior-developer');
   const [selectedAgencyAgentForComposer, setSelectedAgencyAgentForComposer] = useState('engineering-senior-developer');
   const [composerInitialPrompt, setComposerInitialPrompt] = useState('');
@@ -790,6 +792,7 @@ export default function Playground({
     setIsAwesomeLlmAppsStudioOpen(false);
     setIsJevStudioOpen(false);
     setIsOpenCodeReviewOpen(false);
+    setIsRufloSwarmOpen(false);
     setIsAutonomousAgentOpen(false);
     setIsAgenticComposerOpen(false);
     setIsLanCollabOpen(false);
@@ -2497,6 +2500,11 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'open-code-review-open':
       case 'alibaba-code-review':
         setIsOpenCodeReviewOpen(true);
+        break;
+      case 'ruflo-swarm':
+      case 'ruflo-swarm-open':
+      case 'claude-flow':
+        setIsRufloSwarmOpen(true);
         break;
       case 'windows-context-menu':
         setIsContextMenuModalOpen(true);
@@ -4229,6 +4237,9 @@ export default function ExtractedVisionUI() {
                   </button>
                   <button onClick={() => { setIsOpenCodeReviewOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-rose-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><ShieldAlert size={12} className="text-rose-400" /> Alibaba Open Code Review...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+R</span>
+                  </button>
+                  <button onClick={() => { setIsRufloSwarmOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Users size={12} className="text-cyan-400" /> Ruflo Multi-Agent Swarm (HNSW)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+F</span>
                   </button>
                   <button onClick={() => { handleSelectFile('__SCAFFOLDER_HUB__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>Project Scaffolder...</span>
@@ -8793,6 +8804,18 @@ export default function ExtractedVisionUI() {
         }}
         onLaunchAutonomousFix={(findingsPrompt) => {
           setPrompt(findingsPrompt);
+          setIsAutonomousAgentOpen(true);
+        }}
+      />
+
+      {/* Ruflo Multi-Agent Swarm Studio Modal (Adaptive Vector Memory & Consensus Gates) */}
+      <RufloSwarmStudioModal
+        isOpen={isRufloSwarmOpen}
+        onClose={() => setIsRufloSwarmOpen(false)}
+        activeFilePath={selectedFile || 'components/Playground.tsx'}
+        onApplyCodeToEditor={(code) => handleUpdateFile(selectedFile || 'components/Playground.tsx', code)}
+        onLaunchAutonomousAgent={(agentPrompt) => {
+          setPrompt(agentPrompt);
           setIsAutonomousAgentOpen(true);
         }}
       />

@@ -101,6 +101,13 @@
         "open-code-review/bin/ocr.js"
       ],
       "env": {}
+    },
+    "ruflo-swarm": {
+      "command": "node",
+      "args": [
+        "ruflo/bin/ruflo.js"
+      ],
+      "env": {}
     }
   }
 }

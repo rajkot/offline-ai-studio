@@ -112,6 +112,13 @@ export const COMMAND_METADATA: {
   iconName: string;
 }[] = [
   {
+    id: 'ruflo-swarm-open',
+    name: '🛸 Ruflo Multi-Agent Swarm: Orchestrator & Adaptive Vector Memory',
+    category: 'Swarm',
+    description: 'Autonomous multi-agent swarms with HNSW vector memory, consensus gates, and task DAGs (Ctrl+Alt+F)',
+    iconName: 'Users'
+  },
+  {
     id: 'open-code-review-open',
     name: '🛡️ Alibaba Open Code Review: Static + LLM Line-Level Code Review',
     category: 'Security',

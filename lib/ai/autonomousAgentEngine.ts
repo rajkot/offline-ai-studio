@@ -22,6 +22,7 @@ import { openJarvisEngine } from '@/lib/ai/openJarvisEngine';
 import { awesomeLlmAppsEngine } from '@/lib/ai/awesomeLlmAppsEngine';
 import { jevUltraFastEngine } from '@/lib/ai/jevUltraFastEngine';
 import { openCodeReviewEngine } from '@/lib/ai/openCodeReviewEngine';
+import { rufloSwarmEngine } from '@/lib/ai/rufloSwarmEngine';
 
 export type AgentPermissionMode = 'full_autonomous' | 'guarded';
 
@@ -112,6 +113,7 @@ class AutonomousAgentEngine {
 
   private listeners: Set<(state: AutonomousAgentState) => void> = new Set();
   private abortController: AbortController | null = null;
+  public rufloSwarm = rufloSwarmEngine;
   private initialFilesSnapshot: Record<string, string> = {};
   private currentFiles: Record<string, string> = {};
   private onApplyFileUpdate?: (path: string, content: string) => Promise<void> | void;
