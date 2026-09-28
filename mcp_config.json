@@ -86,6 +86,14 @@
         "agency-agents/scripts/run.js"
       ],
       "env": {}
+    },
+    "jev-ultrafast": {
+      "command": "python",
+      "args": [
+        "-m",
+        "jev_ultrafast"
+      ],
+      "env": {}
     }
   }
 }

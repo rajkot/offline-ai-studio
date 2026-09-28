@@ -20,6 +20,7 @@ import { strandsToolsEngine } from '@/lib/tools/strandsToolsEngine';
 import { scientificSkillsEngine } from '@/lib/ai/scientificSkillsEngine';
 import { openJarvisEngine } from '@/lib/ai/openJarvisEngine';
 import { awesomeLlmAppsEngine } from '@/lib/ai/awesomeLlmAppsEngine';
+import { jevUltraFastEngine } from '@/lib/ai/jevUltraFastEngine';
 
 export type AgentPermissionMode = 'full_autonomous' | 'guarded';
 

@@ -86,6 +86,7 @@ import { StrandsToolsStudioModal } from '@/client/components/StrandsToolsStudioM
 import { ScientificSkillsStudioModal } from '@/client/components/ScientificSkillsStudioModal';
 import { OpenJarvisStudioModal } from '@/client/components/OpenJarvisStudioModal';
 import { AwesomeLlmAppsStudioModal } from '@/client/components/AwesomeLlmAppsStudioModal';
+import { JevUltraFastStudioModal } from '@/client/components/JevUltraFastStudioModal';
 import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
@@ -430,6 +431,7 @@ export default function Playground({
   const [isScientificSkillsStudioOpen, setIsScientificSkillsStudioOpen] = useState(false);
   const [isOpenJarvisStudioOpen, setIsOpenJarvisStudioOpen] = useState(false);
   const [isAwesomeLlmAppsStudioOpen, setIsAwesomeLlmAppsStudioOpen] = useState(false);
+  const [isJevStudioOpen, setIsJevStudioOpen] = useState(false);
   const [selectedAgencyAgentForAutonomous, setSelectedAgencyAgentForAutonomous] = useState('engineering-senior-developer');
   const [selectedAgencyAgentForComposer, setSelectedAgencyAgentForComposer] = useState('engineering-senior-developer');
   const [composerInitialPrompt, setComposerInitialPrompt] = useState('');
@@ -784,6 +786,7 @@ export default function Playground({
     setIsScientificSkillsStudioOpen(false);
     setIsOpenJarvisStudioOpen(false);
     setIsAwesomeLlmAppsStudioOpen(false);
+    setIsJevStudioOpen(false);
     setIsAutonomousAgentOpen(false);
     setIsAgenticComposerOpen(false);
     setIsLanCollabOpen(false);
@@ -2481,6 +2484,11 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'awesome-llm-apps-open':
       case 'awesome-llm-apps':
         setIsAwesomeLlmAppsStudioOpen(true);
+        break;
+      case 'jev-ultrafast':
+      case 'jev-ultrafast-open':
+      case 'jev-studio':
+        setIsJevStudioOpen(true);
         break;
       case 'windows-context-menu':
         setIsContextMenuModalOpen(true);
@@ -4207,6 +4215,9 @@ export default function ExtractedVisionUI() {
                   </button>
                   <button onClick={() => { setIsAwesomeLlmAppsStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-indigo-400" /> Awesome LLM Apps (60+)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+L</span>
+                  </button>
+                  <button onClick={() => { setIsJevStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Zap size={12} className="text-amber-400" /> JEV Ultra-Fast Browser Agent...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+J</span>
                   </button>
                   <button onClick={() => { handleSelectFile('__SCAFFOLDER_HUB__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>Project Scaffolder...</span>
@@ -8740,6 +8751,16 @@ export default function ExtractedVisionUI() {
           setConsoleOutput(prev => prev + '\n$ ' + cmd);
           setIsBottomPanelOpen(true);
           setActiveTab('terminal');
+        }}
+      />
+
+      {/* JEV Ultra-Fast DOM & Browser Agent Modal (Browser-Use × TypeSafe) */}
+      <JevUltraFastStudioModal
+        isOpen={isJevStudioOpen}
+        onClose={() => setIsJevStudioOpen(false)}
+        onExecuteInBrowser={(action) => {
+          setPrompt(`Execute JEV browser action: ${action.operation} on ${action.speculativeTarget}`);
+          setIsAutonomousAgentOpen(true);
         }}
       />
 

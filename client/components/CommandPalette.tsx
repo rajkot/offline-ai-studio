@@ -98,6 +98,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'void-open': 'Ctrl+Alt+V',
   'agency-agents-open': 'Ctrl+Shift+Z',
   'awesome-llm-apps-open': 'Ctrl+Alt+L',
+  'jev-ultrafast-open': 'Ctrl+Alt+J',
   'codebase-memory-open': 'Ctrl+Alt+M',
   'settings-open': 'Ctrl+,'
 };
@@ -109,6 +110,13 @@ export const COMMAND_METADATA: {
   description: string;
   iconName: string;
 }[] = [
+  {
+    id: 'jev-ultrafast-open',
+    name: '⚡ JEV Ultra-Fast Browser Agent: Single-Roundtrip Action Space',
+    category: 'Navigation',
+    description: 'Dynamic indexed action space, <10ms atomic DOM snapshots, and 95%+ token context savings (Ctrl+Alt+J)',
+    iconName: 'Zap'
+  },
   {
     id: 'awesome-llm-apps-open',
     name: '🚀 Awesome LLM Apps Storefront: 60+ Production Multi-Agent & RAG Apps',
