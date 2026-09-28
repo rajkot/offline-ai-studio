@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 import { checkOllamaHealth, generateOllamaText, listOllamaModels, selectBestOllamaModel } from '@/lib/ai/ollamaClient';
+import { agencyAgentsEngine } from '@/lib/ai/agencyAgentsEngine';
 
 interface FileChangePayload {
   filePath: string;
@@ -11,11 +12,21 @@ interface FileChangePayload {
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, files, intent = 'feature', model: requestedModel } = await req.json();
+    const { prompt, files, intent = 'feature', model: requestedModel, agencyAgentId } = await req.json();
 
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
+
+    const agent = agencyAgentId ? agencyAgentsEngine.getAgentById(agencyAgentId) : null;
+    const personaPrefix = agent 
+      ? `You are ${agent.name} (${agent.emoji}, ${agent.divisionLabel} Division).
+VIBE: ${agent.vibe}
+PHILOSOPHY & RULES:
+${agent.systemPrompt.slice(0, 1500)}
+
+You are operating as the Principal Multi-File Cascade Composer.`
+      : `You are a Principal Software Architect and Cascade / Composer Multi-File Agent.`;
 
     const apiKey = process.env.GEMINI_API_KEY;
     const workspaceFiles: Record<string, string> = files || {};
@@ -25,7 +36,7 @@ export async function POST(req: NextRequest) {
     if (apiKey) {
       try {
         const ai = new GoogleGenAI({ apiKey });
-        const systemPrompt = `You are a Principal Software Architect and Cascade / Composer Multi-File Agent.
+        const systemPrompt = `${personaPrefix}
 The user wants to implement a comprehensive feature across multiple files in a Next.js / TypeScript project.
 
 Available workspace files:
@@ -75,7 +86,7 @@ Return ONLY valid JSON. Do not include markdown code block ticks (\`\`\`json).`;
     try {
       const ollamaHealth = await checkOllamaHealth();
       if (ollamaHealth.online) {
-        const systemPrompt = `You are a Principal Software Architect and Cascade / Composer Multi-File Agent.
+        const systemPrompt = `${personaPrefix}
 The user wants to implement a comprehensive feature across multiple files.
 Available workspace files: ${fileListStr}
 Output valid JSON with schema:

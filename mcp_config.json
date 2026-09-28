@@ -41,6 +41,22 @@
         "@modelcontextprotocol/server-fetch"
       ],
       "env": {}
+    },
+    "codebase-memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "codebase-memory-mcp"
+      ],
+      "env": {}
+    },
+    "strands-tools": {
+      "command": "python",
+      "args": [
+        "-m",
+        "strands_tools"
+      ],
+      "env": {}
     }
   }
 }

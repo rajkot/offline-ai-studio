@@ -96,6 +96,9 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'uitars-open': 'Ctrl+Alt+A',
   'cline-open': 'Ctrl+Alt+C',
   'void-open': 'Ctrl+Alt+V',
+  'agency-agents-open': 'Ctrl+Shift+Z',
+  'awesome-llm-apps-open': 'Ctrl+Alt+L',
+  'codebase-memory-open': 'Ctrl+Alt+M',
   'settings-open': 'Ctrl+,'
 };
 
@@ -106,6 +109,48 @@ export const COMMAND_METADATA: {
   description: string;
   iconName: string;
 }[] = [
+  {
+    id: 'awesome-llm-apps-open',
+    name: '🚀 Awesome LLM Apps Storefront: 60+ Production Multi-Agent & RAG Apps',
+    category: 'Navigation',
+    description: 'Browse, preview, scaffold and run 60+ multi-agent teams, Agentic RAG, MCP agents and voice AI apps (Ctrl+Alt+L)',
+    iconName: 'Sparkles'
+  },
+  {
+    id: 'codebase-memory-open',
+    name: '🧠 Codebase Memory MCP: AST Knowledge Graph & Call Tracer',
+    category: 'Navigation',
+    description: '162-Language AST Knowledge Graph, sub-ms call-chain traversal, and 99% token savings (Ctrl+Alt+M)',
+    iconName: 'Brain'
+  },
+  {
+    id: 'agency-agents-open',
+    name: '🤖 Agency Agents Studio: 302 Specialized Sovereign Personas',
+    category: 'Navigation',
+    description: 'Inspect, filter, test, and dispatch specialized agent personas across 18 divisions (Ctrl+Shift+Z)',
+    iconName: 'Sparkles'
+  },
+  {
+    id: 'strands-tools-open',
+    name: '🔧 Strands Agents Tools Studio: 18+ Execution & MCP Tools',
+    category: 'Navigation',
+    description: 'File editor, shell execution, REPL sandbox, memory, web automation & MCP tool harness (Ctrl+Shift+U)',
+    iconName: 'Wrench'
+  },
+  {
+    id: 'scientific-skills-open',
+    name: '🔬 Scientific Agent Skills Studio: 165+ Research Capabilities & DBs',
+    category: 'Navigation',
+    description: 'Bioinformatics, cheminformatics, computational physics, statistics, ML research & literature synthesis (Ctrl+Shift+K)',
+    iconName: 'Microscope'
+  },
+  {
+    id: 'openjarvis-studio-open',
+    name: '🧠 OpenJarvis Studio: Stanford 5-Pillar Agent Harness & Learning Engine',
+    category: 'Navigation',
+    description: 'Intelligence-per-Watt low FLOP routing, morning briefing, CodeAct copilot & trace memory (Ctrl+Shift+J)',
+    iconName: 'Brain'
+  },
   {
     id: 'format-document',
     name: '✨ Format Document (Prettier)',

@@ -14,6 +14,12 @@
 import { generateOllamaText, checkOllamaHealth, listOllamaModels, selectBestOllamaModel } from './ollamaClient';
 import { generateWithOnlineAi } from './onlineAiEngine';
 import { codeKnowledgeGraphEngine } from '@/lib/ast/codeKnowledgeGraphEngine';
+import { agencyAgentsEngine } from './agencyAgentsEngine';
+import { codebaseMemoryMcpEngine } from '@/lib/mcp/codebaseMemoryMcpEngine';
+import { strandsToolsEngine } from '@/lib/tools/strandsToolsEngine';
+import { scientificSkillsEngine } from '@/lib/ai/scientificSkillsEngine';
+import { openJarvisEngine } from '@/lib/ai/openJarvisEngine';
+import { awesomeLlmAppsEngine } from '@/lib/ai/awesomeLlmAppsEngine';
 
 export type AgentPermissionMode = 'full_autonomous' | 'guarded';
 
@@ -68,6 +74,8 @@ export interface AutonomousAgentState {
   phase: AgentLoopPhase;
   permissionMode: AgentPermissionMode;
   prompt: string;
+  agencyAgentId?: string;
+  agencyAgentName?: string;
   testCommand: string;
   activeFile: string;
   iteration: number;
@@ -86,6 +94,8 @@ class AutonomousAgentEngine {
     phase: 'idle',
     permissionMode: 'guarded',
     prompt: '',
+    agencyAgentId: 'engineering-senior-developer',
+    agencyAgentName: 'Senior Developer',
     testCommand: 'npm test',
     activeFile: '',
     iteration: 0,
@@ -390,6 +400,7 @@ class AutonomousAgentEngine {
     allFiles: Record<string, string>;
     permissionMode?: AgentPermissionMode;
     maxIterations?: number;
+    agencyAgentId?: string;
     onApplyFileUpdate?: (path: string, content: string) => Promise<void> | void;
   }) {
     if (this.state.isActive) {
@@ -401,11 +412,15 @@ class AutonomousAgentEngine {
     this.currentFiles = { ...params.allFiles };
     this.onApplyFileUpdate = params.onApplyFileUpdate;
 
+    const selectedAgent = params.agencyAgentId ? agencyAgentsEngine.getAgentById(params.agencyAgentId) : null;
+
     this.state = {
       isActive: true,
       phase: 'planning',
       permissionMode: params.permissionMode || this.state.permissionMode,
       prompt: params.prompt,
+      agencyAgentId: selectedAgent?.id || params.agencyAgentId || 'engineering-senior-developer',
+      agencyAgentName: selectedAgent?.name || 'Senior Developer',
       testCommand: params.testCommand || 'npm test',
       activeFile: params.activeFile,
       iteration: 1,
@@ -420,7 +435,7 @@ class AutonomousAgentEngine {
 
     // Save baseline checkpoint 0
     this.saveCheckpoint('Initial Baseline Pre-Agent State');
-    this.addLog('planning', `Initiated autonomous session. Goal: "${params.prompt}"`, 'plan');
+    this.addLog('planning', `Initiated autonomous session with Agent "${this.state.agencyAgentName}". Goal: "${params.prompt}"`, 'plan');
     this.notify();
 
     try {
@@ -440,18 +455,23 @@ class AutonomousAgentEngine {
    * Prompt -> Plan -> Write Code -> Run Terminal Command -> Catch Errors -> Auto-Read Failing File -> Apply Patch -> Re-test
    */
   private async runLoop() {
+    const activeAgencyAgent = this.state.agencyAgentId ? agencyAgentsEngine.getAgentById(this.state.agencyAgentId) : null;
+    const personaHeader = activeAgencyAgent 
+      ? `=== ACTIVE AGENCY AGENT: ${activeAgencyAgent.name.toUpperCase()} (${activeAgencyAgent.emoji}) ===\nDIVISION: ${activeAgencyAgent.divisionLabel}\nVIBE: ${activeAgencyAgent.vibe}\nRULES: ${activeAgencyAgent.systemPrompt.slice(0, 1200)}\n=========================================\n`
+      : 'You are Devin/Claude Code, an autonomous AI software engineer.\n';
+
     while (this.state.isActive && this.state.iteration <= this.state.maxIterations) {
       if (this.abortController?.signal.aborted) return;
 
       const iter = this.state.iteration;
-      this.addLog('planning', `--- Iteration ${iter}/${this.state.maxIterations} Started ---`, 'info');
+      this.addLog('planning', `--- Iteration ${iter}/${this.state.maxIterations} Started [Persona: ${this.state.agencyAgentName || 'Autonomous Engineer'}] ---`, 'info');
 
       // 1. Planning Phase
       this.state.phase = 'planning';
       this.notify();
 
       const activeContent = this.currentFiles[this.state.activeFile] || '';
-      const planPrompt = `You are Devin/Claude Code, an autonomous AI software engineer.
+      const planPrompt = `${personaHeader}
 Goal: "${this.state.prompt}"
 Active File: "${this.state.activeFile}"
 Test Command: "${this.state.testCommand}"
@@ -462,9 +482,9 @@ Current file preview:
 ${activeContent.slice(0, 1500)}
 \`\`\`
 
-Provide a high-level concise 2-sentence plan of the code modifications needed to solve the goal and pass the test.`;
+Provide a high-level concise 2-sentence plan of the code modifications needed to solve the goal and pass the test adhering strictly to your agency persona discipline.`;
 
-      const planExplanation = await this.callAi(planPrompt, 'You are an autonomous coding agent planner.');
+      const planExplanation = await this.callAi(planPrompt, `You are ${this.state.agencyAgentName || 'Autonomous Engineer'}, an elite AI agent.`);
       this.addLog('planning', planExplanation || 'Formulating code patch based on requirements and file context.', 'plan');
 
       // 2. Coding / Patch Generation Phase
@@ -472,17 +492,23 @@ Provide a high-level concise 2-sentence plan of the code modifications needed to
       this.notify();
 
       let graphContext = '';
+      let mcpMemoryContext = '';
       try {
         codeKnowledgeGraphEngine.indexWorkspace(this.currentFiles);
         graphContext = codeKnowledgeGraphEngine.getGraphRAGContext(this.state.activeFile);
+        
+        codebaseMemoryMcpEngine.indexWorkspace(this.currentFiles);
+        mcpMemoryContext = codebaseMemoryMcpEngine.getFileContext(this.state.activeFile);
       } catch (e) {
         console.warn('[AutonomousAgent] Graph context indexing skipped:', e);
       }
 
-      const codingPrompt = `You are Devin/Claude Code. Write the corrected, complete implementation for file "${this.state.activeFile}".
+      const codingPrompt = `${personaHeader}
+Write the corrected, complete implementation for file "${this.state.activeFile}".
 Goal: "${this.state.prompt}"
 Previous Errors (if any): "${this.state.errorSummary || 'Initial implementation'}"
 
+${mcpMemoryContext ? `\nCodebase Memory MCP Contracts (99% Token-Reduced AST Context):\n${mcpMemoryContext}\n` : ''}
 ${graphContext ? `\nCode Knowledge Graph (Callers, Imported Interfaces & Contracts):\n${graphContext}\n` : ''}
 Active File Code:
 \`\`\`
@@ -490,7 +516,7 @@ ${activeContent}
 \`\`\`
 
 OUTPUT FORMAT:
-Return ONLY the raw source code of the file. Do not wrap in conversational chit-chat. Provide production-ready syntax.`;
+Return ONLY the raw source code of the file. Do not wrap in conversational chit-chat. Provide production-ready syntax conforming to your agent standards.`;
 
       this.addLog('coding', `Generating code patch for ${this.state.activeFile}...`, 'code');
       const patchCodeRaw = await this.callAi(codingPrompt);

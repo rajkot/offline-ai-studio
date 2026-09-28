@@ -36,6 +36,7 @@ interface AutonomousAgentModalProps {
   onClose: () => void;
   activeFile: string;
   allFiles: Record<string, string>;
+  initialAgencyAgentId?: string;
   onApplyFileUpdate?: (path: string, content: string) => Promise<void> | void;
 }
 
@@ -44,14 +45,40 @@ export default function AutonomousAgentModal({
   onClose,
   activeFile,
   allFiles,
+  initialAgencyAgentId,
   onApplyFileUpdate
 }: AutonomousAgentModalProps) {
   const [state, setState] = useState<AutonomousAgentState>(autonomousAgentEngine.getState());
   const [prompt, setPrompt] = useState('');
   const [testCommand, setTestCommand] = useState('npm test');
   const [selectedFile, setSelectedFile] = useState(activeFile);
+  const [selectedAgentId, setSelectedAgentId] = useState<string>(initialAgencyAgentId || state.agencyAgentId || 'engineering-senior-developer');
+  const [availableAgents, setAvailableAgents] = useState<Array<{ id: string; name: string; emoji: string; division: string; vibe: string }>>([]);
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/agency-agents')
+      .then(res => res.json())
+      .then(data => {
+        if (data.agents) {
+          setAvailableAgents(data.agents.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            emoji: a.emoji,
+            division: a.divisionLabel || a.division,
+            vibe: a.vibe || a.description
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (initialAgencyAgentId) {
+      setSelectedAgentId(initialAgencyAgentId);
+    }
+  }, [initialAgencyAgentId]);
 
   useEffect(() => {
     setSelectedFile(activeFile);
@@ -81,6 +108,7 @@ export default function AutonomousAgentModal({
       allFiles,
       permissionMode: state.permissionMode,
       maxIterations: 6,
+      agencyAgentId: selectedAgentId,
       onApplyFileUpdate
     });
   };
@@ -240,6 +268,39 @@ export default function AutonomousAgentModal({
         <div className="flex-1 flex overflow-hidden">
           {/* Left Panel: Configuration & Checkpoints */}
           <div className="w-80 border-r border-slate-800 p-4 flex flex-col gap-4 bg-slate-950/40">
+            {/* Agency Agent Persona Selector */}
+            <div>
+              <label className="text-xs font-bold text-slate-300 flex items-center justify-between mb-1.5">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Agency Agent Persona</span>
+                </span>
+                <span className="text-[10px] text-indigo-400 font-mono">
+                  {availableAgents.length} available
+                </span>
+              </label>
+              <select
+                value={selectedAgentId}
+                onChange={(e) => setSelectedAgentId(e.target.value)}
+                disabled={state.isActive}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-indigo-200 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+              >
+                {availableAgents.map((agent) => (
+                  <option key={agent.id} value={agent.id} className="bg-slate-950 text-white">
+                    {agent.emoji} {agent.name} ({agent.division})
+                  </option>
+                ))}
+              </select>
+              {(() => {
+                const current = availableAgents.find(a => a.id === selectedAgentId);
+                return current ? (
+                  <p className="text-[10px] text-slate-400 mt-1 line-clamp-1 italic">
+                    {current.vibe}
+                  </p>
+                ) : null;
+              })()}
+            </div>
+
             {/* Task Prompt Input */}
             <div>
               <label className="text-xs font-bold text-slate-300 block mb-1.5">

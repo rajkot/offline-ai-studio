@@ -1,0 +1,964 @@
+"""
+Tests for the use_aws tool using the Agent interface.
+"""
+
+from io import BytesIO
+from unittest.mock import MagicMock, patch
+
+import pytest
+from botocore.config import Config as BotocoreConfig
+from strands import Agent
+
+from strands_tools import use_aws
+from strands_tools.utils import data_util, user_input
+
+
+@pytest.fixture
+def agent():
+    """Create an agent with the use_aws tool loaded."""
+    return Agent(tools=[use_aws])
+
+
+def extract_result_text(result):
+    """Extract the result text from the agent response."""
+    if isinstance(result, dict) and "content" in result and isinstance(result["content"], list):
+        return result["content"][0]["text"]
+    return str(result)
+
+
+@pytest.fixture
+def mock_boto3_client():
+    """Create a mock boto3 client for testing."""
+    with patch("strands_tools.use_aws.get_boto3_client") as mock_get_client:
+        # Create a mock client with a mock operation
+        mock_client = MagicMock()
+        mock_operation = MagicMock()
+        mock_operation.return_value = {
+            "ResponseMetadata": {"RequestId": "test-request-id"},
+            "Items": [{"id": "item1"}],
+        }
+        mock_client.describe_instances = mock_operation
+        mock_client.list_buckets = MagicMock(return_value={"Buckets": [{"Name": "test-bucket"}]})
+
+        # Configure the mock to return our mock client
+        mock_get_client.return_value = mock_client
+        yield mock_client
+
+
+@pytest.fixture
+def mock_available_services():
+    """Create a mock for available AWS services."""
+    with patch("strands_tools.use_aws.get_available_services") as mock_services:
+        mock_services.return_value = ["ec2", "s3", "lambda", "dynamodb"]
+        yield mock_services
+
+
+@pytest.fixture
+def mock_available_operations():
+    """Create a mock for available operations."""
+    with patch("strands_tools.use_aws.get_available_operations") as mock_operations:
+        mock_operations.return_value = [
+            "describe_instances",
+            "list_buckets",
+            "create_bucket",
+        ]
+        yield mock_operations
+
+
+@pytest.fixture
+def mock_boto3_session():
+    """Create a mock boto3 session."""
+    with patch("boto3.Session") as mock_session_class:
+        mock_session = MagicMock()
+        mock_client = MagicMock()
+        mock_session.client.return_value = mock_client
+        mock_session_class.return_value = mock_session
+        yield mock_session
+
+
+def test_use_aws_direct_success(mock_boto3_client, mock_available_services, mock_available_operations):
+    """Test direct invocation of the use_aws tool with a successful operation."""
+    # Create a tool use dictionary similar to how the agent would call it
+    tool_use = {
+        "toolUseId": "test-tool-use-id",
+        "input": {
+            "service_name": "ec2",
+            "operation_name": "describe_instances",
+            "parameters": {"InstanceIds": ["i-123456789"]},
+            "region": "us-west-2",
+            "label": "Test EC2 Instance Description",
+        },
+    }
+
+    # Call the use_aws function directly
+    result = use_aws.use_aws(tool=tool_use)
+
+    # Verify the result has the expected structure
+    assert result["toolUseId"] == "test-tool-use-id"
+    assert result["status"] == "success"
+    assert "Success:" in result["content"][0]["text"]
+    assert "test-request-id" in result["content"][0]["text"]
+
+
+def test_use_aws_without_parameters(mock_boto3_client, mock_available_services, mock_available_operations):
+    """Test use_aws when parameters is not provided in the input."""
+    tool_use = {
+        "toolUseId": "test-tool-use-id",
+        "input": {
+            "service_name": "s3",
+            "operation_name": "list_buckets",
+            "region": "us-west-2",
+            "label": "List S3 Buckets",
+        },
+    }
+
+    result = use_aws.use_aws(tool=tool_use)
+
+    assert result["toolUseId"] == "test-tool-use-id"
+    assert result["status"] == "success"
+
+
+def test_use_aws_invalid_service(mock_available_services, mock_available_operations):
+    """Test use_aws with an invalid service name."""
+    tool_use = {
+        "toolUseId": "test-tool-use-id",
+        "input": {
+            "service_name": "invalid_service",
+            "operation_name": "describe_instances",
+            "parameters": {},
+            "region": "us-west-2",
+            "label": "Invalid Service Test",
+        },
+    }
+
+    result = use_aws.use_aws(tool=tool_use)
+
+    assert result["status"] == "error"
+    assert "Invalid AWS service: invalid_service" in result["content"][0]["text"]
+
+
+def test_use_aws_invalid_operation(mock_available_services, mock_available_operations):
+    """Test use_aws with an invalid operation name."""
+    tool_use = {
+        "toolUseId": "test-tool-use-id",
+        "input": {
+            "service_name": "ec2",
+            "operation_name": "invalid_operation",
+            "parameters": {},
+            "region": "us-west-2",
+            "label": "Invalid Operation Test",
+        },
+    }
+
+    result = use_aws.use_aws(tool=tool_use)
+
+    assert result["status"] == "error"
+    assert "Invalid AWS operation: invalid_operation" in result["content"][0]["text"]
+
+
+def test_use_aws_validation_error(mock_boto3_client, mock_available_services, mock_available_operations):
+    """Test use_aws with a parameter validation error."""
+    # Configure the mock to raise a validation error
+    from botocore.exceptions import ParamValidationError
+
+    mock_boto3_client.describe_instances.side_effect = ParamValidationError(report="Invalid parameter format")
+
+    # Mock the schema generation function
+    with patch("strands_tools.use_aws.generate_input_schema") as mock_schema:
+        mock_schema.return_value = {
+            "type": "object",
+            "properties": {"InstanceIds": {"type": "array"}},
+        }
+
+        tool_use = {
+            "toolUseId": "test-tool-use-id",
+            "input": {
+                "service_name": "ec2",
+                "operation_name": "describe_instances",
+                "parameters": {"InstanceIds": "not-an-array"},
+                "region": "us-west-2",
+                "label": "Validation Error Test",
+            },
+        }
+
+        result = use_aws.use_aws(tool=tool_use)
+
+        assert result["status"] == "error"
+        assert "Validation error:" in result["content"][0]["text"]
+        assert "Expected input schema" in result["content"][1]["text"]
+
+
+def test_use_aws_exception_handling(mock_boto3_client, mock_available_services, mock_available_operations):
+    """Test use_aws with a generic exception."""
+    # Configure the mock to raise an exception
+    mock_boto3_client.describe_instances.side_effect = Exception("Test exception")
+
+    tool_use = {
+        "toolUseId": "test-tool-use-id",
+        "input": {
+            "service_name": "ec2",
+            "operation_name": "describe_instances",
+            "parameters": {},
+            "region": "us-west-2",
+            "label": "Exception Test",
+        },
+    }
+
+    result = use_aws.use_aws(tool=tool_use)
+
+    assert result["status"] == "error"
+    assert "AWS call threw exception: Test exception" in result["content"][0]["text"]
+
+
+def test_use_aws_streaming_body_handling(mock_boto3_client, mock_available_services, mock_available_operations):
+    """Test use_aws with a streaming body response."""
+    from io import BytesIO
+
+    from botocore.response import StreamingBody
+
+    # Create a mock streaming body
+    mock_stream = BytesIO(b'{"Result": "streaming data"}')
+    mock_streaming_body = StreamingBody(mock_stream, len(mock_stream.getvalue()))
+
+    # Configure the mock to return a response with a streaming body
+    mock_boto3_client.describe_instances.return_value = {
+        "ResponseMetadata": {"RequestId": "test-request-id"},
+        "StreamData": mock_streaming_body,
+    }
+
+    tool_use = {
+        "toolUseId": "test-tool-use-id",
+        "input": {
+            "service_name": "ec2",
+            "operation_name": "describe_instances",
+            "parameters": {},
+            "region": "us-west-2",
+            "label": "Streaming Body Test",
+        },
+    }
+
+    result = use_aws.use_aws(tool=tool_use)
+
+    assert result["status"] == "success"
+    assert "Success:" in result["content"][0]["text"]
+    assert "streaming data" in result["content"][0]["text"]
+
+
+@patch("strands_tools.use_aws.get_user_input")
+def test_use_aws_mutative_operation_confirm(
+    mock_user_input,
+    mock_boto3_client,
+    mock_available_services,
+    mock_available_operations,
+):
+    """Test use_aws with a mutative operation that requires confirmation."""
+    # Mock the user input to confirm the operation
+    mock_user_input.return_value = "y"
+
+    # Configure environment variable
+    with patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}):
+        tool_use = {
+            "toolUseId": "test-tool-use-id",
+            "input": {
+                "service_name": "s3",
+                "operation_name": "create_bucket",
+                "parameters": {"Bucket": "test-bucket"},
+                "region": "us-west-2",
+                "label": "Mutative Operation Test",
+            },
+        }
+
+        result = use_aws.use_aws(tool=tool_use)
+
+        # Verify user was prompted for confirmation
+        mock_user_input.assert_called_once()
+        assert result["status"] == "success"
+
+
+@pytest.mark.parametrize(
+    "service_name, operation_name",
+    [
+        ("ses", "send_email"),
+        ("sqs", "send_message"),
+        ("lambda", "invoke"),
+        ("ec2", "run_instances"),
+        ("rds-data", "execute_statement"),
+        ("sns", "publish"),
+    ],
+)
+@patch("strands_tools.use_aws.get_available_operations")
+@patch("strands_tools.use_aws.get_user_input")
+def test_use_aws_side_effecting_action_requires_consent(
+    mock_user_input,
+    mock_get_available_operations,
+    mock_boto3_client,
+    mock_available_services,
+    service_name,
+    operation_name,
+):
+    """Side-effecting action classes (send/invoke/run/execute/publish) require confirmation."""
+    mock_user_input.return_value = "y"
+    mock_get_available_operations.return_value = [operation_name]
+
+    with patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}):
+        tool_use = {
+            "toolUseId": "test-tool-use-id",
+            "input": {
+                "service_name": service_name,
+                "operation_name": operation_name,
+                "parameters": {},
+                "region": "us-west-2",
+                "label": "Side-effecting Operation Test",
+            },
+        }
+
+        use_aws.use_aws(tool=tool_use)
+
+        # Verify the consent gate prompted the user before executing.
+        mock_user_input.assert_called_once()
+
+
+@patch("strands_tools.use_aws.get_user_input")
+def test_use_aws_mutative_operation_cancel(
+    mock_user_input,
+    mock_boto3_client,
+    mock_available_services,
+    mock_available_operations,
+):
+    """Test use_aws with a mutative operation that's canceled by the user."""
+    # Mock the user input to cancel the operation
+    mock_user_input.return_value = "n"
+
+    # Configure environment variable
+    with patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}):
+        tool_use = {
+            "toolUseId": "test-tool-use-id",
+            "input": {
+                "service_name": "s3",
+                "operation_name": "create_bucket",
+                "parameters": {"Bucket": "test-bucket"},
+                "region": "us-west-2",
+                "label": "Mutative Operation Cancel Test",
+            },
+        }
+
+        result = use_aws.use_aws(tool=tool_use)
+
+        # Verify user was prompted for confirmation
+        mock_user_input.assert_called_once()
+        assert result["status"] == "error"
+        assert "Operation canceled by user" in result["content"][0]["text"]
+
+
+def test_use_aws_with_profile(mock_boto3_client, mock_available_services, mock_available_operations):
+    """Test use_aws with a specified AWS profile."""
+    tool_use = {
+        "toolUseId": "test-tool-use-id",
+        "input": {
+            "service_name": "ec2",
+            "operation_name": "describe_instances",
+            "parameters": {},
+            "region": "us-west-2",
+            "label": "Profile Test",
+            "profile_name": "test-profile",
+        },
+    }
+
+    with patch("strands_tools.use_aws.get_boto3_client") as mock_get_client:
+        mock_get_client.return_value = mock_boto3_client
+        result = use_aws.use_aws(tool=tool_use)
+
+        # Verify profile was passed to the client
+        mock_get_client.assert_called_once_with("ec2", "us-west-2", "test-profile")
+        assert result["status"] == "success"
+
+
+def test_get_available_operations():
+    """Test get_available_operations with a valid service."""
+    with patch("boto3.client") as mock_client_func:
+        # Create a mock client
+        mock_client = MagicMock()
+
+        # Add methods directly to the mock
+        mock_client.describe_instances = MagicMock()
+        mock_client.list_buckets = MagicMock()
+        mock_client._private_method = MagicMock()
+
+        mock_client_func.return_value = mock_client
+
+        # When dir() is called, only the non-private methods should be included
+        result = use_aws.get_available_operations("ec2")
+
+        # Check results
+        assert "_private_method" not in result
+        assert "describe_instances" in result
+        assert "list_buckets" in result
+
+
+def test_get_boto3_client():
+    """Test that get_boto3_client calls boto3.Session and session.client correctly."""
+    with patch("boto3.Session") as mock_session_class:
+        mock_session = MagicMock()
+        mock_session_class.return_value = mock_session
+
+        use_aws.get_boto3_client("s3", "us-east-1", "test-profile")
+
+        mock_session_class.assert_called_once_with(profile_name="test-profile")
+
+        # Verify the client was called with the correct arguments
+        mock_session.client.assert_called_once()
+        args, kwargs = mock_session.client.call_args
+
+        assert kwargs["service_name"] == "s3"
+        assert kwargs["region_name"] == "us-east-1"
+        assert "config" in kwargs
+        config = kwargs["config"]
+        assert isinstance(config, BotocoreConfig)
+        assert config.user_agent_extra == "strands-agents-use-aws"
+
+
+def test_handle_streaming_body_non_json():
+    """Test handle_streaming_body with non-JSON content."""
+    from botocore.response import StreamingBody
+
+    # Create a mock streaming body with non-JSON content
+    mock_stream = BytesIO(b"This is not JSON content")
+    mock_streaming_body = StreamingBody(mock_stream, len(mock_stream.getvalue()))
+
+    response = {"StreamData": mock_streaming_body}
+    result = use_aws.handle_streaming_body(response)
+
+    assert result["StreamData"] == "This is not JSON content"
+
+
+def test_get_available_services():
+    """Test get_available_services calls boto3.Session().get_available_services()."""
+    with patch("boto3.Session") as mock_session_class:
+        mock_session = MagicMock()
+        mock_session.get_available_services.return_value = ["s3", "ec2", "lambda"]
+        mock_session_class.return_value = mock_session
+
+        result = use_aws.get_available_services()
+
+        mock_session.get_available_services.assert_called_once()
+        assert result == ["s3", "ec2", "lambda"]
+
+
+def test_get_available_operations_exception():
+    """Test get_available_operations when boto3.client raises an exception."""
+    with patch("boto3.client") as mock_client_func:
+        mock_client_func.side_effect = Exception("Test exception")
+
+        result = use_aws.get_available_operations("invalid-service")
+
+        assert result == []
+
+
+def test_use_aws_schema_generation_exception():
+    """Test use_aws when schema generation raises an exception."""
+    # Mock the dependencies
+    mock_available_services = ["ec2"]
+    mock_available_operations = ["describe_instances"]
+
+    with (
+        patch(
+            "strands_tools.use_aws.get_available_services",
+            return_value=mock_available_services,
+        ),
+        patch(
+            "strands_tools.use_aws.get_available_operations",
+            return_value=mock_available_operations,
+        ),
+        patch("strands_tools.use_aws.get_boto3_client") as mock_get_client,
+        patch("strands_tools.use_aws.generate_input_schema") as mock_generate_schema,
+    ):
+        # Configure mocks
+        mock_client = MagicMock()
+        mock_describe = MagicMock()
+        mock_describe.side_effect = use_aws.ParamValidationError(report="Invalid parameter")
+        mock_client.describe_instances = mock_describe
+        mock_get_client.return_value = mock_client
+
+        # Make generate_input_schema raise an exception
+        mock_generate_schema.side_effect = Exception("Schema generation failed")
+
+        # Create a tool use dictionary
+        tool_use = {
+            "toolUseId": "test-tool-use-id",
+            "input": {
+                "service_name": "ec2",
+                "operation_name": "describe_instances",
+                "parameters": {"InvalidParam": "value"},
+                "region": "us-west-2",
+                "label": "Schema Exception Test",
+            },
+        }
+
+        result = use_aws.use_aws(tool=tool_use)
+
+        assert result["status"] == "error"
+        assert "Validation error:" in result["content"][0]["text"]
+        # Confirm it doesn't include the schema since generation failed
+        assert len(result["content"]) == 1
+
+
+def test_convert_datetime_to_str():
+    """Test convert_datetime_to_str with various data types."""
+    from datetime import datetime, timezone
+
+    # Test with a datetime object
+    dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    assert data_util.convert_datetime_to_str(dt) == "2023-01-01 12:00:00+0000"
+
+    # Test with a dictionary containing datetime
+    data = {"date": dt, "name": "test"}
+    result = data_util.convert_datetime_to_str(data)
+    assert result["date"] == "2023-01-01 12:00:00+0000"
+    assert result["name"] == "test"
+
+    # Test with a list containing datetime
+    data = [dt, "test", 123]
+    result = data_util.convert_datetime_to_str(data)
+    assert result[0] == "2023-01-01 12:00:00+0000"
+    assert result[1] == "test"
+    assert result[2] == 123
+
+    # Test with a regular value
+    assert data_util.convert_datetime_to_str("test") == "test"
+    assert data_util.convert_datetime_to_str(123) == 123
+
+
+def test_to_snake_case():
+    """Test to_snake_case function."""
+    assert data_util.to_snake_case("HelloWorld") == "hello_world"
+    assert data_util.to_snake_case("helloWorld") == "hello_world"
+    assert data_util.to_snake_case("hello") == "hello"
+    assert data_util.to_snake_case("hello_world") == "hello_world"
+
+
+@patch("asyncio.get_event_loop")
+@patch("asyncio.new_event_loop")
+@patch("asyncio.set_event_loop")
+def test_get_user_input_new_loop(mock_set_event_loop, mock_new_event_loop, mock_get_event_loop):
+    """Test get_user_input when there's no existing event loop."""
+    # Setup mocks
+    mock_get_event_loop.side_effect = RuntimeError("No running event loop")
+    mock_loop = MagicMock()
+    mock_new_event_loop.return_value = mock_loop
+    mock_loop.run_until_complete.return_value = "y"
+
+    # Call function
+    with patch("strands_tools.utils.user_input.get_user_input_async") as mock_get_async:
+        mock_get_async.return_value = "y"
+        result = user_input.get_user_input("Prompt", "n")
+
+    # Verify a new loop was created and set
+    mock_new_event_loop.assert_called_once()
+    mock_set_event_loop.assert_called_once_with(mock_loop)
+    assert result == "y"
+
+
+# --- Credential redaction and sensitive operation consent gate tests ---
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("SecretAccessKey", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"),
+        ("SessionToken", "FwoGZXIvYXdzEBYaDHmKHt..."),
+        ("SecretString", '{"password": "hunter2"}'),
+        ("SecretBinary", b"\x00\x01\x02"),
+        ("authorizationToken", "QVdTOnN1cGVyc2VjcmV0"),
+        ("Password", "super-secret"),
+        ("AccessToken", "eyJraWQiOi..."),
+        ("RefreshToken", "eyJjdHkiOi..."),
+        ("IdToken", "eyJraWQiOi..."),
+        ("ApiKey", "abc123apikey"),
+        ("ClientSecret", "client-secret-value"),
+        ("KeyMaterial", "-----BEGIN RSA PRIVATE KEY-----"),
+        ("PrivateKey", "-----BEGIN PRIVATE KEY-----"),
+        ("SharedSecret", "shared-secret-123"),
+        ("DbPassword", "db-pass-456"),
+        ("MasterUserPassword", "master-pass-789"),
+    ],
+)
+def test_redact_sensitive_values_key_redacted(key, value):
+    """Each sensitive key should be redacted regardless of nesting depth."""
+    response = {key: value, "SafeField": "visible"}
+    result = use_aws.redact_sensitive_values(response)
+
+    assert result == {key: "**REDACTED**", "SafeField": "visible"}
+
+
+def test_redact_sensitive_values_nested_dict():
+    """Sensitive keys nested inside dicts are redacted."""
+    response = {
+        "Credentials": {
+            "AccessKeyId": "EXAMPLE_KEY_ID_12345678",
+            "SecretAccessKey": "secret-key-value",
+            "SessionToken": "session-token-value",
+            "Expiration": "2026-05-13T18:00:00Z",
+        }
+    }
+    result = use_aws.redact_sensitive_values(response)
+
+    assert result == {
+        "Credentials": {
+            "AccessKeyId": "EXAMPLE_KEY_ID_12345678",
+            "SecretAccessKey": "**REDACTED**",
+            "SessionToken": "**REDACTED**",
+            "Expiration": "2026-05-13T18:00:00Z",
+        }
+    }
+
+
+def test_redact_sensitive_values_nested_list():
+    """Sensitive keys inside list elements are redacted."""
+    response = {
+        "authorizationData": [
+            {"authorizationToken": "token-1", "proxyEndpoint": "https://endpoint-1"},
+            {"authorizationToken": "token-2", "proxyEndpoint": "https://endpoint-2"},
+        ]
+    }
+    result = use_aws.redact_sensitive_values(response)
+
+    assert result == {
+        "authorizationData": [
+            {"authorizationToken": "**REDACTED**", "proxyEndpoint": "https://endpoint-1"},
+            {"authorizationToken": "**REDACTED**", "proxyEndpoint": "https://endpoint-2"},
+        ]
+    }
+
+
+@pytest.mark.parametrize("obj", [{}, [], None, "string", 42, 3.14, True])
+def test_redact_sensitive_values_edge_cases(obj):
+    """Empty containers and scalars pass through without error."""
+    result = use_aws.redact_sensitive_values(obj)
+    assert result == obj
+
+
+@pytest.mark.parametrize(
+    "service,operation",
+    [
+        ("sts", "get_session_token"),
+        ("secretsmanager", "get_secret_value"),
+        ("ecr", "get_authorization_token"),
+    ],
+)
+@patch("strands_tools.use_aws.get_user_input", return_value="n")
+def test_use_aws_sensitive_operations_blocked_on_denial(mock_input, service, operation):
+    """Sensitive operations are blocked when user declines consent."""
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=[service]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=[operation]),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": service,
+                "operation_name": operation,
+                "parameters": {},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        mock_input.assert_called_once()
+        assert result["status"] == "error"
+        assert "Operation canceled by user" in result["content"][0]["text"]
+
+
+@patch("strands_tools.use_aws.get_user_input", return_value="y")
+def test_use_aws_sensitive_operations_proceeds_with_redaction(mock_input):
+    """Sensitive operation proceeds on consent but response is still redacted."""
+    mock_client = MagicMock()
+    mock_client.get_secret_value.return_value = {
+        "Name": "my-secret",
+        "SecretString": "top-secret-value",
+    }
+
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=["secretsmanager"]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=["get_secret_value"]),
+        patch("strands_tools.use_aws.get_boto3_client", return_value=mock_client),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": "secretsmanager",
+                "operation_name": "get_secret_value",
+                "parameters": {"SecretId": "my-secret"},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        assert result["status"] == "success"
+        assert "**REDACTED**" in result["content"][0]["text"]
+        assert "top-secret-value" not in result["content"][0]["text"]
+
+
+@patch("strands_tools.use_aws.get_user_input")
+def test_use_aws_sensitive_operations_bypass_consent(mock_input):
+    """BYPASS_TOOL_CONSENT=true skips the prompt but values are still redacted.
+
+    The bypass disables the human confirmation prompt only. Redaction protects
+    what is returned into the model's context and stays in force regardless, so
+    sensitive values never reach the model unredacted.
+    """
+    mock_client = MagicMock()
+    mock_client.get_session_token.return_value = {
+        "Credentials": {
+            "AccessKeyId": "EXAMPLE_KEY_ID_12345678",
+            "SecretAccessKey": "secret-key-value",
+            "SessionToken": "session-token-value",
+            "Expiration": "2026-05-13T18:00:00Z",
+        },
+    }
+
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=["sts"]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=["get_session_token"]),
+        patch("strands_tools.use_aws.get_boto3_client", return_value=mock_client),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "true"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": "sts",
+                "operation_name": "get_session_token",
+                "parameters": {},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        mock_input.assert_not_called()
+        assert result["status"] == "success"
+        assert "**REDACTED**" in result["content"][0]["text"]
+        assert "secret-key-value" not in result["content"][0]["text"]
+        assert "session-token-value" not in result["content"][0]["text"]
+
+
+@patch("strands_tools.use_aws.get_user_input")
+def test_use_aws_ssm_get_parameter_value_redacted_with_bypass(mock_input):
+    """BYPASS_TOOL_CONSENT=true skips the prompt but SSM values are still redacted."""
+    mock_client = MagicMock()
+    mock_client.get_parameter.return_value = {
+        "Parameter": {
+            "Name": "/app/db-password",
+            "Type": "SecureString",
+            "Value": "super-secret-parameter-value",
+        }
+    }
+
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=["ssm"]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=["get_parameter"]),
+        patch("strands_tools.use_aws.get_boto3_client", return_value=mock_client),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "true"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": "ssm",
+                "operation_name": "get_parameter",
+                "parameters": {"Name": "/app/db-password", "WithDecryption": True},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        mock_input.assert_not_called()
+        assert result["status"] == "success"
+        assert "**REDACTED**" in result["content"][0]["text"]
+        assert "super-secret-parameter-value" not in result["content"][0]["text"]
+
+
+@pytest.mark.parametrize(
+    "service,operation",
+    [
+        ("ssm", "get_parameter"),
+        ("ssm", "get_parameters"),
+        ("ssm", "get_parameters_by_path"),
+        ("kms", "decrypt"),
+        ("kms", "generate_data_key"),
+    ],
+)
+@patch("strands_tools.use_aws.get_user_input", return_value="n")
+def test_use_aws_parameter_and_key_operations_blocked_on_denial(mock_input, service, operation):
+    """SSM parameter reads and KMS key operations require consent."""
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=[service]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=[operation]),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": service,
+                "operation_name": operation,
+                "parameters": {},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        mock_input.assert_called_once()
+        assert result["status"] == "error"
+        assert "Operation canceled by user" in result["content"][0]["text"]
+
+
+@patch("strands_tools.use_aws.get_user_input", return_value="y")
+def test_use_aws_ssm_get_parameter_value_redacted(mock_input):
+    """A SecureString parameter value is redacted in the get_parameter response."""
+    mock_client = MagicMock()
+    mock_client.get_parameter.return_value = {
+        "Parameter": {
+            "Name": "/app/db-password",
+            "Type": "SecureString",
+            "Value": "super-secret-parameter-value",
+        }
+    }
+
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=["ssm"]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=["get_parameter"]),
+        patch("strands_tools.use_aws.get_boto3_client", return_value=mock_client),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": "ssm",
+                "operation_name": "get_parameter",
+                "parameters": {"Name": "/app/db-password", "WithDecryption": True},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        assert result["status"] == "success"
+        assert "**REDACTED**" in result["content"][0]["text"]
+        assert "super-secret-parameter-value" not in result["content"][0]["text"]
+        # Non-secret fields remain visible.
+        assert "/app/db-password" in result["content"][0]["text"]
+
+
+@patch("strands_tools.use_aws.get_user_input", return_value="y")
+def test_use_aws_ssm_get_parameters_values_redacted(mock_input):
+    """Each value in a get_parameters response is redacted."""
+    mock_client = MagicMock()
+    mock_client.get_parameters.return_value = {
+        "Parameters": [
+            {"Name": "/app/one", "Value": "secret-one"},
+            {"Name": "/app/two", "Value": "secret-two"},
+        ]
+    }
+
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=["ssm"]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=["get_parameters"]),
+        patch("strands_tools.use_aws.get_boto3_client", return_value=mock_client),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": "ssm",
+                "operation_name": "get_parameters",
+                "parameters": {"Names": ["/app/one", "/app/two"]},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        assert result["status"] == "success"
+        assert "secret-one" not in result["content"][0]["text"]
+        assert "secret-two" not in result["content"][0]["text"]
+        assert result["content"][0]["text"].count("**REDACTED**") == 2
+
+
+@patch("strands_tools.use_aws.get_user_input", return_value="y")
+def test_use_aws_kms_decrypt_plaintext_redacted(mock_input):
+    """KMS decrypt Plaintext output is redacted."""
+    mock_client = MagicMock()
+    mock_client.decrypt.return_value = {
+        "KeyId": "arn:aws:kms:us-east-1:111122223333:key/abcd",
+        "Plaintext": "decrypted-plaintext-bytes",
+    }
+
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=["kms"]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=["decrypt"]),
+        patch("strands_tools.use_aws.get_boto3_client", return_value=mock_client),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": "kms",
+                "operation_name": "decrypt",
+                "parameters": {"CiphertextBlob": b"blob"},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        assert result["status"] == "success"
+        assert "**REDACTED**" in result["content"][0]["text"]
+        assert "decrypted-plaintext-bytes" not in result["content"][0]["text"]
+
+
+@patch("strands_tools.use_aws.get_user_input", return_value="y")
+def test_use_aws_kms_generate_data_key_pair_private_key_redacted(mock_input):
+    """KMS generate_data_key_pair PrivateKeyPlaintext output is gated and redacted by default."""
+    mock_client = MagicMock()
+    mock_client.generate_data_key_pair.return_value = {
+        "KeyId": "arn:aws:kms:us-east-1:111122223333:key/abcd",
+        "PrivateKeyPlaintext": "private-key-plaintext-bytes",
+        "PublicKey": "public-key-bytes",
+    }
+
+    with (
+        patch("strands_tools.use_aws.get_available_services", return_value=["kms"]),
+        patch("strands_tools.use_aws.get_available_operations", return_value=["generate_data_key_pair"]),
+        patch("strands_tools.use_aws.get_boto3_client", return_value=mock_client),
+        patch.dict("os.environ", {"BYPASS_TOOL_CONSENT": "false"}),
+    ):
+        tool_use = {
+            "toolUseId": "test-id",
+            "input": {
+                "service_name": "kms",
+                "operation_name": "generate_data_key_pair",
+                "parameters": {"KeyId": "abcd", "KeyPairSpec": "RSA_2048"},
+                "region": "us-east-1",
+                "label": "Test",
+            },
+        }
+        result = use_aws.use_aws(tool=tool_use)
+
+        # Consent is required (prompt shown) and the private key is redacted.
+        mock_input.assert_called_once()
+        assert result["status"] == "success"
+        assert "**REDACTED**" in result["content"][0]["text"]
+        assert "private-key-plaintext-bytes" not in result["content"][0]["text"]
+        # Non-secret fields remain visible.
+        assert "public-key-bytes" in result["content"][0]["text"]
+
+
+def test_redact_ssm_parameter_values_non_ssm_passthrough():
+    """Non-SSM responses are unaffected by SSM-specific redaction."""
+    response = {"Parameter": {"Value": "not-an-ssm-value"}}
+    result = use_aws.redact_ssm_parameter_values("ec2", response)
+    assert result == response

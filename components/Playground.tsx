@@ -80,6 +80,12 @@ import OnlineProjectScaffolderModal from '@/client/components/OnlineProjectScaff
 import CloneRepositoryModal, { ClonedRepoResult } from '@/client/components/CloneRepositoryModal';
 import ModelCatalogStorefront from '@/client/components/ModelCatalogStorefront';
 import AutonomousAgentModal from '@/client/components/AutonomousAgentModal';
+import AgencyAgentsStudioModal from '@/client/components/AgencyAgentsStudioModal';
+import CodebaseMemoryStudioModal from '@/client/components/CodebaseMemoryStudioModal';
+import { StrandsToolsStudioModal } from '@/client/components/StrandsToolsStudioModal';
+import { ScientificSkillsStudioModal } from '@/client/components/ScientificSkillsStudioModal';
+import { OpenJarvisStudioModal } from '@/client/components/OpenJarvisStudioModal';
+import { AwesomeLlmAppsStudioModal } from '@/client/components/AwesomeLlmAppsStudioModal';
 import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
@@ -418,6 +424,15 @@ export default function Playground({
   const [isUiTarsOpen, setIsUiTarsOpen] = useState(false);
   const [isClineOpen, setIsClineOpen] = useState(false);
   const [isVoidOpen, setIsVoidOpen] = useState(false);
+  const [isAgencyAgentsStudioOpen, setIsAgencyAgentsStudioOpen] = useState(false);
+  const [isCodebaseMemoryStudioOpen, setIsCodebaseMemoryStudioOpen] = useState(false);
+  const [isStrandsToolsStudioOpen, setIsStrandsToolsStudioOpen] = useState(false);
+  const [isScientificSkillsStudioOpen, setIsScientificSkillsStudioOpen] = useState(false);
+  const [isOpenJarvisStudioOpen, setIsOpenJarvisStudioOpen] = useState(false);
+  const [isAwesomeLlmAppsStudioOpen, setIsAwesomeLlmAppsStudioOpen] = useState(false);
+  const [selectedAgencyAgentForAutonomous, setSelectedAgencyAgentForAutonomous] = useState('engineering-senior-developer');
+  const [selectedAgencyAgentForComposer, setSelectedAgencyAgentForComposer] = useState('engineering-senior-developer');
+  const [composerInitialPrompt, setComposerInitialPrompt] = useState('');
 
   // LAN Pair Programming, Semantic Search & GGUF Quantizer State
   const [isLanCollabOpen, setIsLanCollabOpen] = useState(false);
@@ -763,6 +778,12 @@ export default function Playground({
     setIsOnlineProjectModalOpen(false);
     setIsThemePickerOpen(false);
     setIsDatabaseStudioOpen(false);
+    setIsAgencyAgentsStudioOpen(false);
+    setIsCodebaseMemoryStudioOpen(false);
+    setIsStrandsToolsStudioOpen(false);
+    setIsScientificSkillsStudioOpen(false);
+    setIsOpenJarvisStudioOpen(false);
+    setIsAwesomeLlmAppsStudioOpen(false);
     setIsAutonomousAgentOpen(false);
     setIsAgenticComposerOpen(false);
     setIsLanCollabOpen(false);
@@ -2430,6 +2451,36 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
         setPrompt(`Using superpowers:requesting-code-review, perform an adversarial code review on the latest edits in ${selectedFile || 'components/Playground.tsx'}: `);
         setIsSidebarOpen(true);
         setActiveSidebarTab('chat');
+        break;
+      case 'agency-agents-studio':
+      case 'agency-agents-open':
+      case 'agency-agents':
+        setIsAgencyAgentsStudioOpen(true);
+        break;
+      case 'codebase-memory-studio':
+      case 'codebase-memory-open':
+      case 'codebase-memory':
+        setIsCodebaseMemoryStudioOpen(true);
+        break;
+      case 'strands-tools-studio':
+      case 'strands-tools-open':
+      case 'strands-tools':
+        setIsStrandsToolsStudioOpen(true);
+        break;
+      case 'scientific-skills-studio':
+      case 'scientific-skills-open':
+      case 'scientific-skills':
+        setIsScientificSkillsStudioOpen(true);
+        break;
+      case 'openjarvis-studio':
+      case 'openjarvis-studio-open':
+      case 'openjarvis':
+        setIsOpenJarvisStudioOpen(true);
+        break;
+      case 'awesome-llm-apps-studio':
+      case 'awesome-llm-apps-open':
+      case 'awesome-llm-apps':
+        setIsAwesomeLlmAppsStudioOpen(true);
         break;
       case 'windows-context-menu':
         setIsContextMenuModalOpen(true);
@@ -4116,96 +4167,121 @@ export default function ExtractedVisionUI() {
                 File
               </button>
               {activeMenuDropdown === 'file' && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
-                  <button onClick={() => { setNewFilePathInput(''); setIsNewFileModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                <div className="absolute top-full left-0 mt-1 w-72 max-h-[85vh] overflow-y-auto overscroll-contain overflow-x-hidden bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
+                  <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-900/40 border-b border-zinc-800/60">
+                    File Operations
+                  </div>
+                  <button onClick={() => { setNewFilePathInput(''); setIsNewFileModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>New File...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+N</span>
                   </button>
-                  <button onClick={() => { handleOpenLocalFolder(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleOpenLocalFolder(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><FolderOpen size={12} className="text-amber-400" /> Open Local Folder...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+O</span>
                   </button>
-                  <button onClick={() => { setIsContextMenuModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { setIsContextMenuModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><MousePointerClick size={12} className="text-emerald-400" /> Windows Explorer Context Menu...</span>
                   </button>
-                  <button onClick={() => { setIsCloneRepoModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { setIsCloneRepoModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Download size={12} className="text-emerald-400" /> Clone Repository...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+G L</span>
                   </button>
-                  <button onClick={() => { handleExecuteCommand('file-save'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleExecuteCommand('file-save'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>Save</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+S</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__SCAFFOLDER_HUB__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+
+                  <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-900/40 border-y border-zinc-800/60 my-1">
+                    AI Engines & Memory Hubs
+                  </div>
+                  <button onClick={() => { setIsAgencyAgentsStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-purple-400" /> Agency Agents Studio (302)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+Z</span>
+                  </button>
+                  <button onClick={() => { setIsCodebaseMemoryStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Brain size={12} className="text-cyan-400" /> Codebase Memory MCP Graph...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+M</span>
+                  </button>
+                  <button onClick={() => { setIsStrandsToolsStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Wrench size={12} className="text-amber-400" /> Strands Agents Tools (18+)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+U</span>
+                  </button>
+                  <button onClick={() => { setIsScientificSkillsStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Microscope size={12} className="text-emerald-400" /> Scientific Agent Skills (165+)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+K</span>
+                  </button>
+                  <button onClick={() => { setIsOpenJarvisStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Brain size={12} className="text-cyan-400" /> OpenJarvis Assistant (5-Pillar)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+J</span>
+                  </button>
+                  <button onClick={() => { setIsAwesomeLlmAppsStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-indigo-400" /> Awesome LLM Apps (60+)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+L</span>
+                  </button>
+                  <button onClick={() => { handleSelectFile('__SCAFFOLDER_HUB__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>Project Scaffolder...</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__TOOLJET_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__TOOLJET_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><LayoutGrid size={12} className="text-orange-400" /> ToolJet Low-Code Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+J</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__AUTOGPT_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__AUTOGPT_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Brain size={12} className="text-purple-400" /> AutoGPT Autonomous Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+G</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__INDIC_NLP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__INDIC_NLP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Languages size={12} className="text-amber-400" /> IndicNLP Corpus & Vectors...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+I</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__CANDLE_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__CANDLE_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Flame size={12} className="text-orange-400" /> Candle Rust ML & WASM...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+K</span>
                   </button>
-                  <button onClick={() => { setIsNanoGptModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { setIsNanoGptModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Brain size={12} className="text-amber-400" /> nanoGPT Subject Model Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+N</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__AIDER_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__AIDER_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><GitBranch size={12} className="text-cyan-400" /> Aider Pair Programmer & Repo Map...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+P</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__TRANSFORMERS_JS_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__TRANSFORMERS_JS_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Zap size={12} className="text-amber-400" /> Transformers.js WebGPU ML Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+T</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__OUTLINES_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__OUTLINES_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Binary size={12} className="text-cyan-400" /> Outlines FSM Guided Generation...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+O</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__LLAMACPP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__LLAMACPP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-orange-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Cpu size={12} className="text-orange-400" /> llama.cpp Native C/C++ Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+L</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__RIPGREP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-rose-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__RIPGREP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-rose-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Search size={12} className="text-rose-400" /> ripgrep Fast Code Search...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+R</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__ASTGREP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__ASTGREP_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Code2 size={12} className="text-emerald-400" /> ast-grep AST Refactor...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+S</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__LANCEDB_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-teal-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__LANCEDB_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-teal-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Database size={12} className="text-teal-400" /> LanceDB Vector Database...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+D</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__CHONKIE_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__CHONKIE_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Layers size={12} className="text-amber-400" /> Chonkie RAG Chunking...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+H</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__TABBY_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__TABBY_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Zap size={12} className="text-cyan-400" /> Tabby FIM Autocomplete...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+Y</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__UNIVERSAL_MODES__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__UNIVERSAL_MODES__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-indigo-400" /> Universal Field Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+U</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__NOVEL_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-pink-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__NOVEL_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-pink-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><BookOpen size={12} className="text-pink-400" /> Novel Creative Studio...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+E</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__DOCKVIEW_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__DOCKVIEW_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Layout size={12} className="text-cyan-400" /> Dockview Window Manager...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+W</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__MAGIC_UI_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__MAGIC_UI_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-indigo-400" /> Magic UI & Sonner Effects...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+M</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__CURSOR_UI_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__CURSOR_UI_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-purple-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Palette size={12} className="text-purple-400" /> Cursor / v0 Modern UI/UX...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+V</span>
                   </button>
-                  <button onClick={() => { handleSelectFile('__NANO_BANANA_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleSelectFile('__NANO_BANANA_STUDIO__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-amber-400" /> 🍌 Nano Banana Prompts (2,500)...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+J</span>
                   </button>
-                  <button onClick={() => { setIsOnlineProjectModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { setIsOnlineProjectModalOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-amber-400" /> New Project with AI...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+A</span>
                   </button>
-                  <button onClick={() => { setIsOnlineAiHubOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { setIsOnlineAiHubOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Globe size={12} className="text-indigo-400" /> Online AI Hub & Login...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+O</span>
                   </button>
                   <div className="h-px bg-zinc-700/60 my-1" />
-                  <button onClick={() => { handleExportZip(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { handleExportZip(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>Export Workspace (ZIP)</span>
                   </button>
-                  <button onClick={() => { setSettingsInitialTab('desktop'); setIsSettingsOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
+                  <button onClick={() => { setSettingsInitialTab('desktop'); setIsSettingsOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>Desktop Release Builder...</span>
                   </button>
                 </div>
@@ -4221,7 +4297,7 @@ export default function ExtractedVisionUI() {
                 Edit
               </button>
               {activeMenuDropdown === 'edit' && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <div className="absolute top-full left-0 mt-1 w-56 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                   <button onClick={() => { handleOpenTranslateModal('comments'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Translate Comments...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+L</span>
                   </button>
@@ -4245,7 +4321,7 @@ export default function ExtractedVisionUI() {
                 Selection
               </button>
               {activeMenuDropdown === 'selection' && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <div className="absolute top-full left-0 mt-1 w-56 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                   <button onClick={() => setActiveMenuDropdown(null)} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Select All</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+A</span>
                   </button>
@@ -4265,7 +4341,7 @@ export default function ExtractedVisionUI() {
                 View
               </button>
               {activeMenuDropdown === 'view' && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <div className="absolute top-full left-0 mt-1 w-64 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                   <button onClick={() => { setIsCommandPaletteOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Command Palette...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+P</span>
                   </button>
@@ -4302,7 +4378,7 @@ export default function ExtractedVisionUI() {
                 Go
               </button>
               {activeMenuDropdown === 'go' && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <div className="absolute top-full left-0 mt-1 w-56 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                   <button onClick={() => { setIsCommandPaletteOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Go to File...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+P</span>
                   </button>
@@ -4322,7 +4398,7 @@ export default function ExtractedVisionUI() {
                 Run
               </button>
               {activeMenuDropdown === 'run' && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <div className="absolute top-full left-0 mt-1 w-56 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                   <button onClick={() => { runCode(); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Run in Sandbox</span> <span className="text-[10px] text-zinc-400 font-mono">F5</span>
                   </button>
@@ -4345,7 +4421,7 @@ export default function ExtractedVisionUI() {
                 Terminal
               </button>
               {activeMenuDropdown === 'terminal' && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <div className="absolute top-full left-0 mt-1 w-56 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                   <button onClick={() => { setIsBottomPanelOpen(true); setActiveTab('terminal'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Toggle Terminal</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+`</span>
                   </button>
@@ -4368,7 +4444,7 @@ export default function ExtractedVisionUI() {
                 Help
               </button>
               {activeMenuDropdown === 'help' && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+                <div className="absolute top-full left-0 mt-1 w-56 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                   <button onClick={() => { handleSelectFile('__DIAGNOSTICS__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200">
                     <span>Diagnostics & Onboarding</span>
                   </button>
@@ -4421,7 +4497,7 @@ export default function ExtractedVisionUI() {
               <ChevronDown size={11} className="text-violet-400" />
             </button>
             {activeMenuDropdown === 'innovations' && (
-              <div className="absolute top-full right-0 mt-1 w-64 bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs">
+              <div className="absolute top-full right-0 mt-1 w-64 max-h-[80vh] overflow-y-auto overscroll-contain bg-[#18181b] border border-zinc-700/80 rounded-md shadow-2xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 font-sans text-xs scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/60">
                 <button
                   onClick={() => { setIsSmartMacroOpen(true); setActiveMenuDropdown(null); }}
                   className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
@@ -4463,6 +4539,27 @@ export default function ExtractedVisionUI() {
                 >
                   <span className="flex items-center gap-2"><span>⚡</span> Void Fast Apply Diff</span>
                   <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+V</span>
+                </button>
+                <button
+                  onClick={() => { setIsStrandsToolsStudioOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>🔧</span> Strands Tools Harness</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+U</span>
+                </button>
+                <button
+                  onClick={() => { setIsScientificSkillsStudioOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-emerald-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>🔬</span> Scientific Skills (165+)</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+K</span>
+                </button>
+                <button
+                  onClick={() => { setIsOpenJarvisStudioOpen(true); setActiveMenuDropdown(null); }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-cyan-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><span>🧠</span> OpenJarvis 5-Pillar</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+J</span>
                 </button>
               </div>
             )}
@@ -5839,7 +5936,14 @@ export default function ExtractedVisionUI() {
             )}
 
             {/* Scrollable Tabs Area */}
-            <div className="flex-1 flex items-center overflow-x-auto scrollbar-none h-full">
+            <div 
+              onWheel={(e) => {
+                if (e.deltaY !== 0) {
+                  e.currentTarget.scrollLeft += e.deltaY;
+                }
+              }}
+              className="flex-1 flex items-center overflow-x-auto scrollbar-thin scrollbar-thumb-zinc-700/40 hover:scrollbar-thumb-zinc-500/70 scrollbar-track-transparent h-full scroll-smooth"
+            >
               {openTabs.map(tab => {
                 const isActive = selectedFile === tab;
                 const isDirty = dirtyFiles.includes(tab);
@@ -7188,6 +7292,61 @@ export default function ExtractedVisionUI() {
                       <span className="text-zinc-700">|</span>
 
                       <button
+                        onClick={() => setIsCodebaseMemoryStudioOpen(true)}
+                        className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                        title="Codebase Memory MCP: AST Knowledge Graph & Call Tracer (Ctrl+Alt+M)"
+                      >
+                        <Brain size={11} className="text-cyan-400" />
+                        <span>Codebase Memory (MCP)</span>
+                      </button>
+
+                      <span className="text-zinc-700">|</span>
+
+                      <button
+                        onClick={() => setIsAgencyAgentsStudioOpen(true)}
+                        className="flex items-center gap-1.5 text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                        title="Agency Agents Studio: 302 Specialized Personas (Ctrl+Shift+Z)"
+                      >
+                        <Sparkles size={11} className="text-purple-400" />
+                        <span>Agency Agents (302)</span>
+                      </button>
+
+                      <span className="text-zinc-700">|</span>
+
+                      <button
+                        onClick={() => setIsStrandsToolsStudioOpen(true)}
+                        className="flex items-center gap-1.5 text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                        title="Strands Agents Tools: 18+ Execution & MCP Tools (Ctrl+Shift+U)"
+                      >
+                        <Wrench size={11} className="text-amber-400" />
+                        <span>Strands Tools (18)</span>
+                      </button>
+
+                      <span className="text-zinc-700">|</span>
+
+                      <button
+                        onClick={() => setIsScientificSkillsStudioOpen(true)}
+                        className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                        title="Scientific Agent Skills: 165+ Validated Research Protocols (Ctrl+Shift+K)"
+                      >
+                        <Microscope size={11} className="text-emerald-400" />
+                        <span>Scientific Skills (165)</span>
+                      </button>
+
+                      <span className="text-zinc-700">|</span>
+
+                      <button
+                        onClick={() => setIsOpenJarvisStudioOpen(true)}
+                        className="flex items-center gap-1.5 text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+                        title="OpenJarvis: Stanford 5-Pillar Local Agent Harness (Ctrl+Shift+J)"
+                      >
+                        <Brain size={11} className="text-cyan-400" />
+                        <span>OpenJarvis (5-Pillar)</span>
+                      </button>
+
+                      <span className="text-zinc-700">|</span>
+
+                      <button
                         onClick={() => handleSelectFile('__MODELS_CATALOG__')}
                         className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 transition-colors cursor-pointer"
                         title="Hugging Face & Ollama GGUF Models Catalog (Ctrl+Shift+M)"
@@ -8486,7 +8645,102 @@ export default function ExtractedVisionUI() {
         onClose={() => setIsAutonomousAgentOpen(false)}
         activeFile={selectedFile || ''}
         allFiles={parsedFiles}
+        initialAgencyAgentId={selectedAgencyAgentForAutonomous}
         onApplyFileUpdate={handleUpdateFile}
+      />
+
+      {/* Agency Agents Studio Modal (302 Sovereign Personas from agency-agents) */}
+      <AgencyAgentsStudioModal
+        isOpen={isAgencyAgentsStudioOpen}
+        onClose={() => setIsAgencyAgentsStudioOpen(false)}
+        activeFile={selectedFile || ''}
+        onSelectAgentForAutonomous={(agentId) => {
+          setSelectedAgencyAgentForAutonomous(agentId);
+          setIsAutonomousAgentOpen(true);
+        }}
+        onSelectAgentForComposer={(agentId, systemPrompt) => {
+          setSelectedAgencyAgentForComposer(agentId);
+          setComposerInitialPrompt(`Objective: `);
+          setIsAgenticComposerOpen(true);
+        }}
+        onInsertToEditor={(content) => {
+          if (selectedFile) {
+            handleUpdateFile(selectedFile, content + '\n' + (parsedFiles[selectedFile] || ''));
+          }
+        }}
+      />
+
+      {/* Codebase Memory MCP Studio Modal (DeusData Tree-Sitter AST Knowledge Graph) */}
+      <CodebaseMemoryStudioModal
+        isOpen={isCodebaseMemoryStudioOpen}
+        onClose={() => setIsCodebaseMemoryStudioOpen(false)}
+        activeFilePath={selectedFile || ''}
+        onInjectContextToEditor={(context) => {
+          if (selectedFile) {
+            handleUpdateFile(selectedFile, context + '\n' + (parsedFiles[selectedFile] || ''));
+          }
+        }}
+        onLaunchAutonomousWithContext={(context) => {
+          setPrompt(`Goal with Codebase Memory AST Graph:\n${context.slice(0, 400)}...\n\nObjective: `);
+          setIsAutonomousAgentOpen(true);
+        }}
+      />
+
+      {/* Strands Agents Tools Studio Modal (18+ Execution & MCP Tools) */}
+      <StrandsToolsStudioModal
+        isOpen={isStrandsToolsStudioOpen}
+        onClose={() => setIsStrandsToolsStudioOpen(false)}
+        onSelectTool={(tool) => {
+          console.log('[StrandsTools] Selected tool:', tool.id);
+        }}
+      />
+
+      {/* Scientific Agent Skills Studio Modal (165+ Validated Research Protocols) */}
+      <ScientificSkillsStudioModal
+        isOpen={isScientificSkillsStudioOpen}
+        onClose={() => setIsScientificSkillsStudioOpen(false)}
+        activeFile={selectedFile || ''}
+        onSelectSkillForAutonomous={(skillId, prompt) => {
+          setPrompt(`Objective with Scientific Skill (${skillId}):\n${prompt}\n\nTask: `);
+          setIsAutonomousAgentOpen(true);
+        }}
+        onSelectSkillForComposer={(skillId, prompt) => {
+          setComposerInitialPrompt(`Scientific Objective (${skillId}):\n${prompt}\n\n`);
+          setIsAgenticComposerOpen(true);
+        }}
+        onInsertToEditor={(content) => {
+          if (selectedFile) {
+            handleUpdateFile(selectedFile, content + '\n' + (parsedFiles[selectedFile] || ''));
+          }
+        }}
+      />
+
+      {/* OpenJarvis Assistant Studio Modal (Stanford 5-Pillar Agent Harness & Learning Engine) */}
+      <OpenJarvisStudioModal
+        isOpen={isOpenJarvisStudioOpen}
+        onClose={() => setIsOpenJarvisStudioOpen(false)}
+        activeFile={selectedFile || ''}
+        onSelectAgentForAutonomous={(presetId, prompt) => {
+          setPrompt(`Objective with OpenJarvis (${presetId}):\n${prompt}\n\nTask: `);
+          setIsAutonomousAgentOpen(true);
+        }}
+        onInsertToEditor={(content) => {
+          if (selectedFile) {
+            handleUpdateFile(selectedFile, content + '\n' + (parsedFiles[selectedFile] || ''));
+          }
+        }}
+      />
+
+      {/* Awesome LLM Apps Storefront Modal (60+ Production Multi-Agent & RAG Apps) */}
+      <AwesomeLlmAppsStudioModal
+        isOpen={isAwesomeLlmAppsStudioOpen}
+        onClose={() => setIsAwesomeLlmAppsStudioOpen(false)}
+        onOpenFile={handleJumpToLocation}
+        onRunInTerminal={(cmd) => {
+          setConsoleOutput(prev => prev + '\n$ ' + cmd);
+          setIsBottomPanelOpen(true);
+          setActiveTab('terminal');
+        }}
       />
 
       {/* Local Headless Browser Agent & Visual Self-Correction Modal */}
@@ -8745,6 +8999,8 @@ export default function ExtractedVisionUI() {
         isOpen={isAgenticComposerOpen}
         onClose={() => setIsAgenticComposerOpen(false)}
         workspaceFiles={parsedFiles}
+        initialAgencyAgentId={selectedAgencyAgentForComposer}
+        initialPrompt={composerInitialPrompt}
         onApplyFiles={(files) => handleBatchApplyFiles(Object.fromEntries(files.map(f => [f.filePath, f.content])))}
         activeFilePath={selectedFile ?? undefined}
       />

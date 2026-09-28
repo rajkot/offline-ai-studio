@@ -37,6 +37,8 @@ interface AgenticComposerModalProps {
   workspaceFiles: Record<string, string>;
   onApplyFiles: (files: { filePath: string; content: string }[]) => void;
   activeFilePath?: string;
+  initialAgencyAgentId?: string;
+  initialPrompt?: string;
 }
 
 export type ComposerIntent = 'feature' | 'refactor' | 'bugfix' | 'test' | 'optimize';
@@ -53,10 +55,14 @@ export default function AgenticComposerModal({
   onClose,
   workspaceFiles,
   onApplyFiles,
-  activeFilePath
+  activeFilePath,
+  initialAgencyAgentId,
+  initialPrompt
 }: AgenticComposerModalProps) {
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt || '');
   const [intent, setIntent] = useState<ComposerIntent>('feature');
+  const [selectedAgentId, setSelectedAgentId] = useState<string>(initialAgencyAgentId || 'engineering-senior-developer');
+  const [availableAgents, setAvailableAgents] = useState<Array<{ id: string; name: string; emoji: string; division: string; vibe: string }>>([]);
   const [selectedContextFiles, setSelectedContextFiles] = useState<string[]>([]);
   const [phase, setPhase] = useState<'input' | 'executing' | 'review'>('input');
   const [steps, setSteps] = useState<ExecutionStep[]>([]);
@@ -68,15 +74,34 @@ export default function AgenticComposerModal({
   const [checkpointId, setCheckpointId] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  useEffect(() => {
+    fetch('/api/agency-agents')
+      .then(res => res.json())
+      .then(data => {
+        if (data.agents) {
+          setAvailableAgents(data.agents.map((a: any) => ({
+            id: a.id,
+            name: a.name,
+            emoji: a.emoji,
+            division: a.divisionLabel || a.division,
+            vibe: a.vibe || a.description
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Focus input and initialize context file on open
   useEffect(() => {
     if (isOpen) {
+      if (initialPrompt) setPrompt(initialPrompt);
+      if (initialAgencyAgentId) setSelectedAgentId(initialAgencyAgentId);
       if (activeFilePath && !activeFilePath.startsWith('__')) {
         setSelectedContextFiles([activeFilePath]);
       }
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isOpen, activeFilePath]);
+  }, [isOpen, activeFilePath, initialPrompt, initialAgencyAgentId]);
 
   // Autonomous Multi-File Composer Loop
   const handleStartComposerLoop = async () => {
@@ -107,6 +132,7 @@ export default function AgenticComposerModal({
           prompt: prompt.trim(),
           files: workspaceFiles,
           intent,
+          agencyAgentId: selectedAgentId,
           contextFiles: selectedContextFiles
         })
       });
@@ -381,6 +407,32 @@ export default function AgenticComposerModal({
         {phase === 'input' && (
           <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-between">
             <div className="space-y-4 max-w-3xl mx-auto w-full">
+              {/* AGENCY AGENT PERSONA SELECTOR */}
+              <div className="flex items-center justify-between bg-zinc-900/90 p-3 rounded-xl border border-zinc-800">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles size={16} className="text-violet-400 shrink-0" />
+                  <div>
+                    <div className="text-xs font-semibold text-zinc-200">
+                      Active Agency Persona:
+                    </div>
+                    <div className="text-[11px] text-zinc-400">
+                      Guides multi-file architecture, syntax standards, and review philosophy
+                    </div>
+                  </div>
+                </div>
+                <select
+                  value={selectedAgentId}
+                  onChange={(e) => setSelectedAgentId(e.target.value)}
+                  className="bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-violet-200 focus:outline-none focus:border-violet-500 max-w-xs"
+                >
+                  {availableAgents.map((ag) => (
+                    <option key={ag.id} value={ag.id} className="bg-zinc-950 text-white">
+                      {ag.emoji} {ag.name} ({ag.division})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* INTENT SELECTORS */}
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-zinc-400 mr-1">Goal Intent:</span>
