@@ -34,7 +34,9 @@ export interface AwesomeLlmApp {
 
 export interface AwesomeAppCategoryMeta {
   id: AwesomeAppCategory;
+  name?: string;
   label: string;
+  description?: string;
   color: string;
   icon: string;
   count: number;

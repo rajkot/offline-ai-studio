@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           let score = 0;
           const text = `${node.name} ${node.label} ${node.type} ${node.filePath}`.toLowerCase();
           const terms = cleanQuery.split(/\s+/);
-          terms.forEach(t => {
+          terms.forEach((t: string) => {
             if (node.name.toLowerCase() === t) score += 0.8;
             else if (text.includes(t)) score += 0.4;
           });

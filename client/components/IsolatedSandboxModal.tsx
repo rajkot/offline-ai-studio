@@ -22,7 +22,8 @@ import {
   Code2,
   FileCode,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
 import { SandboxExecutionResult, CommandInspectionResult } from '@/lib/sandbox/isolatedExecutionGuard';
 
@@ -444,7 +445,7 @@ export default function IsolatedSandboxModal({
                     ) : commandResult.status === 'SUSPICIOUS' ? (
                       <AlertTriangle size={22} className="text-amber-400" />
                     ) : (
-                      <CheckCircle size={22} className="text-emerald-400" />
+                      <CheckCircle2 size={22} className="text-emerald-400" />
                     )}
                     <div>
                       <h4 className="text-sm font-bold text-white flex items-center gap-2">

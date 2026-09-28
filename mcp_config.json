@@ -57,6 +57,35 @@
         "strands_tools"
       ],
       "env": {}
+    },
+    "scientific-skills": {
+      "command": "node",
+      "args": [
+        "scientific-skills/scripts/run.js"
+      ],
+      "env": {}
+    },
+    "openjarvis": {
+      "command": "node",
+      "args": [
+        "open-jarvis/scripts/run.js"
+      ],
+      "env": {}
+    },
+    "awesome-llm-apps": {
+      "command": "python",
+      "args": [
+        "-m",
+        "awesome_llm_apps"
+      ],
+      "env": {}
+    },
+    "agency-agents": {
+      "command": "node",
+      "args": [
+        "agency-agents/scripts/run.js"
+      ],
+      "env": {}
     }
   }
 }

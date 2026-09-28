@@ -9,7 +9,7 @@
  */
 
 import { generateOllamaText } from '@/lib/ai/ollamaClient';
-import { generateWithOnlineAI } from '@/lib/ai/onlineClient';
+import { generateWithOnlineAi } from '@/lib/ai/onlineAiEngine';
 
 export interface VoiceCommandIntent {
   rawTranscript: string;
@@ -142,7 +142,7 @@ Requirements: ${intent.requirements.join(', ')}
 Output ONLY production-ready, clean TypeScript React component code with Tailwind CSS and Lucide icons. Do not include markdown chatter.`;
 
     try {
-      const modelPromise = generateOllamaText(prompt, 'qwen2.5:1.5b');
+      const modelPromise = generateOllamaText({ model: 'qwen2.5:1.5b', prompt });
       const timeoutPromise = new Promise<string>((r) => setTimeout(() => r(''), 4000));
       const rawOutput = await Promise.race([modelPromise, timeoutPromise]);
 

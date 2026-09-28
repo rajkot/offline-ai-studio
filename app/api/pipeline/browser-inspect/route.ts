@@ -61,7 +61,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      success: auditResult.success,
       data: auditResult,
       ...auditResult
     });

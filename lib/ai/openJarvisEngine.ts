@@ -329,14 +329,15 @@ Objective: Deliver concise, accurate, production-grade output.`;
     try {
       const health = await checkOllamaHealth();
       if (health.online) {
-        const models = await listOllamaModels();
+        const rawModels = await listOllamaModels();
+        const modelNames = rawModels.map(m => (typeof m === 'string' ? m : m.name));
         // Route model based on FLOP tier
         if (flopTier === 'micro_1b') {
-          modelName = models.find(m => m.includes('1.5b') || m.includes('1b')) || 'qwen2.5:1.5b';
+          modelName = modelNames.find(m => m.includes('1.5b') || m.includes('1b')) || 'qwen2.5:1.5b';
         } else if (flopTier === 'medium_3b') {
-          modelName = models.find(m => m.includes('3b')) || selectBestOllamaModel(models);
+          modelName = modelNames.find(m => m.includes('3b')) || selectBestOllamaModel(rawModels);
         } else {
-          modelName = selectBestOllamaModel(models);
+          modelName = selectBestOllamaModel(rawModels);
         }
 
         resultText = await generateOllamaText({

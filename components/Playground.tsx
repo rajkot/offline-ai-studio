@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { ArrowLeft, Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, LayoutGrid, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff, Palette, Languages, Flame, Binary, BookOpen, FolderPlus, MousePointerClick } from 'lucide-react';
+import { ArrowLeft, Download, FileText, Folder, FolderOpen, Square, Zap, Send, MessageSquare, Trash2, Play, AlertCircle, Search, Beaker, Shield, ShieldAlert, Wrench, CheckCircle2, XCircle, Terminal, Globe, Database, Brain, DollarSign, Package, Bot, GitMerge, GitBranch, Gauge, HardDrive, ShieldCheck, RefreshCw, AlertTriangle, ExternalLink, Rocket, Camera, Upload, X, Cpu, Sparkles, Activity, Command, FilePlus, Settings, Sun, Moon, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, Compass, Eye, Edit3, Code2, Layers, Bug, Columns2, Rows2, Grid2X2, Keyboard, Split, PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, PanelBottomClose, PanelBottom, Layout, LayoutGrid, Check, Copy, Maximize2, Minimize2, MoreHorizontal, User, Users, Sliders, Radio, CaseUpper, WholeWord, Regex, Mic, MicOff, Palette, Languages, Flame, Binary, BookOpen, FolderPlus, MousePointerClick, Microscope } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import JSZip from 'jszip';
 import CommandPalette, { getActiveKeybindings } from './CommandPalette';
@@ -8748,12 +8748,9 @@ export default function ExtractedVisionUI() {
         isOpen={isBrowserInspectorOpen}
         onClose={() => setIsBrowserInspectorOpen(false)}
         defaultUrl="http://127.0.0.1:3000"
-        onApplyFix={(filePath, fix) => {
-          if (parsedFiles[filePath] !== undefined) {
-            handleUpdateFile(filePath, fix);
-            setDiskToastMessage(`✨ Applied visual auto-fix to ${filePath}`);
-            setTimeout(() => setDiskToastMessage(null), 3000);
-          }
+        onTriggerSelfHealing={(errorSummary) => {
+          setPrompt(`Fix browser error: ${errorSummary}`);
+          setIsAutonomousAgentOpen(true);
         }}
       />
 

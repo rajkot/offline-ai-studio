@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       if (useOnlineAi) {
         try {
           reply = await generateWithOnlineAi({
+            provider: 'omniroute',
             userPrompt: prompt,
             systemPrompt: 'You are an elite specialized agency agent.',
             temperature: 0.2

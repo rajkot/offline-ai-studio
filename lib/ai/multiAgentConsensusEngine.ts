@@ -159,8 +159,9 @@ export class MultiAgentConsensusEngine {
 
       try {
         const onlineText = await generateWithOnlineAi({
-          prompt,
-          systemInstruction: systemPrompt,
+          provider: 'omniroute',
+          userPrompt: prompt,
+          systemPrompt: systemPrompt,
           temperature: 0.2,
           maxTokens: 3000
         });
@@ -171,6 +172,11 @@ export class MultiAgentConsensusEngine {
     })();
 
     return Promise.race([workPromise, timeoutPromise]);
+  }
+
+  public reset(): void {
+    this.currentConsensus = null;
+    this.isRunning = false;
   }
 
   /**
