@@ -5,6 +5,9 @@ const endpoints = [
   { name: 'OpenJarvis Engine', path: '/api/openjarvis' },
   { name: 'Strands Agents Tools', path: '/api/strands-tools' },
   { name: 'Codebase Memory MCP', path: '/api/mcp/codebase-memory' },
+  { name: 'JEV UltraFast Browser', path: '/api/jev-ultrafast' },
+  { name: 'Open Code Review', path: '/api/open-code-review' },
+  { name: 'Ruflo Swarm', path: '/api/ruflo' },
   { name: 'Ollama Status', path: '/api/ollama/status' },
   { name: 'System Optimizer', path: '/api/optimizer/status' },
   { name: 'RAG Stats', path: '/api/rag/stats' }
