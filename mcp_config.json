@@ -94,6 +94,13 @@
         "jev_ultrafast"
       ],
       "env": {}
+    },
+    "open-code-review": {
+      "command": "node",
+      "args": [
+        "open-code-review/bin/ocr.js"
+      ],
+      "env": {}
     }
   }
 }

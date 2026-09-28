@@ -87,6 +87,7 @@ import { ScientificSkillsStudioModal } from '@/client/components/ScientificSkill
 import { OpenJarvisStudioModal } from '@/client/components/OpenJarvisStudioModal';
 import { AwesomeLlmAppsStudioModal } from '@/client/components/AwesomeLlmAppsStudioModal';
 import { JevUltraFastStudioModal } from '@/client/components/JevUltraFastStudioModal';
+import { OpenCodeReviewStudioModal } from '@/client/components/OpenCodeReviewStudioModal';
 import WebGpuStudioModal from '@/client/components/WebGpuStudioModal';
 import VoiceToCodeOverlay from '@/client/components/VoiceToCodeOverlay';
 import DatabaseStudioModal from '@/client/components/DatabaseStudioModal';
@@ -432,6 +433,7 @@ export default function Playground({
   const [isOpenJarvisStudioOpen, setIsOpenJarvisStudioOpen] = useState(false);
   const [isAwesomeLlmAppsStudioOpen, setIsAwesomeLlmAppsStudioOpen] = useState(false);
   const [isJevStudioOpen, setIsJevStudioOpen] = useState(false);
+  const [isOpenCodeReviewOpen, setIsOpenCodeReviewOpen] = useState(false);
   const [selectedAgencyAgentForAutonomous, setSelectedAgencyAgentForAutonomous] = useState('engineering-senior-developer');
   const [selectedAgencyAgentForComposer, setSelectedAgencyAgentForComposer] = useState('engineering-senior-developer');
   const [composerInitialPrompt, setComposerInitialPrompt] = useState('');
@@ -787,6 +789,7 @@ export default function Playground({
     setIsOpenJarvisStudioOpen(false);
     setIsAwesomeLlmAppsStudioOpen(false);
     setIsJevStudioOpen(false);
+    setIsOpenCodeReviewOpen(false);
     setIsAutonomousAgentOpen(false);
     setIsAgenticComposerOpen(false);
     setIsLanCollabOpen(false);
@@ -2489,6 +2492,11 @@ export function computeRRFScore(denseRank: number, sparseRank: number, k = 60) {
       case 'jev-ultrafast-open':
       case 'jev-studio':
         setIsJevStudioOpen(true);
+        break;
+      case 'open-code-review':
+      case 'open-code-review-open':
+      case 'alibaba-code-review':
+        setIsOpenCodeReviewOpen(true);
         break;
       case 'windows-context-menu':
         setIsContextMenuModalOpen(true);
@@ -4218,6 +4226,9 @@ export default function ExtractedVisionUI() {
                   </button>
                   <button onClick={() => { setIsJevStudioOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-amber-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span className="flex items-center gap-1.5"><Zap size={12} className="text-amber-400" /> JEV Ultra-Fast Browser Agent...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Alt+J</span>
+                  </button>
+                  <button onClick={() => { setIsOpenCodeReviewOpen(true); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-rose-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
+                    <span className="flex items-center gap-1.5"><ShieldAlert size={12} className="text-rose-400" /> Alibaba Open Code Review...</span> <span className="text-[10px] text-zinc-400 font-mono">Ctrl+Shift+R</span>
                   </button>
                   <button onClick={() => { handleSelectFile('__SCAFFOLDER_HUB__'); setActiveMenuDropdown(null); }} className="w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center justify-between text-zinc-200 cursor-pointer">
                     <span>Project Scaffolder...</span>
@@ -8760,6 +8771,28 @@ export default function ExtractedVisionUI() {
         onClose={() => setIsJevStudioOpen(false)}
         onExecuteInBrowser={(action) => {
           setPrompt(`Execute JEV browser action: ${action.operation} on ${action.speculativeTarget}`);
+          setIsAutonomousAgentOpen(true);
+        }}
+      />
+
+      {/* Alibaba Open Code Review Studio Modal (Static + LLM Hybrid Inspector) */}
+      <OpenCodeReviewStudioModal
+        isOpen={isOpenCodeReviewOpen}
+        onClose={() => setIsOpenCodeReviewOpen(false)}
+        activeFilePath={selectedFile || 'components/Playground.tsx'}
+        activeFileCode={selectedFile && parsedFiles[selectedFile] ? parsedFiles[selectedFile] : rawOutput}
+        onJumpToLine={handleJumpToLine}
+        onApplyFixToEditor={(line, replacement) => {
+          if (selectedFile && parsedFiles[selectedFile]) {
+            const lines = parsedFiles[selectedFile].split('\n');
+            if (line >= 1 && line <= lines.length) {
+              lines[line - 1] = replacement;
+              handleUpdateFile(selectedFile, lines.join('\n'));
+            }
+          }
+        }}
+        onLaunchAutonomousFix={(findingsPrompt) => {
+          setPrompt(findingsPrompt);
           setIsAutonomousAgentOpen(true);
         }}
       />

@@ -99,6 +99,7 @@ export const DEFAULT_KEYBINDINGS: Record<string, string> = {
   'agency-agents-open': 'Ctrl+Shift+Z',
   'awesome-llm-apps-open': 'Ctrl+Alt+L',
   'jev-ultrafast-open': 'Ctrl+Alt+J',
+  'open-code-review-open': 'Ctrl+Shift+R',
   'codebase-memory-open': 'Ctrl+Alt+M',
   'settings-open': 'Ctrl+,'
 };
@@ -110,6 +111,13 @@ export const COMMAND_METADATA: {
   description: string;
   iconName: string;
 }[] = [
+  {
+    id: 'open-code-review-open',
+    name: '🛡️ Alibaba Open Code Review: Static + LLM Line-Level Code Review',
+    category: 'Security',
+    description: 'Battle-tested Alibaba rulesets for NPE guard, race conditions, SQLi, and architectural compliance (Ctrl+Shift+R)',
+    iconName: 'ShieldAlert'
+  },
   {
     id: 'jev-ultrafast-open',
     name: '⚡ JEV Ultra-Fast Browser Agent: Single-Roundtrip Action Space',

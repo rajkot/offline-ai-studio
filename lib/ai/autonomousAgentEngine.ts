@@ -21,6 +21,7 @@ import { scientificSkillsEngine } from '@/lib/ai/scientificSkillsEngine';
 import { openJarvisEngine } from '@/lib/ai/openJarvisEngine';
 import { awesomeLlmAppsEngine } from '@/lib/ai/awesomeLlmAppsEngine';
 import { jevUltraFastEngine } from '@/lib/ai/jevUltraFastEngine';
+import { openCodeReviewEngine } from '@/lib/ai/openCodeReviewEngine';
 
 export type AgentPermissionMode = 'full_autonomous' | 'guarded';
 
