@@ -105,7 +105,7 @@ Output valid JSON with schema:
 Return ONLY valid JSON. No markdown backticks.`;
 
         const abortCtrl = new AbortController();
-        const timeoutTimer = setTimeout(() => abortCtrl.abort(), 6000);
+        const timeoutTimer = setTimeout(() => abortCtrl.abort(), 60000);
 
         const availableModels = await listOllamaModels();
         const activeModel = requestedModel || selectBestOllamaModel(availableModels);

@@ -54,6 +54,35 @@ try {
     }
   }
   console.log('Total patched:', patched);
+
+  // Stage .next/static and public into .next/standalone if standalone build exists
+  const standaloneDir = path.join(__dirname, '..', '.next', 'standalone');
+  if (fs.existsSync(standaloneDir)) {
+    const staticSrc = path.join(__dirname, '..', '.next', 'static');
+    const staticDst = path.join(standaloneDir, '.next', 'static');
+    if (fs.existsSync(staticSrc)) {
+      if (!fs.existsSync(staticDst)) fs.mkdirSync(staticDst, { recursive: true });
+      fs.cpSync(staticSrc, staticDst, { recursive: true, force: true });
+      console.log('[patch-next] Copied .next/static -> .next/standalone/.next/static');
+    }
+
+    const publicSrc = path.join(__dirname, '..', 'public');
+    const publicDst = path.join(standaloneDir, 'public');
+    if (fs.existsSync(publicSrc)) {
+      if (!fs.existsSync(publicDst)) fs.mkdirSync(publicDst, { recursive: true });
+      fs.cpSync(publicSrc, publicDst, {
+        recursive: true,
+        force: true,
+        filter: (src) => {
+          const basename = path.basename(src);
+          if (basename === 'release') return false;
+          if (basename.endsWith('.exe') || basename.endsWith('.zip') || basename.endsWith('.dmg') || basename.endsWith('.AppImage')) return false;
+          return true;
+        }
+      });
+      console.log('[patch-next] Copied public -> .next/standalone/public');
+    }
+  }
 } catch (globalErr) {
   console.warn('[patch-next] Warning:', globalErr.message);
 }

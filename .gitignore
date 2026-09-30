@@ -31,6 +31,8 @@ public/release/
 public/*.exe
 tsconfig.tsbuildinfo
 integrations/
+test-output/
+**/bin/
 # Browser Temp Profiles
 .edge_tmp/
 .chrome_tmp/

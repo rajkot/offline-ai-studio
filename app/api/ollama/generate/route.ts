@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { streamOllamaGenerate, generateOllamaText } from '@/lib/ai/ollamaClient';
+import { streamOllamaGenerate, generateOllamaText, checkOllamaHealth } from '@/lib/ai/ollamaClient';
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,6 +7,16 @@ export async function POST(req: NextRequest) {
 
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+    }
+
+    const health = await checkOllamaHealth();
+    if (!health.online) {
+      return NextResponse.json({
+        success: false,
+        online: false,
+        error: `Ollama service is currently offline or unreachable (${health.error || 'Connection refused'})`,
+        model
+      });
     }
 
     if (!stream) {
@@ -25,7 +35,8 @@ export async function POST(req: NextRequest) {
           }
           controller.close();
         } catch (err: any) {
-          controller.error(err);
+          controller.enqueue(encoder.encode(`\n[Ollama Stream Error: ${err.message || err}]\n`));
+          controller.close();
         }
       }
     });
