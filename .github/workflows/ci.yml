@@ -1,0 +1,52 @@
+name: CI Pipeline (Lint, Typecheck, Build, Test)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint, Typecheck, and Test
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_OPTIONS: '--max-old-space-size=4096'
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Type Check (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: Lint Codebase (ESLint)
+        run: npm run lint
+
+      - name: Verify Production Build & Asset Staging
+        run: npm run build
+
+      - name: Run Core Engine Unit Tests
+        run: |
+          npx tsx scripts/test-cline-protocol-engine.js
+          npx tsx scripts/test-consensus-engine.js
+          npx tsx scripts/test-nanojev-engine.js
+          npx tsx scripts/test-repomix-engine.js
+          npx tsx scripts/test-sandbox-engine.js
+          npx tsx scripts/test-smart-macro-engine.js
+          npx tsx scripts/test-ui-tars-engine.js
+          npx tsx scripts/test-void-fast-apply.js
